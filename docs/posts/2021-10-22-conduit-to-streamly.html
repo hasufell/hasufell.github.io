@@ -196,13 +196,18 @@
 <div class="sourceCode" id="cb7"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a><span class="ot">unfoldr ::</span> <span class="dt">Applicative</span> m <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> <span class="dt">Maybe</span> (b, a)) <span class="ot">-&gt;</span> <span class="dt">Unfold</span> m a b</span></code></pre></div>
 <p>…which actually looks a lot like conduit:</p>
 <div class="sourceCode" id="cb8"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a><span class="ot">unfold ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> (b <span class="ot">-&gt;</span> <span class="dt">Maybe</span> (a, b)) <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> <span class="dt">ConduitT</span> i a m ()</span></code></pre></div>
+<p>The difference in streamly is that we provide the initial seed value when we turn the Unfold into a Stream.</p>
 <p>So, let’s do the same procedure as above. We’ll create a list of Chars:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true"></a><span class="co">-- provided by streamly</span></span>
+<div class="sourceCode" id="cb9"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true"></a><span class="co">-- provided by streamly, creates an unfold</span></span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true"></a><span class="ot">fromList ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> <span class="dt">Unfold</span> m [a] a</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true"></a></span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true"></a><span class="co">-- we turn the unfold into a stream of chars</span></span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true"></a><span class="ot">chars ::</span> (<span class="dt">IsStream</span> t, <span class="dt">Monad</span> m) <span class="ot">=&gt;</span> t m <span class="dt">Char</span></span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true"></a>chars <span class="ot">=</span> Streamly.Prelude.unfold fromList <span class="st">&quot;abc&quot;</span></span></code></pre></div>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true"></a><span class="co">-- provided by streamly</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true"></a><span class="co">-- given a seed value, turn an Unfold into a stream</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true"></a><span class="ot">unfold ::</span> (<span class="dt">IsStream</span> t, <span class="dt">Monad</span> m) <span class="ot">=&gt;</span> <span class="dt">Unfold</span> m a b <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> t m b</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true"></a></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true"></a><span class="co">-- we turn the unfold into a stream of chars</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true"></a><span class="ot">chars ::</span> (<span class="dt">IsStream</span> t, <span class="dt">Monad</span> m) <span class="ot">=&gt;</span> t m <span class="dt">Char</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true"></a>chars <span class="ot">=</span> Streamly.Prelude.unfold fromList <span class="st">&quot;abc&quot;</span></span></code></pre></div>
 <p>This type <code>t m Char</code> looks a lot simpler. It’s basically a glorified list with possible effects run for every element.</p>
 <h3 id="transformers">Transformers</h3>
 <p>A transformer doesn’t have its own type. It’s in my opinion much simpler than conduit. Here, we can simply reuse the Preludes <code>fmap</code>. The main difference is that we have an input and an output stream, so:</p>
@@ -210,7 +215,7 @@
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true"></a><span class="ot">charToInt ::</span> (<span class="dt">IsStream</span> t, <span class="dt">Monad</span> m, <span class="dt">Functor</span> (t m)) <span class="ot">=&gt;</span> t m <span class="dt">Char</span> <span class="ot">-&gt;</span> t m <span class="dt">Int</span></span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true"></a>charToInt inputStream <span class="ot">=</span> <span class="fu">fmap</span> <span class="fu">ord</span> inputStream</span>
 <span id="cb10-4"><a href="#cb10-4" aria-hidden="true"></a></span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true"></a><span class="co">-- applies the transformation to the chars, yielding a stream on Ints</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true"></a><span class="co">-- applies the transformation to the chars, yielding a stream of Ints</span></span>
 <span id="cb10-6"><a href="#cb10-6" aria-hidden="true"></a><span class="ot">ints ::</span> (<span class="dt">IsStream</span> t, <span class="dt">Monad</span> m, <span class="dt">Functor</span> (t m)) <span class="ot">=&gt;</span> t m <span class="dt">Int</span></span>
 <span id="cb10-7"><a href="#cb10-7" aria-hidden="true"></a>ints <span class="ot">=</span> charToInt chars</span></code></pre></div>
 <p>This feels much more like lists! Compare with <code>fmap ord "abc"</code>. Streams can be passed around and transformed just like lists. If you want to run effects for every item, you just use the Monad interface:</p>

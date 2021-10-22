@@ -153,11 +153,18 @@ unfoldr :: Applicative m => (a -> Maybe (b, a)) -> Unfold m a b
 unfold :: Monad m => (b -> Maybe (a, b)) -> b -> ConduitT i a m ()
 ```
 
+The difference in streamly is that we provide the initial seed value
+when we turn the Unfold into a Stream.
+
 So, let's do the same procedure as above. We'll create a list of Chars:
 
 ```hs
--- provided by streamly
+-- provided by streamly, creates an unfold
 fromList :: Monad m => Unfold m [a] a
+
+-- provided by streamly
+-- given a seed value, turn an Unfold into a stream
+unfold :: (IsStream t, Monad m) => Unfold m a b -> a -> t m b
 
 -- we turn the unfold into a stream of chars
 chars :: (IsStream t, Monad m) => t m Char
@@ -178,7 +185,7 @@ input and an output stream, so:
 charToInt :: (IsStream t, Monad m, Functor (t m)) => t m Char -> t m Int
 charToInt inputStream = fmap ord inputStream
 
--- applies the transformation to the chars, yielding a stream on Ints
+-- applies the transformation to the chars, yielding a stream of Ints
 ints :: (IsStream t, Monad m, Functor (t m)) => t m Int
 ints = charToInt chars
 ```
