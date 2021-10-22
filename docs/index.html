@@ -201,7 +201,7 @@
 <div class="sourceCode" id="cb8"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a><span class="ot">unfold ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> (b <span class="ot">-&gt;</span> <span class="dt">Maybe</span> (a, b)) <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> <span class="dt">ConduitT</span> i a m ()</span></code></pre></div>
 <p>The difference in streamly is that we provide the initial seed value when we turn the Unfold into a Stream.</p>
 <p>So, let’s do the same procedure as above. We’ll create a list of Chars:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true"></a><span class="co">-- provided by streamly, creates an unfold</span></span>
+<div class="sourceCode" id="cb9"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true"></a><span class="co">-- provided by streamly</span></span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true"></a><span class="ot">fromList ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> <span class="dt">Unfold</span> m [a] a</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true"></a></span>
 <span id="cb9-4"><a href="#cb9-4" aria-hidden="true"></a><span class="co">-- provided by streamly</span></span>
