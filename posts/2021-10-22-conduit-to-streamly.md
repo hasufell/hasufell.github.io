@@ -159,7 +159,7 @@ when we turn the Unfold into a Stream.
 So, let's do the same procedure as above. We'll create a list of Chars:
 
 ```hs
--- provided by streamly, creates an unfold
+-- provided by streamly
 fromList :: Monad m => Unfold m [a] a
 
 -- provided by streamly
