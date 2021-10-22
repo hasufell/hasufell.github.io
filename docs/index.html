@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+  <head>
+  <!---
+  <link href="http://gmpg.org/xfn/11" rel="profile">
+  -->
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+
+  <title>
+    
+      Hasufell's blog &middot; haskell and tech, mostly
+    
+  </title>
+
+  
+      
+  <link rel="canonical" href="https://hasufell.github.io/index.html">
+      
+  
+
+  <link rel="stylesheet" href="https://hasufell.github.io/css/poole.css">
+  <link rel="stylesheet" href="https://hasufell.github.io/css/syntax.css">
+  <link rel="stylesheet" href="https://hasufell.github.io/css/lanyon.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=PT+Serif:400,400italic,700%7CPT+Sans:400">
+
+  <!---
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="{{ '/public/apple-touch-icon-precomposed.png' | absolute_url }}">
+  <link rel="shortcut icon" href="{{ '/public/favicon.ico' | absolute_url }}">
+  -->
+
+  <link rel="alternate" type="application/rss+xml" title="RSS" href="https://hasufell.github.io/atom.xml">
+
+  <!--- deactivate google analytics
+  {% if site.google_analytics_id %}
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+    ga('create', '{{ site.google_analytics_id }}', 'auto');
+    ga('send', 'pageview');
+  </script>
+  {% endif %}
+  -->
+</head>
+
+
+  <body>
+
+    <!-- Target for toggling the sidebar `.sidebar-checkbox` is for regular
+     styles, `#sidebar-checkbox` for behavior. -->
+<input type="checkbox" class="sidebar-checkbox" id="sidebar-checkbox">
+
+<!-- Toggleable sidebar -->
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-item">
+    <p>Hasufell's blog</p>
+  </div>
+
+  <nav class="sidebar-nav">
+    <a class="sidebar-nav-item active" href="https://hasufell.github.io">Home</a>
+
+    <!--- The code below dynamically generates a sidebar nav of the files in the folder /pages -->
+
+    
+      
+        <a class="sidebar-nav-item" href="https://hasufell.github.io/pages/About.html">About</a>
+      
+    
+      
+        <a class="sidebar-nav-item" href="https://hasufell.github.io/pages/Contact.html">Contact</a>
+      
+    
+
+    <a class="sidebar-nav-item" href="https://hasufell.github.io/archive.html">Archive</a>
+
+    <a class="sidebar-nav-item" href="https://github.com/hasufell/hasufell.github.io">GitHub project</a>
+
+  </nav>
+
+  <div class="sidebar-item">
+    <p>
+      &copy; 2021. All rights reserved.
+    </p>
+    <p>
+        <img src="https://hasufell.github.io/images/haskell-logo.png" class="logo" style="display: inline;" />
+        Site created with
+        <a href="https://jaspervdj.be/hakyll">Hakyll</a>.
+        <br>
+        Modified theme
+        <a href="https://github.com/hahey/lanyon-hakyll">lanyon-hakyll</a>
+        based on
+        <a href="https://lanyon.getpoole.com/">Lanyon</a>.
+    </p>
+  </div>
+</div>
+
+
+    <!-- Wrap is the content to shift when toggling the sidebar. We wrap the
+         content to avoid any CSS collisions with our real content. -->
+    <div class="wrap">
+      <div class="masthead">
+        <div class="container">
+          <h3 class="masthead-title">
+            <a href="https://hasufell.github.io" title="Home">Hasufell's blog</a>
+            <small>haskell and tech, mostly</small>
+          </h3>
+        </div>
+      </div>
+
+      <div class="container content">
+          <div class="posts">
+  
+  <div class="post">
+    <h1 class="post-title">
+      <a href="./posts/2021-10-22-conduit-to-streamly.html">
+        From conduit to streamly
+      </a>
+    </h1>
+    <span class="post-date">October 22, 2021,
+      
+         Posted by Julian Ospald
+      
+    </span>
+
+    <h2 id="yeah">Yeah</h2>
+<p>Yes.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="ot">encodeWith ::</span> (<span class="dt">MonadCatch</span> m, <span class="dt">MonadAsync</span> m, <span class="dt">MonadMask</span> m)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a>           <span class="ot">=&gt;</span> <span class="dt">FormatOptions</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a>           <span class="ot">-&gt;</span> <span class="dt">SerialT</span> m <span class="dt">Event</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a>           <span class="ot">-&gt;</span> m <span class="dt">ByteString</span></span></code></pre></div>
+  </div>
+  
+</div>
+
+<div class="pagination">
+  
+    <span class="pagination-item newer">Newer</span>
+  
+  
+    <span class="pagination-item older">Older</span>
+  
+</div>
+
+      </div>
+    </div>
+
+    <label for="sidebar-checkbox" class="sidebar-toggle"></label>
+
+    <script src="https://hasufell.github.io/public/js/script.js"></script>
+
+  </body>
+
+</html>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <title>Hasufell's blog</title>
+    <link href="https://github.com/hasufell/hasufell.github.io/atom.xml" rel="self" />
+    <link href="https://github.com/hasufell/hasufell.github.io" />
+    <id>https://github.com/hasufell/hasufell.github.io/atom.xml</id>
+    <author>
+        <name>Julian Ospald</name>
+        <email>hasufell@posteo.de</email>
+    </author>
+    <updated>2021-10-22T00:00:00Z</updated>
+    <entry>
+    <title>From conduit to streamly</title>
+    <link href="https://github.com/hasufell/hasufell.github.io/posts/2021-10-22-conduit-to-streamly.html" />
+    <id>https://github.com/hasufell/hasufell.github.io/posts/2021-10-22-conduit-to-streamly.html</id>
+    <published>2021-10-22T00:00:00Z</published>
+    <updated>2021-10-22T00:00:00Z</updated>
+    <summary type="html"><![CDATA[<h2 id="yeah">Yeah</h2>
+<p>Yes.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="ot">encodeWith ::</span> (<span class="dt">MonadCatch</span> m, <span class="dt">MonadAsync</span> m, <span class="dt">MonadMask</span> m)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a>           <span class="ot">=&gt;</span> <span class="dt">FormatOptions</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a>           <span class="ot">-&gt;</span> <span class="dt">SerialT</span> m <span class="dt">Event</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a>           <span class="ot">-&gt;</span> m <span class="dt">ByteString</span></span></code></pre></div>]]></summary>
+</entry>
+
+</feed>
