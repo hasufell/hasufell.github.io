@@ -6,7 +6,7 @@ tags: haskell, conduit, streamly, streaming
 
 ## Motivation
 
-At GHCup, I recently put a lot of effort into [reducing the dependency footprint](https://gitlab.haskell.org/haskell/ghcup-hs/-/issues/212)
+At GHCup I recently put a lot of effort into [reducing the dependency footprint](https://gitlab.haskell.org/haskell/ghcup-hs/-/issues/212)
 to improve build times. Since conduit is not a direct dependency and only used for yaml parsing and some other things, I replaced
 those deps with alternatives or re-implemented them (like logging).
 
@@ -17,7 +17,7 @@ but to my despair... that turned out to be [10 times slower](https://gitlab.hask
 
 [Conduit](https://hackage.haskell.org/package/conduit) is an excellent fully featured streaming library,
 but I didn't want to go back to it by re-introducing *yaml*. Since
-GHCup previously dependent on [streamly](https://github.com/composewell/streamly) and will likely do so in the future,
+GHCup previously depended on [streamly](https://github.com/composewell/streamly) and will likely do so in the future,
 those were good arguments for it. Other arguments for streamly could be the strong focus on
 [performance](https://github.com/composewell/streaming-benchmarks#streamly-vs-conduit)
 through inlining and stream fusion optimizations. As such, it may exceed other implementations performance, but also
