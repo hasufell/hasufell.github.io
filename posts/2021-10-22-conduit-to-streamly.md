@@ -258,10 +258,10 @@ parse' = do
   case mc of
     Just 'a' -> do
        mcn <- C.head
-	   case mcn of
-	     Just '1' -> (1:) <$> parse'
-		 Just cn  -> liftIO $ throwIO $ "Unexpected char: " ++ [cn]
-		 Nothing  -> pure []
+       case mcn of
+         Just '1' -> (1:) <$> parse'
+         Just cn  -> liftIO $ throwIO $ "Unexpected char: " ++ [cn]
+         Nothing  -> pure []
     Just ... -- and so on
     Nothing -> pure []
 ```
@@ -284,10 +284,10 @@ parse' = do
   case mc of
     Just 'a' -> do
        mcn <- anyChar
-	   case mcn of
-	     Just '1' -> (1:) <$> parse'
-		 Just cn  -> liftIO $ throwIO $ "Unexpected char: " ++ [cn]
-		 Nothing  -> pure []
+       case mcn of
+         Just '1' -> (1:) <$> parse'
+         Just cn  -> liftIO $ throwIO $ "Unexpected char: " ++ [cn]
+         Nothing  -> pure []
     Just ... -- and so on
     Nothing -> pure []
 ```
