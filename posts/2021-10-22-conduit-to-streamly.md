@@ -1,5 +1,6 @@
 ---
 title: From conduit to streamly
+subtitle: A migration guide
 author: Julian Ospald
 tags: haskell, conduit, streamly, streaming
 ---
@@ -7,28 +8,34 @@ tags: haskell, conduit, streamly, streaming
 ## Motivation
 
 At GHCup I recently put a lot of effort into [reducing the dependency footprint](https://gitlab.haskell.org/haskell/ghcup-hs/-/issues/212)
-to improve build times. Since conduit is not a direct dependency and only used for yaml parsing and some other things, I replaced
+to improve build times. Since `conduit` was not a direct dependency and only used for yaml parsing and some other things, I replaced
 those deps with alternatives or re-implemented them (like logging).
 
 [yaml](https://hackage.haskell.org/package/yaml), which uses conduit under the hood, was replaced with
 [HsYAML](https://hackage.haskell.org/package/HsYAML),
 but to my despair... that turned out to be [10 times slower](https://gitlab.haskell.org/haskell/ghcup-hs/-/issues/270), which also caused
-[issues for pandoc](https://github.com/haskell-hvr/HsYAML/issues/40). So I simply decided to migrate yaml to streamly: [https://hackage.haskell.org/package/yaml-streamly](https://hackage.haskell.org/package/yaml-streamly).
+[issues for pandoc](https://github.com/haskell-hvr/HsYAML/issues/40).
 
 [Conduit](https://hackage.haskell.org/package/conduit) is an excellent fully featured streaming library,
-but I didn't want to go back to it by re-introducing *yaml*. Since
-GHCup previously depended on [streamly](https://github.com/composewell/streamly) and will likely do so in the future,
-those were good arguments for it. Other arguments for streamly could be the strong focus on
+but I didn't want to go back to it by re-introducing yaml, since
+GHCup previously depended on `streamly` and will likely do so in the future.
+So I simply decided to migrate yaml to streamly: [https://hackage.haskell.org/package/yaml-streamly](https://hackage.haskell.org/package/yaml-streamly).
+
+[Streamly](https://github.com/composewell/streamly) is a very general streaming library with a the strong focus on
 [performance](https://github.com/composewell/streaming-benchmarks#streamly-vs-conduit)
 through inlining and stream fusion optimizations. As such, it may exceed other implementations performance, but also
-depends quite heavily on GHC behavior, flags, INLINE pragmas etc.
+depends quite heavily on GHC behavior, flags, INLINE pragmas etc. It can also be used as an
+[alternative for async](https://github.com/composewell/streamly/blob/master/docs/streamly-vs-async.md),
+for reactive programming and much more.
+
+So in this post, I will shortly explain conduit and streamly and provide a simple migration guide.
 
 ## Recap on conduit
 
-There are many approaches on streaming and conduit and streamly diverge quite heavily in terms of paradigm and API.
+There are many approaches on streaming. Conduit and streamly diverge quite heavily in terms of paradigm and API.
 
 Conduit expresses streaming by providing a type that captures
-`i`nput, `o`utput and a possible final `r`esult all at the same type (and the obligatory effect `m`):
+`i`nput, `o`utput and a possible final `r`esult, all in one type (and the obligatory effect `m`):
 
 ```hs
 data ConduitT i o m r
@@ -51,8 +58,13 @@ unfold :: Monad m => (b -> Maybe (a, b)) -> b -> ConduitT i a m ()
 A simple unfold that lets us turn a list into a stream would be:
 
 ```hs
--- provided by conduit
+-- this is also provided by conduit
 sourceList :: Monad m => [a] -> ConduitT i a m ()
+sourceList = unfold gen
+ where
+  gen :: [a] -> Maybe (a, [a])
+  gen (x:xs) = Just (x,xs)
+  gen _      = Nothing -- stream aborts
 
 -- our own stream of "output" chars with no final result
 chars :: Monad m => ConduitT i Char m ()
@@ -69,20 +81,35 @@ A producer focuses on the `o`utput.
 A transformer is like `map :: (a -> b) -> [a] -> [b]`. It transforms the stream and may yield a different type.
 
 ```hs
+-- provided by conduit, notice how it has only one argument
+map :: Monad m => (a -> b) -> ConduitT a b m ()
+
 -- transforms Char to Int
 charToInt :: Monad m => ConduitT Char Int m ()
-charToInt = Data.Conduit.List.map ord
+charToInt = map ord
 
 -- applies the transformation to the chars, yielding a Producer
+-- we'll explaing '.|' shortly
 ints :: Monad m => ConduitM a Int m ()
 ints = chars .| charToInt
 ```
 
-Notable is also that the Functor `fmap` isn't a transformation. It would fmap on the final value, not the
+Notable is also that the Functor `fmap` isn't a transformation. It would map on the final value, not the
 produced values. That's why we need `Data.Conduit.List.map`. Streamly
 is very different here.
 
 A transformer maps the `i`nput to the `o`utput.
+
+To apply a transformation, we use the `(.|)` pipe operator, which reminds us of shell pipes:
+
+```hs
+(.|) :: Monad m
+     => ConduitM a b m () -- ^ producer of values 'b'
+     -> ConduitM b c m r  -- ^ transformer (b -> c), or consumer
+     -> ConduitM a c m r
+```
+
+It takes a little while to see what's going on. The type variables guide us.
 
 ### Consumer
 
@@ -94,7 +121,7 @@ from the Char stream, we'd do:
 -- provided by conduit
 foldl :: Monad m => (a -> b -> a) -> a -> ConduitT b o m a
 
--- 'a' (the input) get folded as a list, so the final result is '[a]'
+-- 'a' (the input) gets folded as a list, so the final result is '[a]'
 toList :: Monad m => ConduitT a o m [a]
 toList = foldl (\a b -> b:a) []
 
@@ -111,7 +138,7 @@ to understand a conduit.
 
 All concepts are unified in one type. Most operations need specific combinators.
 
-### Running the conduit
+### Wrapping up conduit
 
 Finally, we can get our Ints:
 
@@ -120,7 +147,8 @@ ints :: Monad m => m [Int]
 ints = runConduit foldedInts
 ```
 
-That's basically conduit. A conduit as such doesn't really just express streams.
+That's basically conduit. A conduit as such doesn't really express streams.
+Instead we're dealing with stream processors (functions).
 
 ## Streamly
 
@@ -159,8 +187,13 @@ when we turn the Unfold into a Stream.
 So, let's do the same procedure as above. We'll create a list of Chars:
 
 ```hs
--- provided by streamly
+-- equivalent to conduits 'sourceList', also provided by streamly
 fromList :: Monad m => Unfold m [a] a
+fromList = unfoldr gen
+ where
+  gen :: [a] -> Maybe (a, [a])
+  gen (x:xs) = Just (x,xs)
+  gen _      = Nothing -- stream aborts
 
 -- provided by streamly
 -- given a seed value, turn an Unfold into a stream
@@ -199,6 +232,14 @@ charToInt :: (IsStream t, Monad m, Monad (t m)) => t m Char -> t m Int
 charToInt inputStream = inputStream >>= pure . ord
 ```
 
+However, this creates a data dependency (as we're used from Monad).
+There's the more general `mapM` that can run effects
+in parallel:
+
+```hs
+mapM :: (IsStream t, MonadAsync m) => (a -> m b) -> t m a -> t m b
+```
+
 Excellent. So Functor, Monad etc. follow our intuition.
 
 ### Consumers
@@ -223,31 +264,30 @@ toList :: Monad m => Fold m a [a]
 toList = foldl' (\a b -> b:a) []
 
 -- Applying the Fold to an actual stream already executes it
-foldedInts :: Monad m => m Int
-foldedInts = fold toListFold ints
+foldedInts :: Monad m => m [Int]
+foldedInts = fold toList ints
 ```
 
 ### Parsers
 
-Folds don't have a monadic interface. If we want backtracking and a monadic interface
-to choose the next step depending on the current element in the stream, we need a
+Folds don't have a monadic interface  (yet). If we want backtracking and a monadic interface
+to choose the next step depending on the current element in the stream, we can use a
 [Parser](https://hackage.haskell.org/package/streamly-0.8.0/docs/Streamly-Internal-Data-Parser.html).
 
-In conduit, we can use Consumers like
+In conduit, we can use consumers like
 [head](https://hackage.haskell.org/package/conduit-1.3.4.2/docs/Data-Conduit-Combinators.html#v:head)
 and [peek](https://hackage.haskell.org/package/conduit-1.3.4.2/docs/Data-Conduit-Combinators.html#v:peek)
 and utilize the Monad interface of `ConduitT` to make our decisions. Theoretically, we could do the same
-in the Stream type of streamly via [uncons](https://hackage.haskell.org/package/streamly-0.8.0/docs/Streamly-Prelude.html#v:uncons).
+in the Stream type of streamly via [uncons](https://hackage.haskell.org/package/streamly-0.8.0/docs/Streamly-Prelude.html#v:uncons), but the parser feels more idiomatic here.
 
 I note that there is a parser-like package [conduit-parse](https://hackage.haskell.org/package/conduit-parse),
 but the [yaml conduit code](https://github.com/snoyberg/yaml/blob/c4392f3855002ab0bbf9bc16e1e32034254234a7/yaml/src/Data/Yaml/Internal.hs#L286) doesn't utilize that and this blog was written while I converted yaml to streamly.
 
-The parser type is the same as a Fold: `newtype Parser m a b`.
+The streamly parser type is the same as a Fold: `newtype Parser m a b`.
 
 It parses a streamed value `a` into `b`. Much of the
 [API](https://hackage.haskell.org/package/streamly-0.8.0/docs/Streamly-Internal-Data-Parser.html#g:2)
-resembles what you're expected of [parsec](https://hackage.haskell.org/package/parsec) or
-[attoparsec](https://hackage.haskell.org/package/attoparsec) etc.
+resembles what you're used to of `parsec` or `attoparsec` etc.
 
 Let's look at this conduit code (not tested to compile):
 
@@ -308,13 +348,38 @@ Running a parser is like running a fold. We need an input stream:
 parse :: MonadThrow m => Parser m a b -> SerialT m a -> m b
 ```
 
+### Wrapping up streamly
+
+Running a stream is usually done by applying a `Fold`, as we've done above.
+We can also turn a stream into a list directly:
+
+```hs
+toList :: Monad m => SerialT m a -> m [a]
+```
+
+Or just evaluate the stream and discard the values:
+
+```hs
+drain :: Monad m => SerialT m a -> m ()
+```
+
+All these functions also exist as Folds, so these are just convenience wrappers.
+
+As can be seen, streamly isn't based on stream processors like conduit.
+Instead it composes stream data directly and behaves pretty much like lists.
+Usually we don't need special operators. Functor, Monad etc. follow our intuition from lists.
+
+We've also seen that there's an abstract `IsStream` class and specific streaming types like `SerialT`
+(for serially processed streams), `AsyncT` (for concurrent streams) and so on. These are explained
+in more detail in the streamly documentation.
+
 ## Back to yaml
 
 So how does this translate to yaml parsing? Well, the `yaml` package uses the [libyaml C library](https://github.com/yaml/libyaml) for parsing,
 which is an event driven parser. So we get a
 [stream of events](https://github.com/snoyberg/yaml/blob/c4392f3855002ab0bbf9bc16e1e32034254234a7/libyaml/src/Text/Libyaml.hs#L577)
 and then [turn that into a single JSON value](https://github.com/snoyberg/yaml/blob/c4392f3855002ab0bbf9bc16e1e32034254234a7/yaml/src/Data/Yaml/Internal.hs#L187)
-and then let [aeson](https://hackage.haskell.org/package/aeson) do its magic.
+and then let `aeson` do its magic.
 
 Finally, for reference, here's the migration patch: [https://github.com/hasufell/streamly-yaml/commit/bfd1da498588af906cbc5d3bb519f1ccdf7ad63e](https://github.com/hasufell/streamly-yaml/commit/bfd1da498588af906cbc5d3bb519f1ccdf7ad63e)
 
@@ -340,6 +405,15 @@ I guess since the actual parsing is done by the C code and the `event->json` con
 element-by-element monadic parsing transformation, there's not much space to improve performance anyway.
 
 If you find ideas about how to improve it further, please let me know.
+
+### Dependency footprint
+
+Did this actually reduce dependency footprint?
+
+Well, no. But the point was to only depend on a single streaming framework.
+I also note that streamly is [planning to split up the `streamly` package](https://github.com/composewell/streamly/issues/533)
+into `streamly-core` (only depends on boot packages) and separate out further
+feature-packages.
 
 ## Conclusion
 
