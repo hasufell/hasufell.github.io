@@ -210,7 +210,7 @@ run for every element.
 ### Transformers
 
 A transformer doesn't have its own type. It's in my opinion much simpler than conduit.
-Here, we can simply reuse the Preludes `fmap`. The main difference is that we have an
+Here, we can simply reuse the Prelude's `fmap`. The main difference is that we have an
 input and an output stream, so:
 
 ```hs
