@@ -424,3 +424,8 @@ feature-packages.
 ## What's next?
 
 Writing a streamly yaml parser in pure Haskell?
+
+## Discussion
+
+* [Discourse](https://discourse.haskell.org/t/blog-from-conduit-to-streamly/3492/4)
+* [Reddit](https://www.reddit.com/r/haskell/comments/qe72nv/from_conduit_to_streamly/)
