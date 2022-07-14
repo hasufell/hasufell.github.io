@@ -52,6 +52,7 @@ But let's look at the reasons why `String` is problematic first.
 * [Contributors](#contributors)
 * [Patch load](#patch-load)
 * [How to help](#how-to-help)
+* [FAQ](#faq)
 
 ## What's wrong with String?
 
@@ -355,3 +356,23 @@ Total: 27549 insertions(+), 5135 deletions(-)
 * create PRs for existing issues:
     - [https://github.com/haskell/process/issues/252](https://github.com/haskell/process/issues/252)
 
+## FAQ
+
+### Why is there no IsString instance (OverloadedStrings)?
+
+`IsString` has a broken API: [https://github.com/haskell/bytestring/issues/140](https://github.com/haskell/bytestring/issues/140)
+
+It can't express failure. Conversion to `OsPath` can fail. Use the provided QuasiQuoters instead.
+
+### Why is this not in base?
+
+Nothing is stopping this from eventually getting into base. But the barrier of doing so is much higher.
+It may happen eventually.
+
+### When will 'FilePath' be dropped?
+
+Probably never. It would break loads of code. We don't want to do that, for now.
+
+### Yet another String type?
+
+Right... I suggest using python if you don't like types ;)
