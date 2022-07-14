@@ -41,7 +41,9 @@ But let's look at the reasons why `String` is problematic first.
 * [What's wrong with String?](#whats-wrong-with-string)
   * [Why do we care?](#why-do-we-care)
 * [The solution](#the-solution)
-* [Migration strategies](#migration-strategies)
+* [How to use the new API](#how-to-use-the-new-api)
+  * [Related packages](#related-packages)
+* [Migration for library authors](#migration-for-library-authors)
   * [1. drop String based API and just provide OsPath](#1-drop-string-based-api-and-just-provide-ospath)
   * [2. provide a shim compatibility API for String](#2-provide-a-shim-compatibility-api-for-string)
   * [3. using CPP to export two APIs](#3-using-cpp-to-export-two-apis)
@@ -155,6 +157,17 @@ A table for encoding/decoding strategies follows:
 
 These conversions are particularly useful if you're dealing with legacy API that is still `FilePath` based. An example on
 how to do that with the process package is [here](https://github.com/hasufell/filepath-examples/blob/master/examples/Process.hs).
+
+### Related packages
+
+Relevant packages are:
+
+1. `unix`: FFI boundary for posix systems
+2. `Win32`: FFI boundary for windows
+3. `file-io`: alternative to base functions for reading/writing files
+4. `directory`
+
+These packages should either have been migrated already or have pending PRs.
 
 ## Migration for library authors
 
