@@ -116,7 +116,17 @@ We decided to use `ShortByteString` as the internal representation of filepaths,
 2. it's unpinned, so doesn't contribute to memory fragmentation ([proof](https://github.com/hasufell/filepath-debug/blob/master/result.txt))
 3. provides convenient API via `bytestring`, which has been [greatly enhanced as part of this proposal](https://github.com/haskell/bytestring/pull/471)
 
-## Migration strategies
+So, in general the idea is to avoid dealing with `String` at all. There may still be use cases for String though, e.g.:
+
+1. dealing with legacy APIs
+2. reading filepaths from a UTF-8 encoded text file (you probably want `Text` here, but it's trivial to convert to String)
+3. a unified encoding across platforms (e.g. to send over the wire)
+
+## How to use the new API
+
+Many examples are here: [https://github.com/hasufell/filepath-examples](https://github.com/hasufell/filepath-examples)
+
+Note that not all libraries may support the new API yet, so have a look at the [cabal.project](https://github.com/hasufell/filepath-examples/blob/master/cabal.project) if you want to start right away.
 
 Most end-users developing applications should be able to convert to the new API with little effort, given that their favorite libraries
 already support this new type.
@@ -142,6 +152,11 @@ A table for encoding/decoding strategies follows:
 | `decodeUtf`   | OsPath   | FilePath | UTF-8 (strict)                   | UTF-16 (strict)                | not total        |
 | `decodeWith`      | OsPath   | FilePath | user specified                   | user specified                 | depends on input |
 | `decodeFS`    | OsPath   | FilePath | depends on getFileSystemEncoding | UTF-16 (escapes coding errors) | requires IO, used by `base` for roundtripping      |
+
+These conversions are particularly useful if you're dealing with legacy API that is still `FilePath` based. An example on
+how to do that with the process package is [here](https://github.com/hasufell/filepath-examples/blob/master/examples/Process.hs).
+
+## Migration for library authors
 
 Core libraries or other libraries exporting API that is heavy on filepaths generally have 3 options:
 
