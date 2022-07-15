@@ -3,33 +3,46 @@
 I'm pleased to announce that the Haskell type `type FilePath = String`
 has a successor, which was first discussed many years ago as the [Abstract FilePath proposal (AFPP)](https://gitlab.haskell.org/ghc/ghc/-/wikis/proposal/abstract-file-path).
 
-The new type shipped with the [filepath-1.4.99.0](https://hackage.haskell.org/package/filepath-1.4.99.0/candidate) package is (simplified, omitting some type aliases):
+The new type shipped with the [filepath-1.4.100.0](https://hackage.haskell.org/package/filepath-1.4.100.0) package is:
 
 ```hs
--- Constructors are not public API.
-module System.OsPath.Types
-  ( WindowsPath
-  , PosixPath
-  , OsPath
-  ) where
+-- * Path types
 
 -- | FilePath for windows.
-newtype WindowsPath = WindowsPath ShortByteString
+type WindowsPath = WindowsString
 
 -- | FilePath for posix systems.
-newtype PosixPath = PosixPath ShortByteString
+type PosixPath = PosixString
 
 -- | Abstract filepath, depending on current platform.
 -- Matching on the wrong constructor is a compile-time error.
-newtype OsPath = OsPath
+type OsPath = OsString
+
+
+-- * String types
+-- Constructors are not public API.
+
+newtype WindowsString = WindowsString ShortByteString
+
+newtype PosixString = PosixString ShortByteString
+
+newtype OsString = OsString
 #if defined(mingw32_HOST_OS)
-  WindowsPath
+  WindowsString
 #else
-  PosixPath
+  PosixString
 #endif
 ```
 
-Unlike the original proposal, this is additional API (not part of `base`) and will not break any existing code.
+The reason we have two set of types here is simply to maintain the current weak distinction
+in filepath for functions that deal with not-quite-filepaths, e.g.: `splitSearchPath :: String -> [FilePath]`. This also
+allows us to provide slightly different API (e.g. QuasiQuoter for `OsString` differs from `OsPath`).
+OsPath is not a newtype, because it doesn't provide an additional guarantees over OsString. 'filepath' remains
+a low-level library and does not provide strong guarantees for filepaths (such as validity).
+
+Libraries with stronger filepath guarantees are listed in the [README](https://gitlab.haskell.org/haskell/filepath/-/blob/master/README.md#what-is-a-filepath).
+
+Unlike the original proposal, this is **additional API (not part of `base`) and will not break any existing code**.
 Core libraries are expected to upgrade their API and provide additional variants that support this new type.
 Migration strategies are discussed further down. The ecosystem might need some time to migrate.
 This is also a [call for help](#how-to-help)!
@@ -39,10 +52,8 @@ But let's look at the reasons why `String` is problematic first.
 ## TOC
 
 * [What's wrong with String?](#whats-wrong-with-string)
-  * [Why do we care?](#why-do-we-care)
 * [The solution](#the-solution)
 * [How to use the new API](#how-to-use-the-new-api)
-  * [Related packages](#related-packages)
 * [Migration for library authors](#migration-for-library-authors)
   * [1. drop String based API and just provide OsPath](#1-drop-string-based-api-and-just-provide-ospath)
   * [2. provide a shim compatibility API for String](#2-provide-a-shim-compatibility-api-for-string)
@@ -55,6 +66,8 @@ But let's look at the reasons why `String` is problematic first.
 * [FAQ](#faq)
 
 ## What's wrong with String?
+
+Filepaths are resources on the (users) system. We create, delete, copy them. Any corner case with filepaths can have devastating effects: deleting the wrong file, comparing the wrong files, failing whitelists, security bugs, etc.
 
 To recap, the definition of String is:
 
@@ -89,7 +102,7 @@ Windows isn't too problematic here. The encoding is total. However, on unix, the
 4. it's hard to get the original bytes back... this may have security implications for e.g. filepath whitelists
 
 So, how do other languages solve this? Python simply enforces `UTF-8` (with PEP 383 escaping) on unix.
-That makes the roundtripping almost total. But this comes with its own set of problems:
+That makes the roundtripping almost sound. But this comes with its own set of problems:
 
 1. if the underlying filepath is not UTF-8, the `[Char]` representation is lossless (from `CString` to `[Char]`), but may be somewhat non-sensical for further interpretation, because you might have excessive escaping or your `Char`s don't correspond to what the user sees on their system
 2. this has really bad interoperability, because the roundtrip encoding can in fact produce invalid UTF-8. The unicode consortium itself has [voiced their concerns with this approach](https://unicode.org/L2/L2009/09236-pep383-problems.html)
@@ -97,10 +110,6 @@ That makes the roundtripping almost total. But this comes with its own set of pr
 
 I have assembled a [list of correctness issues](https://gist.github.com/hasufell/c600d318bdbe010a7841cc351c835f92)
 with these approaches for in-depth reading.
-
-### Why do we care?
-
-Filepaths are resources on the (users) system. We create, delete, copy them. Any corner case with filepaths can have devastating effects: deleting the wrong file, comparing the wrong files, failing whitelists, security bugs, etc.
 
 ## The solution
 
@@ -123,27 +132,33 @@ So, in general the idea is to avoid dealing with `String` at all. There may stil
 
 1. dealing with legacy APIs
 2. reading filepaths from a UTF-8 encoded text file (you probably want `Text` here, but it's trivial to convert to String)
-3. a unified encoding across platforms (e.g. to send over the wire)
+3. a unified representation across platforms (e.g. to send over the wire or to serialize)
 
 ## How to use the new API
 
 Many examples are here: [https://github.com/hasufell/filepath-examples](https://github.com/hasufell/filepath-examples)
 
-Note that not all libraries may support the new API yet, so have a look at the [cabal.project](https://github.com/hasufell/filepath-examples/blob/master/cabal.project) if you want to start right away.
+Note that not all libraries have released support for the new API yet, so have a look at this [cabal.project](https://github.com/hasufell/filepath-examples/blob/master/cabal.project) if you want to start right away. Generally, you should be able to use these packages already:
+
+* **filepath**: provides filepath manipulation and the new `OsPath` type
+* **unix**: provides new API variants, e.g. `System.Posix.Files.PosixString` (as an alternative to `System.Posix.Files`)
+* **Win32**: similarly, provides new variants, e.g. `System.Win32.WindowsString.File`
+* **directory**: provides the new API under `System.Directory.OsPath`
+* [**file-io**](https://github.com/hasufell/file-io): companion package that provides base-like file reading/writing/opening operations
 
 Most end-users developing applications should be able to convert to the new API with little effort, given that their favorite libraries
 already support this new type.
 
-[System.OsPath](https://hackage.haskell.org/package/filepath-1.4.99.0/candidate/docs/System-OsPath.html) exports the same API as `System.FilePath` with some additional helpers to convert from and to `String`. Likewise `System.OsPath.Posix`/`System.OsPath.Windows` are equivalent to `System.FilePath.Posix`/`System.FilePath.Windows`.
+[System.OsPath](https://hackage.haskell.org/package/filepath-1.4.100.0/docs/System-OsPath.html) exports the same API as `System.FilePath` with some additional helpers to convert from and to `String`. Likewise `System.OsPath.Posix`/`System.OsPath.Windows` are equivalent to `System.FilePath.Posix`/`System.FilePath.Windows`.
 
 So, you can just:
 
-1. update your dependencies lower bounds to the minimum version that supports `OsPath`
-2. import `System.OsPath` instead of `System.FilePath`
-3. use the specialised API from your dependencies, e.g. for unix `System.Posix.Directory.PosixPath` instead of `System.Posix.Directory`
-4. there's currently no `fromString` instance, so `OverloadedStrings` doesn't work (there's no total instance, similar to [Surprising behavior of ByteString literals via IsString](https://github.com/haskell/bytestring/issues/140)). Instead, we provide QuasiQuoters. If you're just using an ASCII subset, you can use `System.OsPath.encodeUtf` and `System.OsPath.decodeUtf` with `fromJust`.
-5. if you want to convert between and from String in the same way the `base` library does, you can use `System.OsPath.encodeFS` and `System.OsPath.decodeFS`
-6. since `base` doesn't support this new type, you'll need the companion library [file-io](https://github.com/hasufell/file-io) for opening a `Handle` and writing/reading files
+1. update your dependencies lower bounds to the minimum version that supports `OsPath` (might need [source-repository-package](https://github.com/hasufell/filepath-examples/blob/master/cabal.project) stanzas)
+2. for `filepath` import `System.OsPath` instead of `System.FilePath`
+3. use the specialised API from your dependencies (e.g. for unix `System.Posix.Directory.PosixPath` instead of `System.Posix.Directory`)
+4. to write OsPath literals, use the provided [QuasiQuoters](https://hackage.haskell.org/package/filepath-1.4.100.0/docs/System-OsPath.html#v:osp). If you're just using an ASCII subset, you can use `System.OsPath.encodeUtf` and `System.OsPath.decodeUtf` with `fromJust`. There's no `IsString` instance, see the [faq](#why-is-there-no-isstring-instance-overloadedstrings).
+5. since `base` doesn't support this new type, you'll need the already mentioned companion library [file-io](https://github.com/hasufell/file-io) for opening a `Handle` and writing/reading files
+6. if you use legacy APIs that still use `FilePath`, there are [examples](https://github.com/hasufell/filepath-examples/blob/master/examples/Process.hs) on how to deal with them (usually `System.OsPath.encodeFS` and `System.OsPath.decodeFS`)
 
 A table for encoding/decoding strategies follows:
 
@@ -158,17 +173,6 @@ A table for encoding/decoding strategies follows:
 
 These conversions are particularly useful if you're dealing with legacy API that is still `FilePath` based. An example on
 how to do that with the process package is [here](https://github.com/hasufell/filepath-examples/blob/master/examples/Process.hs).
-
-### Related packages
-
-Relevant packages are:
-
-1. `unix`: FFI boundary for posix systems
-2. `Win32`: FFI boundary for windows
-3. `file-io`: alternative to base functions for reading/writing files
-4. `directory`
-
-These packages should either have been migrated already or have pending PRs.
 
 ## Migration for library authors
 
