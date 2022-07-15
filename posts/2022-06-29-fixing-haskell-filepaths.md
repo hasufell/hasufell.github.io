@@ -34,10 +34,10 @@ newtype OsString = OsString
 #endif
 ```
 
-The reason we have two set of types here is simply to maintain the current weak distinction
+The reason we have two sets of types here is simply to maintain the current weak distinction
 in filepath for functions that deal with not-quite-filepaths, e.g.: `splitSearchPath :: String -> [FilePath]`. This also
 allows us to provide slightly different API (e.g. QuasiQuoter for `OsString` differs from `OsPath`).
-OsPath is not a newtype, because it doesn't provide an additional guarantees over OsString. 'filepath' remains
+OsPath is not a newtype, because it doesn't provide any additional guarantees over OsString. 'filepath' remains
 a low-level library and does not provide strong guarantees for filepaths (such as validity).
 
 Libraries with stronger filepath guarantees are listed in the [README](https://gitlab.haskell.org/haskell/filepath/-/blob/master/README.md#what-is-a-filepath).
