@@ -233,7 +233,8 @@
 <li>update your dependencies lower bounds to the minimum version that supports <code>OsPath</code> (might need <a href="https://github.com/hasufell/filepath-examples/blob/master/cabal.project">source-repository-package</a> stanzas)</li>
 <li>for <code>filepath</code> import <code>System.OsPath</code> instead of <code>System.FilePath</code></li>
 <li>use the specialised API from your dependencies (e.g. for unix <code>System.Posix.Directory.PosixPath</code> instead of <code>System.Posix.Directory</code>)</li>
-<li>to write OsPath literals, use the provided <a href="https://hackage.haskell.org/package/filepath-1.4.100.0/docs/System-OsPath.html#v:osp">QuasiQuoters</a>. If you’re just using an ASCII subset, you can use <code>System.OsPath.encodeUtf</code> and <code>System.OsPath.decodeUtf</code> with <code>fromJust</code>. There’s no <code>IsString</code> instance, see the <a href="#why-is-there-no-isstring-instance-overloadedstrings">faq</a>.</li>
+<li>to write OsPath literals, use the provided <a href="https://hackage.haskell.org/package/filepath-1.4.100.0/docs/System-OsPath.html#v:osp">QuasiQuoters</a>. There’s no <code>IsString</code> instance, see the <a href="#why-is-there-no-isstring-instance-overloadedstrings">faq</a>.</li>
+<li>if you’re just using an ASCII subset or strict unicode scalar values, you can use <code>fromJust . encodeUtf</code> and <code>fromJust . decodeUtf</code> to pack/unpack literals</li>
 <li>since <code>base</code> doesn’t support this new type, you’ll need the already mentioned companion library <a href="https://github.com/hasufell/file-io">file-io</a> for opening a <code>Handle</code> and writing/reading files</li>
 <li>if you use legacy APIs that still use <code>FilePath</code>, there are <a href="https://github.com/hasufell/filepath-examples/blob/master/examples/Process.hs">examples</a> on how to deal with them (usually <code>System.OsPath.encodeFS</code> and <code>System.OsPath.decodeFS</code>)</li>
 </ol>

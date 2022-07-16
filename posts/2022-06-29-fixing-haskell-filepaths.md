@@ -156,9 +156,10 @@ So, you can just:
 1. update your dependencies lower bounds to the minimum version that supports `OsPath` (might need [source-repository-package](https://github.com/hasufell/filepath-examples/blob/master/cabal.project) stanzas)
 2. for `filepath` import `System.OsPath` instead of `System.FilePath`
 3. use the specialised API from your dependencies (e.g. for unix `System.Posix.Directory.PosixPath` instead of `System.Posix.Directory`)
-4. to write OsPath literals, use the provided [QuasiQuoters](https://hackage.haskell.org/package/filepath-1.4.100.0/docs/System-OsPath.html#v:osp). If you're just using an ASCII subset, you can use `System.OsPath.encodeUtf` and `System.OsPath.decodeUtf` with `fromJust`. There's no `IsString` instance, see the [faq](#why-is-there-no-isstring-instance-overloadedstrings).
-5. since `base` doesn't support this new type, you'll need the already mentioned companion library [file-io](https://github.com/hasufell/file-io) for opening a `Handle` and writing/reading files
-6. if you use legacy APIs that still use `FilePath`, there are [examples](https://github.com/hasufell/filepath-examples/blob/master/examples/Process.hs) on how to deal with them (usually `System.OsPath.encodeFS` and `System.OsPath.decodeFS`)
+4. to write OsPath literals, use the provided [QuasiQuoters](https://hackage.haskell.org/package/filepath-1.4.100.0/docs/System-OsPath.html#v:osp). There's no `IsString` instance, see the [faq](#why-is-there-no-isstring-instance-overloadedstrings).
+5. if you're just using an ASCII subset or strict unicode scalar values, you can use `fromJust . encodeUtf` and `fromJust . decodeUtf` to pack/unpack literals
+6. since `base` doesn't support this new type, you'll need the already mentioned companion library [file-io](https://github.com/hasufell/file-io) for opening a `Handle` and writing/reading files
+7. if you use legacy APIs that still use `FilePath`, there are [examples](https://github.com/hasufell/filepath-examples/blob/master/examples/Process.hs) on how to deal with them (usually `System.OsPath.encodeFS` and `System.OsPath.decodeFS`)
 
 A table for encoding/decoding strategies follows:
 
