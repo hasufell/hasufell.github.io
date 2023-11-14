@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+  <head>
+  <!---
+  <link href="http://gmpg.org/xfn/11" rel="profile">
+  -->
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+
+  <title>
+    
+      2023-11-14-ghcup-is-not-an-installer &middot; Hasufell's blog
+    
+  </title>
+
+  
+      
+  <link rel="canonical" href="https://hasufell.github.io/posts/2023-11-14-ghcup-is-not-an-installer.html">
+      
+  
+
+  <link rel="stylesheet" href="https://hasufell.github.io/css/poole.css">
+  <link rel="stylesheet" href="https://hasufell.github.io/css/syntax.css">
+  <link rel="stylesheet" href="https://hasufell.github.io/css/lanyon.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=PT+Serif:400,400italic,700%7CPT+Sans:400">
+
+  <!---
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="{{ '/public/apple-touch-icon-precomposed.png' | absolute_url }}">
+  <link rel="shortcut icon" href="{{ '/public/favicon.ico' | absolute_url }}">
+  -->
+
+  <link rel="alternate" type="application/rss+xml" title="RSS" href="https://hasufell.github.io/atom.xml">
+
+  <!--- deactivate google analytics
+  {% if site.google_analytics_id %}
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+    ga('create', '{{ site.google_analytics_id }}', 'auto');
+    ga('send', 'pageview');
+  </script>
+  {% endif %}
+  -->
+</head>
+
+
+  <body>
+
+    <!-- Target for toggling the sidebar `.sidebar-checkbox` is for regular
+     styles, `#sidebar-checkbox` for behavior. -->
+<input type="checkbox" class="sidebar-checkbox" id="sidebar-checkbox">
+
+<!-- Toggleable sidebar -->
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-item">
+    <p>Hasufell's blog</p>
+  </div>
+
+  <nav class="sidebar-nav">
+    <a class="sidebar-nav-item" href="https://hasufell.github.io">Home</a>
+
+    <!--- The code below dynamically generates a sidebar nav of the files in the folder /pages -->
+
+    
+      
+        <a class="sidebar-nav-item" href="https://hasufell.github.io/pages/About.html">About</a>
+      
+    
+      
+        <a class="sidebar-nav-item" href="https://hasufell.github.io/pages/Contact.html">Contact</a>
+      
+    
+
+    <a class="sidebar-nav-item" href="https://hasufell.github.io/archive.html">Archive</a>
+
+    <a class="sidebar-nav-item" href="https://github.com/hasufell/hasufell.github.io">GitHub project</a>
+
+  </nav>
+
+  <div class="sidebar-item">
+    <p>
+      &copy; 2021. All rights reserved.
+    </p>
+    <p>
+        <img src="https://hasufell.github.io/images/haskell-logo.png" class="logo" style="display: inline;" />
+        Site created with
+        <a href="https://jaspervdj.be/hakyll">Hakyll</a>.
+        <br>
+        Modified theme
+        <a href="https://github.com/hahey/lanyon-hakyll">lanyon-hakyll</a>
+        based on
+        <a href="https://lanyon.getpoole.com/">Lanyon</a>.
+    </p>
+  </div>
+</div>
+
+
+    <!-- Wrap is the content to shift when toggling the sidebar. We wrap the
+         content to avoid any CSS collisions with our real content. -->
+    <div class="wrap">
+      <div class="masthead">
+        <div class="container">
+          <h3 class="masthead-title">
+            <a href="https://hasufell.github.io" title="Home">Hasufell's blog</a>
+            <small>haskell and tech, mostly</small>
+          </h3>
+        </div>
+      </div>
+
+      <div class="container content">
+          <div class="post">
+    <h1 class="post-title">
+      <a href="../posts/2023-11-14-ghcup-is-not-an-installer.html">
+        2023-11-14-ghcup-is-not-an-installer
+      </a>
+    </h1>
+    <span class="post-date">November 14, 2023,
+      
+    </span>
+     <h1 id="ghcup-is-not-an-installer">GHCup is not an installer</h1>
+<h2 id="misunderstandings">Misunderstandings</h2>
+<p>Over the past few years, there have been recurring questions or misunderstandings about GHCup. E.g.:</p>
+<ul>
+<li>GHCup only installs bindists from upstream (e.g. GHC/Cabal/HLS CI)</li>
+<li>GHCup never applies patches to tools it distributes</li>
+</ul>
+<p>Both those assumptions do not apply, because GHCup is primarily a <strong>distribution channel</strong>, not just an installer. The distribution channel is basically the <a href="https://github.com/haskell/ghcup-metadata/blob/develop/ghcup-0.0.8.yaml"><code>ghcup-0.0.8.yaml</code> metadata file</a>.</p>
+<p>Users who strictly only want upstream bindists (whether they’re broken or not) can use a different distribution channel: <a href="https://github.com/haskell/ghcup-metadata/blob/develop/ghcup-vanilla-0.0.8.yaml"><code>ghcup-vanilla-0.0.8.yaml</code></a>. More information in the <a href="https://github.com/haskell/ghcup-metadata#for-end-users">README</a>.</p>
+<h2 id="policies-and-priorities">Policies and priorities</h2>
+<p>GHCup follows similar philosophies and policies like Debian or Fedora. Most of them are outlined <a href="https://www.haskell.org/ghcup/about/#distribution-policies">here</a> in more details. The most important points, simplified, are:</p>
+<ol type="1">
+<li>The end-user experience is our primary concern</li>
+<li>We strive to collaborate with all maintainers of all the tools we support and maintain a good relationship</li>
+<li>We may fix build system or other distribution bugs in upstream bindists</li>
+<li>We may even patch source code of supported tools in very rare cases if that is required to ensure that the end-user experience does not break</li>
+</ol>
+<p>As such, we prioritize the end-user over interests of upstream developers. E.g. it frequently happens that upstream developers want a new release to be ‘recommended’ (that is: installed by default if you run GHCup for the first time). However, experience shows that it’s usually better to wait.</p>
+<p>So far, we have never patched source code. In case that ever happens, it would be communicated to both upstream and the end user via post-install messages.</p>
+<h2 id="affects-on-maintenance">Affects on maintenance</h2>
+<p>Following these priorities, the smallest part of GHCup maintenance sometimes seems to be the codebase. The following tasks have come up repeatedly, until <a href="https://github.com/haskell/ghcup-hs/issues/848">I decreased my workload considerably to avoid a proper burnout</a>:</p>
+<ul>
+<li>building unofficial bindists for missing platforms (e.g. GHC alpine i386, armv7, FreeBSD or stack darwin aarch64)</li>
+<li>patching upstream bindists in case of issues discovered post-release</li>
+<li>tracking releases and bugs of all tools to decide which release is to be ‘recommended’</li>
+<li>being involved in CI code and release issues of most tools</li>
+<li>meetings and communication with HF, GHC HQ, other tooling maintainers and especially HLS</li>
+<li>developing and supporting new ideas (dynamic HLS bindists, GHC nightlies, …)</li>
+<li>advocating and pushing for prioritizing end user experience, e.g. <a href="https://github.com/haskellfoundation/tech-proposals/issues/48">here</a></li>
+<li>supporting users having installation issues via IRC, Discord, email, different issue trackers, …</li>
+</ul>
+<p>Most of this has now stalled, until GHCup gets more support (e.g. <a href="https://discourse.haskell.org/t/haskell-foundation-october-2023-update/8054#ghcup-backup-maintenance-5">from Obsidian</a>, which I’m excited about).</p>
+</div>
+
+
+<div class="related">
+  <h2>Related posts</h2>
+  <ul class="related-posts">
+      
+      <li>
+        <h3>
+          <a href="../posts/2022-06-29-fixing-haskell-filepaths.html">
+            2022-06-29-fixing-haskell-filepaths
+            <small>June 29, 2022</small>
+          </a>
+        </h3>
+      </li>
+    
+      <li>
+        <h3>
+          <a href="../posts/2021-10-22-conduit-to-streamly.html">
+            From conduit to streamly
+            <small>October 22, 2021</small>
+          </a>
+        </h3>
+      </li>
+    
+  </ul>
+</div>
+
+
+<div class="related">
+  <h2>Comments</h2>
+<script src="https://utteranc.es/client.js" repo="hasufell/hasufell.github.io" issue-term="pathname" theme="github-light" crossorigin="anonymous" async>
+</script>
+</div>
+
+      </div>
+    </div>
+
+    <label for="sidebar-checkbox" class="sidebar-toggle"></label>
+
+    <script src="https://hasufell.github.io/public/js/script.js"></script>
+
+  </body>
+
+</html>
