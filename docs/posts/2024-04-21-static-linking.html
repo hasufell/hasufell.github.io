@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+  <head>
+  <!---
+  <link href="http://gmpg.org/xfn/11" rel="profile">
+  -->
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+
+  <title>
+    
+      2024-04-21-static-linking &middot; Hasufell's blog
+    
+  </title>
+
+  
+      
+  <link rel="canonical" href="https://hasufell.github.io/posts/2024-04-21-static-linking.html">
+      
+  
+
+  <link rel="stylesheet" href="https://hasufell.github.io/css/poole.css">
+  <link rel="stylesheet" href="https://hasufell.github.io/css/syntax.css">
+  <link rel="stylesheet" href="https://hasufell.github.io/css/lanyon.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=PT+Serif:400,400italic,700%7CPT+Sans:400">
+
+  <!---
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="{{ '/public/apple-touch-icon-precomposed.png' | absolute_url }}">
+  <link rel="shortcut icon" href="{{ '/public/favicon.ico' | absolute_url }}">
+  -->
+
+  <link rel="alternate" type="application/rss+xml" title="RSS" href="https://hasufell.github.io/atom.xml">
+
+  <!--- deactivate google analytics
+  {% if site.google_analytics_id %}
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+    ga('create', '{{ site.google_analytics_id }}', 'auto');
+    ga('send', 'pageview');
+  </script>
+  {% endif %}
+  -->
+</head>
+
+
+  <body>
+
+    <!-- Target for toggling the sidebar `.sidebar-checkbox` is for regular
+     styles, `#sidebar-checkbox` for behavior. -->
+<input type="checkbox" class="sidebar-checkbox" id="sidebar-checkbox">
+
+<!-- Toggleable sidebar -->
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-item">
+    <p>Hasufell's blog</p>
+  </div>
+
+  <nav class="sidebar-nav">
+    <a class="sidebar-nav-item" href="https://hasufell.github.io">Home</a>
+
+    <!--- The code below dynamically generates a sidebar nav of the files in the folder /pages -->
+
+    
+      
+        <a class="sidebar-nav-item" href="https://hasufell.github.io/pages/About.html">About</a>
+      
+    
+      
+        <a class="sidebar-nav-item" href="https://hasufell.github.io/pages/Contact.html">Contact</a>
+      
+    
+
+    <a class="sidebar-nav-item" href="https://hasufell.github.io/archive.html">Archive</a>
+
+    <a class="sidebar-nav-item" href="https://github.com/hasufell/hasufell.github.io">GitHub project</a>
+
+  </nav>
+
+  <div class="sidebar-item">
+    <p>
+      &copy; 2021. All rights reserved.
+    </p>
+    <p>
+        <img src="https://hasufell.github.io/images/haskell-logo.png" class="logo" style="display: inline;" />
+        Site created with
+        <a href="https://jaspervdj.be/hakyll">Hakyll</a>.
+        <br>
+        Modified theme
+        <a href="https://github.com/hahey/lanyon-hakyll">lanyon-hakyll</a>
+        based on
+        <a href="https://lanyon.getpoole.com/">Lanyon</a>.
+    </p>
+  </div>
+</div>
+
+
+    <!-- Wrap is the content to shift when toggling the sidebar. We wrap the
+         content to avoid any CSS collisions with our real content. -->
+    <div class="wrap">
+      <div class="masthead">
+        <div class="container">
+          <h3 class="masthead-title">
+            <a href="https://hasufell.github.io" title="Home">Hasufell's blog</a>
+            <small>haskell and tech, mostly</small>
+          </h3>
+        </div>
+      </div>
+
+      <div class="container content">
+          <div class="post">
+    <h1 class="post-title">
+      <a href="../posts/2024-04-21-static-linking.html">
+        2024-04-21-static-linking
+      </a>
+    </h1>
+    <span class="post-date">April 21, 2024,
+      
+    </span>
+     <h1 id="getting-your-haskell-executable-statically-linked-without-nix">Getting your Haskell executable statically linked without Nix</h1>
+<h2 id="motivation">Motivation</h2>
+<p>Following the excellent post from Tom Sydney <a href="https://cs-syd.eu/posts/2024-04-20-static-linking-haskell-nix">“Getting your Haskell executable statically linked with Nix”</a>, I want to present an alternative approach.</p>
+<p>I believe nix has questionable ergnomics and most Haskell developers don’t need it, even if they want to link their binaries statically.</p>
+<h2 id="musl-and-alpine-linux">Musl and Alpine Linux</h2>
+<p>GHC/cabal don’t really know how to do partial static linking, unless you employ some trickery. So we need a system where we can link everything statically, including libc. This leads us to the Musl libc, which has good support for static linking.</p>
+<p>Two prominent choices for musl based Linux distributions are:</p>
+<ul>
+<li>Alpine Linux</li>
+<li>Void Linux musl</li>
+</ul>
+<p>In this guide, we pick Alpine.</p>
+<h2 id="ghcup-and-ghc">GHCup and GHC</h2>
+<p>In order to use Alpine Linux as a build environment, we need proper toolchain support. GHCup supports Alpine Linux as a first class citizen, so you should be able to install GHC on Alpine. If you run into issues, <a href="https://github.com/haskell/ghcup-hs/issues/new">open a bug report</a>.</p>
+<p>Note that you do not need a statically linked GHC to build a static binary. This is a misconception.</p>
+<h2 id="build-environment">Build environment</h2>
+<p>We need a clean build environment that is reproducible (-ish). We can use docker, which has excellent support for Alpine Linux containers.</p>
+<h2 id="tying-everything-together">Tying everything together</h2>
+<p>To tie everything together, we start an interactive shell in a docker container:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a>$ <span class="ex">docker</span> run --rm -ti alpine:3.19 sh</span></code></pre></div>
+<p>Then we install pre-requisites:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a>$ <span class="ex">apk</span> update</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a>$ <span class="ex">apk</span> add curl gcc g++ git gmp-dev libc-dev libffi-dev make musl-dev ncurses-dev perl tar xz</span></code></pre></div>
+<p>We install GHCup:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a>$ <span class="ex">curl</span> --proto <span class="st">'=https'</span> --tlsv1.2 -sSf https://get-ghcup.haskell.org <span class="kw">|</span> <span class="va">BOOTSTRAP_HASKELL_NONINTERACTIVE=</span>1 <span class="fu">sh</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a><span class="bu">source</span> ~/.ghcup/env</span></code></pre></div>
+<p>Let’s create a dummy app:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a>$ <span class="fu">mkdir</span> test-app</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a>$ <span class="bu">cd</span> test-app</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a>$ <span class="ex">cabal</span> init --non-interactive</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a>$ <span class="ex">cabal</span> build --enable-executable-static</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true"></a>$ <span class="fu">mkdir</span> out/</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true"></a>$ <span class="fu">cp</span> <span class="va">$(</span><span class="ex">cabal</span> -v0 list-bin exe:test-app<span class="va">)</span> out/</span></code></pre></div>
+<p>We use <code>cabal build</code> in combination with <code>cabal list-bin</code>, because some versions of cabal are buggy when combining <code>--enable-executable-static</code> with <code>install</code>: <a href="https://github.com/haskell/cabal/pull/9697">https://github.com/haskell/cabal/pull/9697</a></p>
+<p>It is also possible to pass <code>-ghc-options='-optl-static'</code> instead of <code>--enable-executable-static</code>.</p>
+<p>Now we examine the binary:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a>$ <span class="ex">apk</span> add file</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a>$ <span class="fu">file</span> out/test-app</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a><span class="ex">out</span>/test-app: <span class="ex">ELF</span> 64-bit LSB executable, x86-64, version 1 (SYSV), <span class="ex">statically</span> linked, BuildID[sha1]=ab54deda534ac8065f5e263e84f168fb46eb8227, with debug_info, not stripped</span></code></pre></div>
+<p>That looks good.</p>
+<h2 id="linking-against-system-libraries">Linking against system libraries</h2>
+<p>If your binary depends on system C libraries, you will need to install those packages. E.g. if you link against zlib, you need the <code>-dev</code> and sometimes <code>-static</code> packages:</p>
+<pre><code>apk add zlib-dev zlib-static</code></pre>
+<p>You can search for libraries and installed files at <a href="https://pkgs.alpinelinux.org/packages">https://pkgs.alpinelinux.org/packages</a></p>
+<h2 id="github-ci">Github CI</h2>
+<p>Examples of Github actions using alpine and building static release binaries can be found here:</p>
+<ul>
+<li><a href="https://github.com/haskell/ghcup-hs/blob/master/.github/workflows/release.yaml">https://github.com/haskell/ghcup-hs/blob/master/.github/workflows/release.yaml</a></li>
+<li><a href="https://github.com/hasufell/stack2cabal/blob/master/.github/workflows/release.yaml">https://github.com/hasufell/stack2cabal/blob/master/.github/workflows/release.yaml</a></li>
+<li><a href="https://github.com/stable-haskell/cabal/blob/cabal-install-v3.10.3.0/.github/workflows/release.yaml">https://github.com/stable-haskell/cabal/blob/cabal-install-v3.10.3.0/.github/workflows/release.yaml</a></li>
+</ul>
+<h2 id="conclusion">Conclusion</h2>
+<p>This approach has been used in GHCup since its rewrite in Haskell. It has worked very well.</p>
+<p>The only downside is that you rely on Alpine Linux packaging of system C libraries. If you link to a package that is not in the Alpine repos, you will need more manual work.</p>
+<p>In that case it might be worthwhile to check Void Linux as an alternative.</p>
+</div>
+
+
+<div class="related">
+  <h2>Related posts</h2>
+  <ul class="related-posts">
+      
+      <li>
+        <h3>
+          <a href="../posts/2023-11-14-ghcup-is-not-an-installer.html">
+            2023-11-14-ghcup-is-not-an-installer
+            <small>November 14, 2023</small>
+          </a>
+        </h3>
+      </li>
+    
+      <li>
+        <h3>
+          <a href="../posts/2022-06-29-fixing-haskell-filepaths.html">
+            2022-06-29-fixing-haskell-filepaths
+            <small>June 29, 2022</small>
+          </a>
+        </h3>
+      </li>
+    
+      <li>
+        <h3>
+          <a href="../posts/2021-10-22-conduit-to-streamly.html">
+            From conduit to streamly
+            <small>October 22, 2021</small>
+          </a>
+        </h3>
+      </li>
+    
+  </ul>
+</div>
+
+
+<div class="related">
+  <h2>Comments</h2>
+<script src="https://utteranc.es/client.js" repo="hasufell/hasufell.github.io" issue-term="pathname" theme="github-light" crossorigin="anonymous" async>
+</script>
+</div>
+
+      </div>
+    </div>
+
+    <label for="sidebar-checkbox" class="sidebar-toggle"></label>
+
+    <script src="https://hasufell.github.io/public/js/script.js"></script>
+
+  </body>
+
+</html>

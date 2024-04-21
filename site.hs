@@ -5,6 +5,7 @@ import           Data.List                     (sortBy)
 import           Data.Ord                      (comparing)
 import           Hakyll
 import           Control.Monad                 (liftM, forM_)
+import           Control.Monad.Fail            (MonadFail)
 import           System.FilePath               (takeBaseName)
 
 --------------------------------------------------------------------------------

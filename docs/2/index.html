@@ -11,13 +11,13 @@
 
   <title>
     
-      From conduit to streamly &middot; Hasufell's blog
+      Hasufell's blog &middot; haskell and tech, mostly
     
   </title>
 
   
       
-  <link rel="canonical" href="https://hasufell.github.io/posts/2021-10-22-conduit-to-streamly.html">
+  <link rel="canonical" href="https://hasufell.github.io/2/index.html">
       
   
 
@@ -61,7 +61,7 @@
   </div>
 
   <nav class="sidebar-nav">
-    <a class="sidebar-nav-item" href="https://hasufell.github.io">Home</a>
+    <a class="sidebar-nav-item active" href="https://hasufell.github.io">Home</a>
 
     <!--- The code below dynamically generates a sidebar nav of the files in the folder /pages -->
 
@@ -112,7 +112,9 @@
       </div>
 
       <div class="container content">
-          <div class="post">
+          <div class="posts">
+  
+  <div class="post">
     <h1 class="post-title">
       <a href="../posts/2021-10-22-conduit-to-streamly.html">
         From conduit to streamly
@@ -123,7 +125,8 @@
          Posted by Julian Ospald
       
     </span>
-     <h2 id="motivation">Motivation</h2>
+
+    <h2 id="motivation">Motivation</h2>
 <p>At GHCup I recently put a lot of effort into <a href="https://gitlab.haskell.org/haskell/ghcup-hs/-/issues/212">reducing the dependency footprint</a> to improve build times. Since <code>conduit</code> was not a direct dependency and only used for yaml parsing and some other things, I replaced those deps with alternatives or re-implemented them (like logging).</p>
 <p><a href="https://hackage.haskell.org/package/yaml">yaml</a>, which uses conduit under the hood, was replaced with <a href="https://hackage.haskell.org/package/HsYAML">HsYAML</a>, but to my despair… that turned out to be <a href="https://gitlab.haskell.org/haskell/ghcup-hs/-/issues/270">10 times slower</a>, which also caused <a href="https://github.com/haskell-hvr/HsYAML/issues/40">issues for pandoc</a>.</p>
 <p><a href="https://hackage.haskell.org/package/conduit">Conduit</a> is an excellent fully featured streaming library, but I didn’t want to go back to it by re-introducing yaml, since GHCup previously depended on <code>streamly</code> and will likely do so in the future. So I simply decided to migrate yaml to streamly: <a href="https://hackage.haskell.org/package/yaml-streamly">https://hackage.haskell.org/package/yaml-streamly</a>.</p>
@@ -348,48 +351,17 @@
 <li><a href="https://discourse.haskell.org/t/blog-from-conduit-to-streamly/3492/4">Discourse</a></li>
 <li><a href="https://www.reddit.com/r/haskell/comments/qe72nv/from_conduit_to_streamly/">Reddit</a></li>
 </ul>
+  </div>
+  
 </div>
 
-
-<div class="related">
-  <h2>Related posts</h2>
-  <ul class="related-posts">
-      
-      <li>
-        <h3>
-          <a href="../posts/2024-04-21-static-linking.html">
-            2024-04-21-static-linking
-            <small>April 21, 2024</small>
-          </a>
-        </h3>
-      </li>
-    
-      <li>
-        <h3>
-          <a href="../posts/2023-11-14-ghcup-is-not-an-installer.html">
-            2023-11-14-ghcup-is-not-an-installer
-            <small>November 14, 2023</small>
-          </a>
-        </h3>
-      </li>
-    
-      <li>
-        <h3>
-          <a href="../posts/2022-06-29-fixing-haskell-filepaths.html">
-            2022-06-29-fixing-haskell-filepaths
-            <small>June 29, 2022</small>
-          </a>
-        </h3>
-      </li>
-    
-  </ul>
-</div>
-
-
-<div class="related">
-  <h2>Comments</h2>
-<script src="https://utteranc.es/client.js" repo="hasufell/hasufell.github.io" issue-term="pathname" theme="github-light" crossorigin="anonymous" async>
-</script>
+<div class="pagination">
+  
+      <a class="pagination-item newer" href="../index.html">Newer</a>
+  
+  
+    <span class="pagination-item older">Older</span>
+  
 </div>
 
       </div>

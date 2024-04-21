@@ -116,6 +116,73 @@
   
   <div class="post">
     <h1 class="post-title">
+      <a href="./posts/2024-04-21-static-linking.html">
+        2024-04-21-static-linking
+      </a>
+    </h1>
+    <span class="post-date">April 21, 2024,
+      
+    </span>
+
+    <h1 id="getting-your-haskell-executable-statically-linked-without-nix">Getting your Haskell executable statically linked without Nix</h1>
+<h2 id="motivation">Motivation</h2>
+<p>Following the excellent post from Tom Sydney <a href="https://cs-syd.eu/posts/2024-04-20-static-linking-haskell-nix">“Getting your Haskell executable statically linked with Nix”</a>, I want to present an alternative approach.</p>
+<p>I believe nix has questionable ergnomics and most Haskell developers don’t need it, even if they want to link their binaries statically.</p>
+<h2 id="musl-and-alpine-linux">Musl and Alpine Linux</h2>
+<p>GHC/cabal don’t really know how to do partial static linking, unless you employ some trickery. So we need a system where we can link everything statically, including libc. This leads us to the Musl libc, which has good support for static linking.</p>
+<p>Two prominent choices for musl based Linux distributions are:</p>
+<ul>
+<li>Alpine Linux</li>
+<li>Void Linux musl</li>
+</ul>
+<p>In this guide, we pick Alpine.</p>
+<h2 id="ghcup-and-ghc">GHCup and GHC</h2>
+<p>In order to use Alpine Linux as a build environment, we need proper toolchain support. GHCup supports Alpine Linux as a first class citizen, so you should be able to install GHC on Alpine. If you run into issues, <a href="https://github.com/haskell/ghcup-hs/issues/new">open a bug report</a>.</p>
+<p>Note that you do not need a statically linked GHC to build a static binary. This is a misconception.</p>
+<h2 id="build-environment">Build environment</h2>
+<p>We need a clean build environment that is reproducible (-ish). We can use docker, which has excellent support for Alpine Linux containers.</p>
+<h2 id="tying-everything-together">Tying everything together</h2>
+<p>To tie everything together, we start an interactive shell in a docker container:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a>$ <span class="ex">docker</span> run --rm -ti alpine:3.19 sh</span></code></pre></div>
+<p>Then we install pre-requisites:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a>$ <span class="ex">apk</span> update</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a>$ <span class="ex">apk</span> add curl gcc g++ git gmp-dev libc-dev libffi-dev make musl-dev ncurses-dev perl tar xz</span></code></pre></div>
+<p>We install GHCup:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a>$ <span class="ex">curl</span> --proto <span class="st">'=https'</span> --tlsv1.2 -sSf https://get-ghcup.haskell.org <span class="kw">|</span> <span class="va">BOOTSTRAP_HASKELL_NONINTERACTIVE=</span>1 <span class="fu">sh</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a><span class="bu">source</span> ~/.ghcup/env</span></code></pre></div>
+<p>Let’s create a dummy app:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a>$ <span class="fu">mkdir</span> test-app</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a>$ <span class="bu">cd</span> test-app</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a>$ <span class="ex">cabal</span> init --non-interactive</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a>$ <span class="ex">cabal</span> build --enable-executable-static</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true"></a>$ <span class="fu">mkdir</span> out/</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true"></a>$ <span class="fu">cp</span> <span class="va">$(</span><span class="ex">cabal</span> -v0 list-bin exe:test-app<span class="va">)</span> out/</span></code></pre></div>
+<p>We use <code>cabal build</code> in combination with <code>cabal list-bin</code>, because some versions of cabal are buggy when combining <code>--enable-executable-static</code> with <code>install</code>: <a href="https://github.com/haskell/cabal/pull/9697">https://github.com/haskell/cabal/pull/9697</a></p>
+<p>It is also possible to pass <code>-ghc-options='-optl-static'</code> instead of <code>--enable-executable-static</code>.</p>
+<p>Now we examine the binary:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a>$ <span class="ex">apk</span> add file</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a>$ <span class="fu">file</span> out/test-app</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a><span class="ex">out</span>/test-app: <span class="ex">ELF</span> 64-bit LSB executable, x86-64, version 1 (SYSV), <span class="ex">statically</span> linked, BuildID[sha1]=ab54deda534ac8065f5e263e84f168fb46eb8227, with debug_info, not stripped</span></code></pre></div>
+<p>That looks good.</p>
+<h2 id="linking-against-system-libraries">Linking against system libraries</h2>
+<p>If your binary depends on system C libraries, you will need to install those packages. E.g. if you link against zlib, you need the <code>-dev</code> and sometimes <code>-static</code> packages:</p>
+<pre><code>apk add zlib-dev zlib-static</code></pre>
+<p>You can search for libraries and installed files at <a href="https://pkgs.alpinelinux.org/packages">https://pkgs.alpinelinux.org/packages</a></p>
+<h2 id="github-ci">Github CI</h2>
+<p>Examples of Github actions using alpine and building static release binaries can be found here:</p>
+<ul>
+<li><a href="https://github.com/haskell/ghcup-hs/blob/master/.github/workflows/release.yaml">https://github.com/haskell/ghcup-hs/blob/master/.github/workflows/release.yaml</a></li>
+<li><a href="https://github.com/hasufell/stack2cabal/blob/master/.github/workflows/release.yaml">https://github.com/hasufell/stack2cabal/blob/master/.github/workflows/release.yaml</a></li>
+<li><a href="https://github.com/stable-haskell/cabal/blob/cabal-install-v3.10.3.0/.github/workflows/release.yaml">https://github.com/stable-haskell/cabal/blob/cabal-install-v3.10.3.0/.github/workflows/release.yaml</a></li>
+</ul>
+<h2 id="conclusion">Conclusion</h2>
+<p>This approach has been used in GHCup since its rewrite in Haskell. It has worked very well.</p>
+<p>The only downside is that you rely on Alpine Linux packaging of system C libraries. If you link to a package that is not in the Alpine repos, you will need more manual work.</p>
+<p>In that case it might be worthwhile to check Void Linux as an alternative.</p>
+  </div>
+  
+  <div class="post">
+    <h1 class="post-title">
       <a href="./posts/2023-11-14-ghcup-is-not-an-installer.html">
         2023-11-14-ghcup-is-not-an-installer
       </a>
@@ -541,245 +608,6 @@
 <p>Right… I suggest using python if you don’t like types ;)</p>
   </div>
   
-  <div class="post">
-    <h1 class="post-title">
-      <a href="./posts/2021-10-22-conduit-to-streamly.html">
-        From conduit to streamly
-      </a>
-    </h1>
-    <span class="post-date">October 22, 2021,
-      
-         Posted by Julian Ospald
-      
-    </span>
-
-    <h2 id="motivation">Motivation</h2>
-<p>At GHCup I recently put a lot of effort into <a href="https://gitlab.haskell.org/haskell/ghcup-hs/-/issues/212">reducing the dependency footprint</a> to improve build times. Since <code>conduit</code> was not a direct dependency and only used for yaml parsing and some other things, I replaced those deps with alternatives or re-implemented them (like logging).</p>
-<p><a href="https://hackage.haskell.org/package/yaml">yaml</a>, which uses conduit under the hood, was replaced with <a href="https://hackage.haskell.org/package/HsYAML">HsYAML</a>, but to my despair… that turned out to be <a href="https://gitlab.haskell.org/haskell/ghcup-hs/-/issues/270">10 times slower</a>, which also caused <a href="https://github.com/haskell-hvr/HsYAML/issues/40">issues for pandoc</a>.</p>
-<p><a href="https://hackage.haskell.org/package/conduit">Conduit</a> is an excellent fully featured streaming library, but I didn’t want to go back to it by re-introducing yaml, since GHCup previously depended on <code>streamly</code> and will likely do so in the future. So I simply decided to migrate yaml to streamly: <a href="https://hackage.haskell.org/package/yaml-streamly">https://hackage.haskell.org/package/yaml-streamly</a>.</p>
-<p><a href="https://github.com/composewell/streamly">Streamly</a> is a very general streaming library with a the strong focus on <a href="https://github.com/composewell/streaming-benchmarks#streamly-vs-conduit">performance</a> through inlining and stream fusion optimizations. As such, it may exceed other implementations performance, but also depends quite heavily on GHC behavior, flags, INLINE pragmas etc. It can also be used as an <a href="https://github.com/composewell/streamly/blob/master/docs/streamly-vs-async.md">alternative for async</a>, for reactive programming and much more.</p>
-<p>So in this post, I will shortly explain conduit and streamly and provide a simple migration guide.</p>
-<h2 id="recap-on-conduit">Recap on conduit</h2>
-<p>There are many approaches on streaming. Conduit and streamly diverge quite heavily in terms of paradigm and API.</p>
-<p>Conduit expresses streaming by providing a type that captures <code>i</code>nput, <code>o</code>utput and a possible final <code>r</code>esult, all in one type (and the obligatory effect <code>m</code>):</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">ConduitT</span> i o m r</span></code></pre></div>
-<p>As such, it expresses:</p>
-<ul>
-<li><a href="https://hackage.haskell.org/package/conduit-1.3.4.2/docs/Data-Conduit-Combinators.html#g:1">Producers</a></li>
-<li><a href="https://hackage.haskell.org/package/conduit-1.3.4.2/docs/Data-Conduit-Combinators.html#g:10">Transformers</a></li>
-<li><a href="https://hackage.haskell.org/package/conduit-1.3.4.2/docs/Data-Conduit-Combinators.html#g:6">Consumers</a></li>
-</ul>
-<h3 id="producers">Producers</h3>
-<p>These are generators from a seed value. Conduit defines it generically as such:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="ot">unfold ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> (b <span class="ot">-&gt;</span> <span class="dt">Maybe</span> (a, b)) <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> <span class="dt">ConduitT</span> i a m ()</span></code></pre></div>
-<p>A simple unfold that lets us turn a list into a stream would be:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="co">-- this is also provided by conduit</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a><span class="ot">sourceList ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> <span class="dt">ConduitT</span> i a m ()</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a>sourceList <span class="ot">=</span> unfold gen</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true"></a> <span class="kw">where</span></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true"></a><span class="ot">  gen ::</span> [a] <span class="ot">-&gt;</span> <span class="dt">Maybe</span> (a, [a])</span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true"></a>  gen (x<span class="op">:</span>xs) <span class="ot">=</span> <span class="dt">Just</span> (x,xs)</span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true"></a>  gen _      <span class="ot">=</span> <span class="dt">Nothing</span> <span class="co">-- stream aborts</span></span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true"></a></span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true"></a><span class="co">-- our own stream of &quot;output&quot; chars with no final result</span></span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true"></a><span class="ot">chars ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> <span class="dt">ConduitT</span> i <span class="dt">Char</span> m ()</span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true"></a>chars <span class="ot">=</span> sourceList <span class="st">&quot;abc&quot;</span></span></code></pre></div>
-<p>As can be seen, the <code>o</code> in <code>data ConduitT i o m r</code> gets fixed to <code>Char</code>. A Producer can then be be “piped” into another conduit, e.g. a transformer.</p>
-<p>A producer focuses on the <code>o</code>utput.</p>
-<h3 id="transformer">Transformer</h3>
-<p>A transformer is like <code>map :: (a -&gt; b) -&gt; [a] -&gt; [b]</code>. It transforms the stream and may yield a different type.</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="co">-- provided by conduit, notice how it has only one argument</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a><span class="fu">map</span><span class="ot"> ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> <span class="dt">ConduitT</span> a b m ()</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a><span class="co">-- transforms Char to Int</span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true"></a><span class="ot">charToInt ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> <span class="dt">ConduitT</span> <span class="dt">Char</span> <span class="dt">Int</span> m ()</span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true"></a>charToInt <span class="ot">=</span> <span class="fu">map</span> <span class="fu">ord</span></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true"></a></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true"></a><span class="co">-- applies the transformation to the chars, yielding a Producer</span></span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true"></a><span class="co">-- we'll explaing '.|' shortly</span></span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true"></a><span class="ot">ints ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> <span class="dt">ConduitM</span> a <span class="dt">Int</span> m ()</span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true"></a>ints <span class="ot">=</span> chars <span class="op">.|</span> charToInt</span></code></pre></div>
-<p>Notable is also that the Functor <code>fmap</code> isn’t a transformation. It would map on the final value, not the produced values. That’s why we need <code>Data.Conduit.List.map</code>. Streamly is very different here.</p>
-<p>A transformer maps the <code>i</code>nput to the <code>o</code>utput.</p>
-<p>To apply a transformation, we use the <code>(.|)</code> pipe operator, which reminds us of shell pipes:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="ot">(.|) ::</span> <span class="dt">Monad</span> m</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a>     <span class="ot">=&gt;</span> <span class="dt">ConduitM</span> a b m () <span class="co">-- ^ producer of values 'b'</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a>     <span class="ot">-&gt;</span> <span class="dt">ConduitM</span> b c m r  <span class="co">-- ^ transformer (b -&gt; c), or consumer</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true"></a>     <span class="ot">-&gt;</span> <span class="dt">ConduitM</span> a c m r</span></code></pre></div>
-<p>It takes a little while to see what’s going on. The type variables guide us.</p>
-<h3 id="consumer">Consumer</h3>
-<p>A consumer works on the input stream, much like a transformer, but may also yield a final result. E.g. If we wanted to return all the Int’s we just converted from the Char stream, we’d do:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a><span class="co">-- provided by conduit</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a><span class="fu">foldl</span><span class="ot"> ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">ConduitT</span> b o m a</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true"></a></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true"></a><span class="co">-- 'a' (the input) gets folded as a list, so the final result is '[a]'</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true"></a><span class="ot">toList ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> <span class="dt">ConduitT</span> a o m [a]</span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true"></a>toList <span class="ot">=</span> <span class="fu">foldl</span> (\a b <span class="ot">-&gt;</span> b<span class="op">:</span>a) []</span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true"></a></span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true"></a><span class="co">-- applying the fold on the stream of Ints</span></span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true"></a><span class="ot">foldedInts ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> <span class="dt">ConduitM</span> a c m [<span class="dt">Int</span>]</span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true"></a>foldedInts <span class="ot">=</span> ints <span class="op">.|</span> toList</span></code></pre></div>
-<p>The consumer focuses on the <code>i</code>nput to produce a final <code>r</code>esult (however, consumers may also drop elements from the stream).</p>
-<p>As demonstrated, one has to look closely at the type parameters in <code>data ConduitT i o m r</code> to understand a conduit.</p>
-<p>All concepts are unified in one type. Most operations need specific combinators.</p>
-<h3 id="wrapping-up-conduit">Wrapping up conduit</h3>
-<p>Finally, we can get our Ints:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a><span class="ot">ints ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> m [<span class="dt">Int</span>]</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a>ints <span class="ot">=</span> runConduit foldedInts</span></code></pre></div>
-<p>That’s basically conduit. A conduit as such doesn’t really express streams. Instead we’re dealing with stream processors (functions).</p>
-<h2 id="streamly">Streamly</h2>
-<p>Streamly’s approach is very different. It focuses on the simple concept of a <em>stream</em> of elements. It has 4 main types:</p>
-<ul>
-<li><a href="https://hackage.haskell.org/package/streamly-0.8.0/docs/Streamly-Prelude.html#g:50">streams</a>: <code>(Monad m, IsStream t) =&gt; t m a</code></li>
-<li><a href="https://hackage.haskell.org/package/streamly-0.8.0/docs/Streamly-Data-Unfold.html">unfolds</a>: <code>data Unfold m a b</code></li>
-<li><a href="https://hackage.haskell.org/package/streamly-0.8.0/docs/Streamly-Data-Fold.html">folds</a>: <code>data Fold m a b</code></li>
-<li><a href="https://hackage.haskell.org/package/streamly-0.8.0/docs/Streamly-Internal-Data-Parser.html">parsers</a>: <code>newtype Parser m a b</code></li>
-</ul>
-<p>As can be seen, this is nothing like <code>data ConduitT i o m r</code>. I also note that <code>IsStream t</code> is abstract to allow for different types of streams like <code>SerialT</code> or <code>AsyncT</code>, which I won’t go into detail about here.</p>
-<p>We’ll now figure out how these concepts translate to conduit.</p>
-<h3 id="producers-1">Producers</h3>
-<p>Conduits producers are basically <em>Unfolds</em>.</p>
-<p>The simplest function to create an <code>Unfold</code> is:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a><span class="ot">unfoldr ::</span> <span class="dt">Applicative</span> m <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> <span class="dt">Maybe</span> (b, a)) <span class="ot">-&gt;</span> <span class="dt">Unfold</span> m a b</span></code></pre></div>
-<p>…which actually looks a lot like conduit:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true"></a><span class="ot">unfold ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> (b <span class="ot">-&gt;</span> <span class="dt">Maybe</span> (a, b)) <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> <span class="dt">ConduitT</span> i a m ()</span></code></pre></div>
-<p>The difference in streamly is that we provide the initial seed value when we turn the Unfold into a Stream.</p>
-<p>So, let’s do the same procedure as above. We’ll create a list of Chars:</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true"></a><span class="co">-- equivalent to conduits 'sourceList', also provided by streamly</span></span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true"></a><span class="ot">fromList ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> <span class="dt">Unfold</span> m [a] a</span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true"></a>fromList <span class="ot">=</span> unfoldr gen</span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true"></a> <span class="kw">where</span></span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true"></a><span class="ot">  gen ::</span> [a] <span class="ot">-&gt;</span> <span class="dt">Maybe</span> (a, [a])</span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true"></a>  gen (x<span class="op">:</span>xs) <span class="ot">=</span> <span class="dt">Just</span> (x,xs)</span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true"></a>  gen _      <span class="ot">=</span> <span class="dt">Nothing</span> <span class="co">-- stream aborts</span></span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true"></a></span>
-<span id="cb10-9"><a href="#cb10-9" aria-hidden="true"></a><span class="co">-- provided by streamly</span></span>
-<span id="cb10-10"><a href="#cb10-10" aria-hidden="true"></a><span class="co">-- given a seed value, turn an Unfold into a stream</span></span>
-<span id="cb10-11"><a href="#cb10-11" aria-hidden="true"></a><span class="ot">unfold ::</span> (<span class="dt">IsStream</span> t, <span class="dt">Monad</span> m) <span class="ot">=&gt;</span> <span class="dt">Unfold</span> m a b <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> t m b</span>
-<span id="cb10-12"><a href="#cb10-12" aria-hidden="true"></a></span>
-<span id="cb10-13"><a href="#cb10-13" aria-hidden="true"></a><span class="co">-- we turn the unfold into a stream of chars</span></span>
-<span id="cb10-14"><a href="#cb10-14" aria-hidden="true"></a><span class="ot">chars ::</span> (<span class="dt">IsStream</span> t, <span class="dt">Monad</span> m) <span class="ot">=&gt;</span> t m <span class="dt">Char</span></span>
-<span id="cb10-15"><a href="#cb10-15" aria-hidden="true"></a>chars <span class="ot">=</span> Streamly.Prelude.unfold fromList <span class="st">&quot;abc&quot;</span></span></code></pre></div>
-<p>This type <code>t m Char</code> looks a lot simpler. It’s basically a glorified list with possible effects run for every element.</p>
-<h3 id="transformers">Transformers</h3>
-<p>A transformer doesn’t have its own type. It’s in my opinion much simpler than conduit. Here, we can simply reuse the Prelude’s <code>fmap</code>. The main difference is that we have an input and an output stream, so:</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true"></a><span class="co">-- transforms Char to Int</span></span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true"></a><span class="ot">charToInt ::</span> (<span class="dt">IsStream</span> t, <span class="dt">Monad</span> m, <span class="dt">Functor</span> (t m)) <span class="ot">=&gt;</span> t m <span class="dt">Char</span> <span class="ot">-&gt;</span> t m <span class="dt">Int</span></span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true"></a>charToInt inputStream <span class="ot">=</span> <span class="fu">fmap</span> <span class="fu">ord</span> inputStream</span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true"></a></span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true"></a><span class="co">-- applies the transformation to the chars, yielding a stream of Ints</span></span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true"></a><span class="ot">ints ::</span> (<span class="dt">IsStream</span> t, <span class="dt">Monad</span> m, <span class="dt">Functor</span> (t m)) <span class="ot">=&gt;</span> t m <span class="dt">Int</span></span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true"></a>ints <span class="ot">=</span> charToInt chars</span></code></pre></div>
-<p>This feels much more like lists! Compare with <code>fmap ord "abc"</code>. Streams can be passed around and transformed just like lists. If you want to run effects for every item, you just use the Monad interface:</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true"></a><span class="ot">charToInt ::</span> (<span class="dt">IsStream</span> t, <span class="dt">Monad</span> m, <span class="dt">Monad</span> (t m)) <span class="ot">=&gt;</span> t m <span class="dt">Char</span> <span class="ot">-&gt;</span> t m <span class="dt">Int</span></span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true"></a>charToInt inputStream <span class="ot">=</span> inputStream <span class="op">&gt;&gt;=</span> <span class="fu">pure</span> <span class="op">.</span> <span class="fu">ord</span></span></code></pre></div>
-<p>However, this creates a data dependency (as we’re used from Monad). There’s the more general <code>mapM</code> that can run effects in parallel:</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true"></a><span class="fu">mapM</span><span class="ot"> ::</span> (<span class="dt">IsStream</span> t, <span class="dt">MonadAsync</span> m) <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> m b) <span class="ot">-&gt;</span> t m a <span class="ot">-&gt;</span> t m b</span></code></pre></div>
-<p>Excellent. So Functor, Monad etc. follow our intuition.</p>
-<h3 id="consumers">Consumers</h3>
-<p>Simple consumers in streamly terms are usually <strong>Folds</strong>.</p>
-<p>E.g. if we wanted to convert our stream of Ints to an actual list of Ints we would combine our input stream with a Fold.</p>
-<p>Remember the Fold type <code>data Fold m a b</code>, where <code>a</code> are the values of the input stream and <code>b</code> is the final folded value.</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true"></a><span class="co">-- provided by streamly for creating a Fold</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true"></a><span class="ot">foldl' ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> (b <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> <span class="dt">Fold</span> m a b</span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true"></a></span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true"></a><span class="co">-- provided by streamly for executing a fold over a stream</span></span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true"></a><span class="ot">fold ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> <span class="dt">Fold</span> m a b <span class="ot">-&gt;</span> <span class="dt">Stream</span> m a <span class="ot">-&gt;</span> m b</span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true"></a></span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true"></a><span class="co">-- A Fold that turns any input stream into a list</span></span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true"></a><span class="ot">toList ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> <span class="dt">Fold</span> m a [a]</span>
-<span id="cb14-9"><a href="#cb14-9" aria-hidden="true"></a>toList <span class="ot">=</span> foldl' (\a b <span class="ot">-&gt;</span> b<span class="op">:</span>a) []</span>
-<span id="cb14-10"><a href="#cb14-10" aria-hidden="true"></a></span>
-<span id="cb14-11"><a href="#cb14-11" aria-hidden="true"></a><span class="co">-- Applying the Fold to an actual stream already executes it</span></span>
-<span id="cb14-12"><a href="#cb14-12" aria-hidden="true"></a><span class="ot">foldedInts ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> m [<span class="dt">Int</span>]</span>
-<span id="cb14-13"><a href="#cb14-13" aria-hidden="true"></a>foldedInts <span class="ot">=</span> fold toList ints</span></code></pre></div>
-<h3 id="parsers">Parsers</h3>
-<p>Folds don’t have a monadic interface (yet). If we want backtracking and a monadic interface to choose the next step depending on the current element in the stream, we can use a <a href="https://hackage.haskell.org/package/streamly-0.8.0/docs/Streamly-Internal-Data-Parser.html">Parser</a>.</p>
-<p>In conduit, we can use consumers like <a href="https://hackage.haskell.org/package/conduit-1.3.4.2/docs/Data-Conduit-Combinators.html#v:head">head</a> and <a href="https://hackage.haskell.org/package/conduit-1.3.4.2/docs/Data-Conduit-Combinators.html#v:peek">peek</a> and utilize the Monad interface of <code>ConduitT</code> to make our decisions. Theoretically, we could do the same in the Stream type of streamly via <a href="https://hackage.haskell.org/package/streamly-0.8.0/docs/Streamly-Prelude.html#v:uncons">uncons</a>, but the parser feels more idiomatic here.</p>
-<p>I note that there is a parser-like package <a href="https://hackage.haskell.org/package/conduit-parse">conduit-parse</a>, but the <a href="https://github.com/snoyberg/yaml/blob/c4392f3855002ab0bbf9bc16e1e32034254234a7/yaml/src/Data/Yaml/Internal.hs#L286">yaml conduit code</a> doesn’t utilize that and this blog was written while I converted yaml to streamly.</p>
-<p>The streamly parser type is the same as a Fold: <code>newtype Parser m a b</code>.</p>
-<p>It parses a streamed value <code>a</code> into <code>b</code>. Much of the <a href="https://hackage.haskell.org/package/streamly-0.8.0/docs/Streamly-Internal-Data-Parser.html#g:2">API</a> resembles what you’re used to of <code>parsec</code> or <code>attoparsec</code> etc.</p>
-<p>Let’s look at this conduit code (not tested to compile):</p>
-<div class="sourceCode" id="cb15"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Data.Conduit.Combinators</span> <span class="kw">as</span> <span class="dt">C</span></span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true"></a></span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true"></a><span class="ot">chars ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> <span class="dt">ConduitT</span> i <span class="dt">Char</span> m ()</span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true"></a>chars <span class="ot">=</span> sourceList <span class="st">&quot;a1b2c3&quot;</span></span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true"></a></span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true"></a><span class="co">-- We parse '1' from 'a1', '2' from 'b2' and so on, no matter</span></span>
-<span id="cb15-7"><a href="#cb15-7" aria-hidden="true"></a><span class="co">-- the order the pairs appear in.</span></span>
-<span id="cb15-8"><a href="#cb15-8" aria-hidden="true"></a><span class="ot">parse' ::</span> <span class="dt">MonadIO</span> m <span class="ot">=&gt;</span> <span class="dt">ConduitT</span> <span class="dt">Char</span> o m [<span class="dt">Int</span>]</span>
-<span id="cb15-9"><a href="#cb15-9" aria-hidden="true"></a>parse' <span class="ot">=</span> <span class="kw">do</span></span>
-<span id="cb15-10"><a href="#cb15-10" aria-hidden="true"></a>  mc <span class="ot">&lt;-</span> C.head</span>
-<span id="cb15-11"><a href="#cb15-11" aria-hidden="true"></a>  <span class="kw">case</span> mc <span class="kw">of</span></span>
-<span id="cb15-12"><a href="#cb15-12" aria-hidden="true"></a>    <span class="dt">Just</span> <span class="ch">'a'</span> <span class="ot">-&gt;</span> <span class="kw">do</span></span>
-<span id="cb15-13"><a href="#cb15-13" aria-hidden="true"></a>       mcn <span class="ot">&lt;-</span> C.head</span>
-<span id="cb15-14"><a href="#cb15-14" aria-hidden="true"></a>       <span class="kw">case</span> mcn <span class="kw">of</span></span>
-<span id="cb15-15"><a href="#cb15-15" aria-hidden="true"></a>         <span class="dt">Just</span> <span class="ch">'1'</span> <span class="ot">-&gt;</span> (<span class="dv">1</span><span class="op">:</span>) <span class="op">&lt;$&gt;</span> parse'</span>
-<span id="cb15-16"><a href="#cb15-16" aria-hidden="true"></a>         <span class="dt">Just</span> cn  <span class="ot">-&gt;</span> liftIO <span class="op">$</span> throwIO <span class="op">$</span> <span class="st">&quot;Unexpected char: &quot;</span> <span class="op">++</span> [cn]</span>
-<span id="cb15-17"><a href="#cb15-17" aria-hidden="true"></a>         <span class="dt">Nothing</span>  <span class="ot">-&gt;</span> <span class="fu">pure</span> []</span>
-<span id="cb15-18"><a href="#cb15-18" aria-hidden="true"></a>    <span class="dt">Just</span> <span class="op">...</span> <span class="co">-- and so on</span></span>
-<span id="cb15-19"><a href="#cb15-19" aria-hidden="true"></a>    <span class="dt">Nothing</span> <span class="ot">-&gt;</span> <span class="fu">pure</span> []</span></code></pre></div>
-<p>To translate this to streamly, we would write:</p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true"></a><span class="ot">chars ::</span> (<span class="dt">IsStream</span> t, <span class="dt">Monad</span> m) <span class="ot">=&gt;</span> t m <span class="dt">Char</span></span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true"></a>chars <span class="ot">=</span> Streamly.Prelude.unfold fromList <span class="st">&quot;a1b2c3&quot;</span></span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true"></a></span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true"></a><span class="co">-- we define a helper that acts like conduits C.head</span></span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true"></a><span class="ot">anyChar ::</span> <span class="dt">MonadCatch</span> m <span class="ot">=&gt;</span> <span class="dt">Parser</span> m <span class="dt">Char</span> (<span class="dt">Maybe</span> <span class="dt">Char</span>)</span>
-<span id="cb16-6"><a href="#cb16-6" aria-hidden="true"></a>anyChar <span class="ot">=</span> (<span class="dt">Just</span> <span class="op">&lt;$&gt;</span> satisfy (<span class="fu">const</span> <span class="dt">True</span>)) <span class="op">&lt;|&gt;</span> <span class="fu">pure</span> <span class="dt">Nothing</span></span>
-<span id="cb16-7"><a href="#cb16-7" aria-hidden="true"></a></span>
-<span id="cb16-8"><a href="#cb16-8" aria-hidden="true"></a><span class="co">-- We parse '1' from 'a1', '2' from 'b2' and so on, no matter</span></span>
-<span id="cb16-9"><a href="#cb16-9" aria-hidden="true"></a><span class="co">-- the order the pairs appear in.</span></span>
-<span id="cb16-10"><a href="#cb16-10" aria-hidden="true"></a><span class="ot">parse' ::</span> <span class="dt">MonadIO</span> m <span class="ot">=&gt;</span> <span class="dt">Parser</span> m <span class="dt">Char</span> [<span class="dt">Int</span>]</span>
-<span id="cb16-11"><a href="#cb16-11" aria-hidden="true"></a>parse' <span class="ot">=</span> <span class="kw">do</span></span>
-<span id="cb16-12"><a href="#cb16-12" aria-hidden="true"></a>  mc <span class="ot">&lt;-</span> anyChar</span>
-<span id="cb16-13"><a href="#cb16-13" aria-hidden="true"></a>  <span class="kw">case</span> mc <span class="kw">of</span></span>
-<span id="cb16-14"><a href="#cb16-14" aria-hidden="true"></a>    <span class="dt">Just</span> <span class="ch">'a'</span> <span class="ot">-&gt;</span> <span class="kw">do</span></span>
-<span id="cb16-15"><a href="#cb16-15" aria-hidden="true"></a>       mcn <span class="ot">&lt;-</span> anyChar</span>
-<span id="cb16-16"><a href="#cb16-16" aria-hidden="true"></a>       <span class="kw">case</span> mcn <span class="kw">of</span></span>
-<span id="cb16-17"><a href="#cb16-17" aria-hidden="true"></a>         <span class="dt">Just</span> <span class="ch">'1'</span> <span class="ot">-&gt;</span> (<span class="dv">1</span><span class="op">:</span>) <span class="op">&lt;$&gt;</span> parse'</span>
-<span id="cb16-18"><a href="#cb16-18" aria-hidden="true"></a>         <span class="dt">Just</span> cn  <span class="ot">-&gt;</span> liftIO <span class="op">$</span> throwIO <span class="op">$</span> <span class="st">&quot;Unexpected char: &quot;</span> <span class="op">++</span> [cn]</span>
-<span id="cb16-19"><a href="#cb16-19" aria-hidden="true"></a>         <span class="dt">Nothing</span>  <span class="ot">-&gt;</span> <span class="fu">pure</span> []</span>
-<span id="cb16-20"><a href="#cb16-20" aria-hidden="true"></a>    <span class="dt">Just</span> <span class="op">...</span> <span class="co">-- and so on</span></span>
-<span id="cb16-21"><a href="#cb16-21" aria-hidden="true"></a>    <span class="dt">Nothing</span> <span class="ot">-&gt;</span> <span class="fu">pure</span> []</span></code></pre></div>
-<p>This looks <em>exactly</em> like the conduit code, except we replaced <code>head</code> with <code>anyChar</code>. Although we could likely reduce it further instead of pattern matching on the chars.</p>
-<p>Running a parser is like running a fold. We need an input stream:</p>
-<div class="sourceCode" id="cb17"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true"></a><span class="ot">parse ::</span> <span class="dt">MonadThrow</span> m <span class="ot">=&gt;</span> <span class="dt">Parser</span> m a b <span class="ot">-&gt;</span> <span class="dt">SerialT</span> m a <span class="ot">-&gt;</span> m b</span></code></pre></div>
-<h3 id="wrapping-up-streamly">Wrapping up streamly</h3>
-<p>Running a stream is usually done by applying a <code>Fold</code>, as we’ve done above. We can also turn a stream into a list directly:</p>
-<div class="sourceCode" id="cb18"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true"></a><span class="ot">toList ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> <span class="dt">SerialT</span> m a <span class="ot">-&gt;</span> m [a]</span></code></pre></div>
-<p>Or just evaluate the stream and discard the values:</p>
-<div class="sourceCode" id="cb19"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true"></a><span class="ot">drain ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> <span class="dt">SerialT</span> m a <span class="ot">-&gt;</span> m ()</span></code></pre></div>
-<p>All these functions also exist as Folds, so these are just convenience wrappers.</p>
-<p>As can be seen, streamly isn’t based on stream processors like conduit. Instead it composes stream data directly and behaves pretty much like lists. Usually we don’t need special operators. Functor, Monad etc. follow our intuition from lists.</p>
-<p>We’ve also seen that there’s an abstract <code>IsStream</code> class and specific streaming types like <code>SerialT</code> (for serially processed streams), <code>AsyncT</code> (for concurrent streams) and so on. These are explained in more detail in the streamly documentation.</p>
-<h2 id="back-to-yaml">Back to yaml</h2>
-<p>So how does this translate to yaml parsing? Well, the <code>yaml</code> package uses the <a href="https://github.com/yaml/libyaml">libyaml C library</a> for parsing, which is an event driven parser. So we get a <a href="https://github.com/snoyberg/yaml/blob/c4392f3855002ab0bbf9bc16e1e32034254234a7/libyaml/src/Text/Libyaml.hs#L577">stream of events</a> and then <a href="https://github.com/snoyberg/yaml/blob/c4392f3855002ab0bbf9bc16e1e32034254234a7/yaml/src/Data/Yaml/Internal.hs#L187">turn that into a single JSON value</a> and then let <code>aeson</code> do its magic.</p>
-<p>Finally, for reference, here’s the migration patch: <a href="https://github.com/hasufell/streamly-yaml/commit/bfd1da498588af906cbc5d3bb519f1ccdf7ad63e">https://github.com/hasufell/streamly-yaml/commit/bfd1da498588af906cbc5d3bb519f1ccdf7ad63e</a></p>
-<p>In fact, it didn’t require a rewrite at all. Simply applying the concepts from above was enough. Figuring out that we need a Parser type etc. took a while (I tried with Fold first). Thanks to the helpful streamly developers for providing guidance. There were some rough edges here and there, since much of the streamly API is still marked as <strong>Internal</strong>.</p>
-<h3 id="performance">Performance</h3>
-<p>Did it actually improve performance?</p>
-<p>On my first attempt, I used the wrong inefficient internal <a href="https://hackage.haskell.org/package/streamly-0.8.0/docs/Streamly-Internal-Data-Parser-ParserD.html#t:Parser">ParserD</a> type, which seemed to cause exponential allocations. After fixing that, I was still slower than conduit. Since streamly heavily relies on GHCs inliner, this wasn’t a surprise. It required <a href="https://github.com/hasufell/streamly-yaml/commit/640596f344675cc21970a66335b5f1ca2ae4c3c9">some effort</a>, but finally the performance was on-par with conduit (tested informally via the <code>yaml2json</code> executable on a 100mb YAML file).</p>
-<p>Streamly also provides <a href="https://github.com/composewell/streamly/blob/master/docs/optimizing.md">some</a> <a href="https://github.com/composewell/streamly/blob/master/docs/building.md#compilation-options">guidance</a> for optimization.</p>
-<p>I guess since the actual parsing is done by the C code and the <code>event-&gt;json</code> conversion is really a slow element-by-element monadic parsing transformation, there’s not much space to improve performance anyway.</p>
-<p>If you find ideas about how to improve it further, please let me know.</p>
-<h3 id="dependency-footprint">Dependency footprint</h3>
-<p>Did this actually reduce dependency footprint?</p>
-<p>Well, no. But the point was to only depend on a single streaming framework. I also note that streamly is <a href="https://github.com/composewell/streamly/issues/533">planning to split up the <code>streamly</code> package</a> into <code>streamly-core</code> (only depends on boot packages) and separate out further feature-packages.</p>
-<h2 id="conclusion">Conclusion</h2>
-<ol type="1">
-<li>migrating conduit code to streamly is easier than I thought</li>
-<li>performance optimization in streamly requires some time and effort</li>
-<li>you definitely want performance regression tests with streamly to ensure new GHC versions or refactorings don’t cause regressions</li>
-</ol>
-<h2 id="whats-next">What’s next?</h2>
-<p>Writing a streamly yaml parser in pure Haskell?</p>
-<h2 id="discussion">Discussion</h2>
-<ul>
-<li><a href="https://discourse.haskell.org/t/blog-from-conduit-to-streamly/3492/4">Discourse</a></li>
-<li><a href="https://www.reddit.com/r/haskell/comments/qe72nv/from_conduit_to_streamly/">Reddit</a></li>
-</ul>
-  </div>
-  
 </div>
 
 <div class="pagination">
@@ -787,7 +615,7 @@
     <span class="pagination-item newer">Newer</span>
   
   
-    <span class="pagination-item older">Older</span>
+    <a class="pagination-item older" href="./2/index.html">Older</a>
   
 </div>
 

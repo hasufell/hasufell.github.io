@@ -8,8 +8,70 @@
         <name>Julian Ospald</name>
         <email>hasufell@posteo.de</email>
     </author>
-    <updated>2023-11-14T00:00:00Z</updated>
+    <updated>2024-04-21T00:00:00Z</updated>
     <entry>
+    <title>2024-04-21-static-linking</title>
+    <link href="https://github.com/hasufell/hasufell.github.io/posts/2024-04-21-static-linking.html" />
+    <id>https://github.com/hasufell/hasufell.github.io/posts/2024-04-21-static-linking.html</id>
+    <published>2024-04-21T00:00:00Z</published>
+    <updated>2024-04-21T00:00:00Z</updated>
+    <summary type="html"><![CDATA[<h1 id="getting-your-haskell-executable-statically-linked-without-nix">Getting your Haskell executable statically linked without Nix</h1>
+<h2 id="motivation">Motivation</h2>
+<p>Following the excellent post from Tom Sydney <a href="https://cs-syd.eu/posts/2024-04-20-static-linking-haskell-nix">“Getting your Haskell executable statically linked with Nix”</a>, I want to present an alternative approach.</p>
+<p>I believe nix has questionable ergnomics and most Haskell developers don’t need it, even if they want to link their binaries statically.</p>
+<h2 id="musl-and-alpine-linux">Musl and Alpine Linux</h2>
+<p>GHC/cabal don’t really know how to do partial static linking, unless you employ some trickery. So we need a system where we can link everything statically, including libc. This leads us to the Musl libc, which has good support for static linking.</p>
+<p>Two prominent choices for musl based Linux distributions are:</p>
+<ul>
+<li>Alpine Linux</li>
+<li>Void Linux musl</li>
+</ul>
+<p>In this guide, we pick Alpine.</p>
+<h2 id="ghcup-and-ghc">GHCup and GHC</h2>
+<p>In order to use Alpine Linux as a build environment, we need proper toolchain support. GHCup supports Alpine Linux as a first class citizen, so you should be able to install GHC on Alpine. If you run into issues, <a href="https://github.com/haskell/ghcup-hs/issues/new">open a bug report</a>.</p>
+<p>Note that you do not need a statically linked GHC to build a static binary. This is a misconception.</p>
+<h2 id="build-environment">Build environment</h2>
+<p>We need a clean build environment that is reproducible (-ish). We can use docker, which has excellent support for Alpine Linux containers.</p>
+<h2 id="tying-everything-together">Tying everything together</h2>
+<p>To tie everything together, we start an interactive shell in a docker container:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a>$ <span class="ex">docker</span> run --rm -ti alpine:3.19 sh</span></code></pre></div>
+<p>Then we install pre-requisites:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a>$ <span class="ex">apk</span> update</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a>$ <span class="ex">apk</span> add curl gcc g++ git gmp-dev libc-dev libffi-dev make musl-dev ncurses-dev perl tar xz</span></code></pre></div>
+<p>We install GHCup:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a>$ <span class="ex">curl</span> --proto <span class="st">&#39;=https&#39;</span> --tlsv1.2 -sSf https://get-ghcup.haskell.org <span class="kw">|</span> <span class="va">BOOTSTRAP_HASKELL_NONINTERACTIVE=</span>1 <span class="fu">sh</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a><span class="bu">source</span> ~/.ghcup/env</span></code></pre></div>
+<p>Let’s create a dummy app:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a>$ <span class="fu">mkdir</span> test-app</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a>$ <span class="bu">cd</span> test-app</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a>$ <span class="ex">cabal</span> init --non-interactive</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a>$ <span class="ex">cabal</span> build --enable-executable-static</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true"></a>$ <span class="fu">mkdir</span> out/</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true"></a>$ <span class="fu">cp</span> <span class="va">$(</span><span class="ex">cabal</span> -v0 list-bin exe:test-app<span class="va">)</span> out/</span></code></pre></div>
+<p>We use <code>cabal build</code> in combination with <code>cabal list-bin</code>, because some versions of cabal are buggy when combining <code>--enable-executable-static</code> with <code>install</code>: <a href="https://github.com/haskell/cabal/pull/9697">https://github.com/haskell/cabal/pull/9697</a></p>
+<p>It is also possible to pass <code>-ghc-options='-optl-static'</code> instead of <code>--enable-executable-static</code>.</p>
+<p>Now we examine the binary:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a>$ <span class="ex">apk</span> add file</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a>$ <span class="fu">file</span> out/test-app</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a><span class="ex">out</span>/test-app: <span class="ex">ELF</span> 64-bit LSB executable, x86-64, version 1 (SYSV), <span class="ex">statically</span> linked, BuildID[sha1]=ab54deda534ac8065f5e263e84f168fb46eb8227, with debug_info, not stripped</span></code></pre></div>
+<p>That looks good.</p>
+<h2 id="linking-against-system-libraries">Linking against system libraries</h2>
+<p>If your binary depends on system C libraries, you will need to install those packages. E.g. if you link against zlib, you need the <code>-dev</code> and sometimes <code>-static</code> packages:</p>
+<pre><code>apk add zlib-dev zlib-static</code></pre>
+<p>You can search for libraries and installed files at <a href="https://pkgs.alpinelinux.org/packages">https://pkgs.alpinelinux.org/packages</a></p>
+<h2 id="github-ci">Github CI</h2>
+<p>Examples of Github actions using alpine and building static release binaries can be found here:</p>
+<ul>
+<li><a href="https://github.com/haskell/ghcup-hs/blob/master/.github/workflows/release.yaml">https://github.com/haskell/ghcup-hs/blob/master/.github/workflows/release.yaml</a></li>
+<li><a href="https://github.com/hasufell/stack2cabal/blob/master/.github/workflows/release.yaml">https://github.com/hasufell/stack2cabal/blob/master/.github/workflows/release.yaml</a></li>
+<li><a href="https://github.com/stable-haskell/cabal/blob/cabal-install-v3.10.3.0/.github/workflows/release.yaml">https://github.com/stable-haskell/cabal/blob/cabal-install-v3.10.3.0/.github/workflows/release.yaml</a></li>
+</ul>
+<h2 id="conclusion">Conclusion</h2>
+<p>This approach has been used in GHCup since its rewrite in Haskell. It has worked very well.</p>
+<p>The only downside is that you rely on Alpine Linux packaging of system C libraries. If you link to a package that is not in the Alpine repos, you will need more manual work.</p>
+<p>In that case it might be worthwhile to check Void Linux as an alternative.</p>]]></summary>
+</entry>
+<entry>
     <title>2023-11-14-ghcup-is-not-an-installer</title>
     <link href="https://github.com/hasufell/hasufell.github.io/posts/2023-11-14-ghcup-is-not-an-installer.html" />
     <id>https://github.com/hasufell/hasufell.github.io/posts/2023-11-14-ghcup-is-not-an-installer.html</id>
