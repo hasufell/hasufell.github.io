@@ -394,10 +394,10 @@ Lazy variants are useful for streaming and incremental processing, as the strict
 ### ByteString
 
 This is a low level type from the [bytestring](https://hackage.haskell.org/package/bytestring) package, shipped with GHC.
-**It is not a string**. It shouldn't have been called \*String. It is a sequence of bytes,
-carries no encoding information and is **pinned memory** (cannot be moved by the GC). As such, it doesn't require
+It is just a sequence of bytes and carries no encoding information. It uses
+**pinned memory**, so it cannot be moved by the GC. As such, it doesn't require
 copying when dealing with the FFI. It is quite efficient and has a large API, but (obviously) lacks text processing
-facilities, because it has no knowledge of unicode. Most operations work on `Word8` boundaries.
+facilities, because it has no knowledge of unicode (or other textual formats). Most operations work on `Word8` boundaries.
 
 The definition for strict ByteString is (as of [0.12.1.0](https://hackage.haskell.org/package/bytestring-0.12.1.0)):
 
@@ -513,7 +513,7 @@ Simplified, the Haskell definitions are:
 newtype WindowsString = WindowsString ShortByteString
 
 -- | Commonly used Posix string as uninterpreted @char[]@ array.
-newtype PosixString = PosixString ShortByteStrine
+newtype PosixString = PosixString ShortByteString
 
 -- | Newtype representing short operating system specific strings.
 --
@@ -527,6 +527,9 @@ newtype OsString = OsString
   PosixString
 #endif
 ```
+
+As we can see, on unix, we're basically dealing with `Word8` sequences (`char[]`),
+but on windows, we're dealing with `Word16` sequences (`wchar_t*`).
 
 The constructors are internal and it is impossible to pattern match on the wrong platform in `OsString`, due
 to the CPP.
@@ -747,7 +750,7 @@ It is important to note that having many quasi-quotations in your source files *
 There are also (sometimes) issues with tooling, such as code formatters or
 [Haskell Language Server](https://haskell-language-server.readthedocs.io/en/stable/).
 
-The `OsString` type provides its quasi-quoter
+The `OsString` type provides its own quasi-quoter
 [osstr](https://hackage.haskell.org/package/os-string-2.0.2.1/docs/System-OsString.html#v:osstr).
 
 The main advantage, again, is that quasi-quoters can properly fail and do so at compile-time.
@@ -969,7 +972,7 @@ toOsString :: OsString -> OsString
 toOsString = id
 ```
 
-OsString always comes with 3 families of decoding and encoding funnctions:
+OsString always comes with 3 families of decoding and encoding functions:
 
 - `encodeUtf`/`decodeUtf`: assumes UTF-8 on unix and UTF-16 LE on windows
   * we are using this in the code above for simplicity
@@ -999,8 +1002,7 @@ From my perspective, there are 3 possibilities:
    ToJSON instance and hope the receiver knows how to interpret the data
 2. if you're dealing with binary data, you can convert to e.g. base64 String or Text
    and then again use the existing instances
-   (there's the [base64-bytestring-type](https://hackage.haskell.org/package/base64-bytestring-type-1.0.1/docs/Data-ByteString-Base64-Type.html)
-   library that does this via a newtype)
+   (there's the [base64-bytestring-type](https://hackage.haskell.org/package/base64-bytestring-type-1.0.1/docs/Data-ByteString-Base64-Type.html) library that does this via a newtype)
 3. convert the byte sequence to `[Word8]`, which has a valid instance as well
 
 For the case of `OsString`, keep in mind that the raw bytes depend on the
@@ -1010,11 +1012,94 @@ methods 2 and 3 (e.g. encoding of the byte sequence and platform). And you
 need a strategy to deal with e.g. a windows machine sending binary data
 to a unix machine. As such, I recommend using [`decodeUtf`](https://hackage.haskell.org/package/os-string-2.0.2.1/docs/System-OsString.html#g:3) to get a String. The target machine can then use [`encodeUtf`](https://hackage.haskell.org/package/os-string-2.0.2.1/docs/System-OsString.html#v:encodeUtf) to get back an OsString.
 
+## A word on lazy IO
+
+Some of the named packages expose API for reading and writing files via their lazy variants:
+
+- [Data.Text.Lazy.IO.readfile](https://hackage.haskell.org/package/text-2.1.1/docs/Data-Text-Lazy-IO.html#v:readFile)
+- [Data.ByteString.Lazy.readFile](https://hackage.haskell.org/package/bytestring-0.12.1.0/docs/Data-ByteString-Lazy.html#v:readFile)
+
+Lazy IO is a hack to use incremental reading/processing without the use of a
+proper streaming library. The [bytestring documentation](https://hackage.haskell.org/package/bytestring-0.12.1.0/docs/Data-ByteString-Lazy.html#g:25) warns is about it:
+
+> * The program reads a file and writes the same file. This means that the file may be locked because the handler has not been released when writeFile is executed.
+> * The program reads thousands of files, but due to lazy evaluation, the OS's file descriptor limit is reached before the handlers can be released.
+
+Lazy IO makes it hard to reason about resources, order of execution etc.
+It is better to use a proper streaming library.
+
+## Streaming
+
+Streaming can not only solve the lazy IO problem, but may also
+solve some of the inefficiency of the `[Char]` type, while keeping a similarly
+simple API.
+
+There are many popular streaming libraries. A few of them are:
+
+- [conduit](https://hackage.haskell.org/package/conduit)
+- [streaming](https://hackage.haskell.org/package/streaming)
+- [streamly](https://hackage.haskell.org/package/streamly)
+- [pipes](https://hackage.haskell.org/package/pipes)
+
+### Via Streamly
+
+A couple of years ago I wrote the blog post
+[From conduit to streamly](https://hasufell.github.io/posts/2021-10-22-conduit-to-streamly.html),
+which gives an introduction into both streamly and conduit. The streamly API
+has diverged quite a bit since then, with multiple major versions. So I won't
+go into much detail about it.
+
+However, streamly is one notable example which provides an alternative
+to the `[Char]` type in [Streamly.Unicode.Stream](https://hackage.haskell.org/package/streamly-core-0.2.2/docs/Streamly-Unicode-Stream.html):
+
+```hs
+decodeUtf8 :: Monad m => Stream m Word8 -> Stream m Char
+encodeUtf8 :: Monad m => Stream m Char -> Stream m Word8
+```
+
+A very simple program to print the first unicode char of a file via streamly is:
+
+```hs
+import System.Environment (getArgs)
+import Streamly.Data.Stream (Stream)
+import Streamly.Data.Fold (Fold)
+import qualified Streamly.Data.Fold as Fold
+import qualified Streamly.FileSystem.File as File
+import qualified Streamly.Unicode.Stream as Unicode
+
+main :: IO ()
+main = do
+  (file:_) <- getArgs
+  c <- getFirstCharFromFile file
+  print c
+
+getFirstCharFromFile :: FilePath -> IO (Maybe Char)
+getFirstCharFromFile file = stream `Fold.drive` fold
+ where
+  stream :: Stream IO Char
+  stream = Unicode.decodeUtf8Chunks $ File.readChunks file
+
+  fold :: Monad m => Fold m a (Maybe a)
+  fold = Fold.one
+```
+
+To compile this program you need the `streamly-core` package. As we can see
+here we can create streams of Unicode Chars easily while reading from a file...
+without lazy IO and without the need for the lazy Text type.
+
+If you want to compare the performance of string vs text vs streamly,
+you can check out the code here in my [example repository](https://github.com/hasufell/streamly-string).
+My results are:
+
+- string: 1,152s
+- text: 0,654s
+- streamly: 0,222s
+
+
 ## Related blog posts
 
 - [Fixing Haskell filepaths, by Julian Ospald](https://hasufell.github.io/posts/2022-06-29-fixing-haskell-filepaths.html)
 - [String types, by FPComplete](https://www.fpcomplete.com/haskell/tutorial/string-types/)
 - [Eat Haskell String Types for Breakfast, by Ziyang Liu](https://free.cofree.io/2020/05/06/string-types/)
 - [Untangling Haskell's Strings](https://mmhaskell.com/blog/2017/5/15/untangling-haskells-strings)
-
 
