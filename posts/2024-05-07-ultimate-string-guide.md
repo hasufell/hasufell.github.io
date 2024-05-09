@@ -995,8 +995,8 @@ on the aeson issue tracker.
 
 From my perspective, there are 3 possibilities:
 
-1. convert to `String`, use the existing ToJSON instance and hope the receiver
-   knows how to interpret the data
+1. convert to `String` (e.g. by assuming UTF-8 or UTF-16), use the existing
+   ToJSON instance and hope the receiver knows how to interpret the data
 2. if you're dealing with binary data, you can convert to e.g. base64 String or Text
    and then again use the existing instances
    (there's the [base64-bytestring-type](https://hackage.haskell.org/package/base64-bytestring-type-1.0.1/docs/Data-ByteString-Base64-Type.html)
@@ -1004,8 +1004,11 @@ From my perspective, there are 3 possibilities:
 3. convert the byte sequence to `[Word8]`, which has a valid instance as well
 
 For the case of `OsString`, keep in mind that the raw bytes depend on the
-current platform. So you may have to attach more information if you choose
-methods 2 and 3 (e.g. encoding of the byte sequence and platform).
+current platform (`char[]` array on unix and `wchar_t*` on windows). So you may
+have to attach more information if you choose
+methods 2 and 3 (e.g. encoding of the byte sequence and platform). And you
+need a strategy to deal with e.g. a windows machine sending binary data
+to a unix machine. As such, I recommend using [`decodeUtf`](https://hackage.haskell.org/package/os-string-2.0.2.1/docs/System-OsString.html#g:3) to get a String. The target machine can then use [`encodeUtf`](https://hackage.haskell.org/package/os-string-2.0.2.1/docs/System-OsString.html#v:encodeUtf) to get back an OsString.
 
 ## Related blog posts
 
