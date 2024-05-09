@@ -1057,7 +1057,7 @@ decodeUtf8 :: Monad m => Stream m Word8 -> Stream m Char
 encodeUtf8 :: Monad m => Stream m Char -> Stream m Word8
 ```
 
-A very simple program to print the first unicode char of a file via streamly is:
+A very simple program to print the last unicode char of a file via streamly is:
 
 ```hs
 import System.Environment (getArgs)
@@ -1089,7 +1089,7 @@ without lazy IO and without the need for the lazy Text type.
 
 If you want to compare the performance of string vs text vs streamly,
 you can check out the code here in my [example repository](https://github.com/hasufell/streamly-string).
-My results are:
+My results on a 189MB file are:
 
 - string: 1,152s
 - text: 0,654s
@@ -1102,4 +1102,9 @@ My results are:
 - [String types, by FPComplete](https://www.fpcomplete.com/haskell/tutorial/string-types/)
 - [Eat Haskell String Types for Breakfast, by Ziyang Liu](https://free.cofree.io/2020/05/06/string-types/)
 - [Untangling Haskell's Strings](https://mmhaskell.com/blog/2017/5/15/untangling-haskells-strings)
+
+-----
+
+- special case filepath
+- PEP 383
 
