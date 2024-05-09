@@ -1246,3 +1246,5 @@ My next project is likely going to be strongly typed filepaths, which
 
 - [From conduit to streamly](https://hasufell.github.io/posts/2021-10-22-conduit-to-streamly.html)
 - [Fast Haskell: Competing with C at parsing XML](https://chrisdone.com/posts/fast-haskell-c-parsing-xml/)
+- [Haskell base proposal: unifying vector-like types](https://www.snoyman.com/blog/2021/03/haskell-base-proposal/)
+- [Haskell base proposal, part 2: unifying vector-like types](https://www.snoyman.com/blog/2021/03/haskell-base-proposal-2/)
