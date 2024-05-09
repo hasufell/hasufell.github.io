@@ -34,6 +34,19 @@ for deciding which string type to use in a given situation.
    * [CString and CStringLen](#cstring-and-cstringlen)
    * [FilePath](#filepath)
    * [OsPath, PosixPath and WindowsPath](#ospath-posixpath-and-windowspath)
+   * [String Types Cheat Sheet](#string-types-cheat-sheet)
+* [Construction](#construction)
+   * [String literals](#string-literals)
+   * [String Classes](#string-classes)
+   * [OverloadedStrings](#overloadedstrings)
+   * [QuasiQuoters](#quasiquoters)
+* [Conversions](#conversions)
+   * [From String to...](#from-string-to)
+   * [From Text to...](#from-text-to)
+   * [From ByteString to...](#from-bytestring-to)
+   * [From ShortByteString to...](#from-shortbytestring-to)
+   * [From OsString to...](#from-osstring-to)
+   * [To JSON](#to-json)
 * [Related blog posts](#related-blog-posts)
 
 ## Motivation
@@ -84,8 +97,11 @@ uncons (x:xs) = Just (x, xs)
 ### Char
 
 If we look closely at the pseudo code definition of `Char` from the Haskell standard, we realize the comment saying `-- Unicode values`.
-This is a bit vague, in fact. What it actually means is [Unicode Code Point](https://www.unicode.org/glossary/#code_point),
-or at least that's how it's implemented in GHC as a [smart constructor](https://wiki.haskell.org/Smart_constructors):
+This is a bit vague, in fact. If we look at the documentation in
+[Data.Char](https://hackage.haskell.org/package/base-4.19.1.0/docs/Data-Char.html#t:Char) from base, we see that it is actually
+implemented as a [Unicode Code Point](https://www.unicode.org/glossary/#code_point).
+
+This can be seen by the [smart constructor](https://wiki.haskell.org/Smart_constructors) `chr` as well:
 
 ```hs
 chr :: Int -> Char
@@ -95,7 +111,7 @@ chr i@(I# i#)
     = errorWithoutStackTrace ("Prelude.chr: bad argument: " ++ showSignedInt (I# 9#) i "")
 ```
 
-We see here that `Char` is basically just an `Int` with an upper bound on `0x10FFFF`. In order to understand this,
+So `Char` is basically just an `Int` with an upper bound on `0x10FFFF`. In order to understand this,
 we actually have to take a short dive into Unicode.
 
 ## Unicode
@@ -263,7 +279,9 @@ This can be a nice property, e.g. as an intermediate representation when convert
 
 However, it is a **questionable default for a String type**, because:
 
-- it is inefficient for large text (carries the overhead of a linked list with thunks for every `Char`)
+- it is inefficient for large text (carries the overhead of a linked list with thunks for every `Char`);
+  the [haddock documentation of Data.String](https://hackage.haskell.org/package/base-4.19.1.0/docs/Data-String.html#t:String)
+  goes into more detail
 - it is often confusing for users who don't have a good mental model of what a *Unicode Code Point* is
   (and is uncommon or non-existent in other languages)
 - it causes problems for certain conversions (e.g. `String -> Text`), because of surrogates
@@ -334,8 +352,10 @@ data Text = Text
 ```
 
 As we can see here, this type allows efficient slicing to avoid unnecessary `memcpy` for many operations.
+E.g. `init` and `tail` are *O(1)* time and space. `splitAt` is *O(1)*, but *O(n)* time, because UTF-8 complicates
+the offset computation.
 
-The lazy variant:
+The lazy Text variant is as follows:
 
 ```hs
 data Text = Empty
@@ -361,6 +381,7 @@ Useful for:
 - anything that fits ASCII or unicode
 - large human readable text processing that requires efficient formats
 - complex unicode handling via advanced libraries such as [text-icu](https://hackage.haskell.org/package/text-icu)
+- quite efficient slicing
 
 Not so useful for:
 
@@ -386,6 +407,8 @@ data ByteString = BS {-# UNPACK #-} !(ForeignPtr Word8) -- payload
 ```
 
 This allows, similar to Text, slicing without copying memory (through pointer arithmetic and the length field).
+Since we're not dealing with unicode, but just `Word8` boundaries, operations like `splitAt` are *O(1)* time and
+space.
 
 And the lazy counterpart, which looks similar to lazy Text:
 
@@ -412,6 +435,7 @@ Invariants:
 Useful for:
 
 - large data
+- very efficient slicing
 - dealing with raw bytes (e.g. web servers)
 - dealing with C FFI
 - storing non-unicode encodings e.g. via a newtype wrapper
@@ -430,8 +454,8 @@ This type is from the bytestring package as well and lives under
 [Data.ByteString.Short](https://hackage.haskell.org/package/bytestring-0.12.1.0/docs/Data-ByteString-Short.html).
 
 It has the same API as `ByteString` since [0.11.3.0](https://hackage.haskell.org/package/bytestring-0.11.3.0/changelog),
-so can be used as a drop-in replacement. The main difference is that it is *unpinned memory*, so causes no
-heap fragmentation. It also has no lazy variant.
+so can be used as a drop-in replacement. The main difference is that it could be backed by *unpinned memory*, so causes no
+heap fragmentation (unless you use the internal API to construct pinned `ByteArray`s). It also has no lazy variant.
 
 The definition as of [0.12.1.0](https://hackage.haskell.org/package/bytestring-0.12.1.0) is:
 
@@ -454,7 +478,7 @@ Interfacing with C FFI triggers memory copy as well, because we need pinned memo
 
 Invariants:
 
-- unpinned memory
+- unpinned memory (when using the default API)
 
 Useful for:
 
@@ -548,6 +572,7 @@ Not so useful for:
 
 - very large data
 - data that is not platform specific or doesn't originate from operating system API
+- efficient slicing
 
 ### CString and CStringLen
 
@@ -616,10 +641,377 @@ type OsPath = OsString
 Use them whenever you can with the new filepath API. Refer to the
 [Fixing Haskell filepaths](https://hasufell.github.io/posts/2022-06-29-fixing-haskell-filepaths.html) blog post for more details.
 
+### String Types Cheat Sheet
+
+| Type            | purpose                 | unicode aware | internal representation          | memory properties  | slicing | FFI suitable |
+|-----------------|-------------------------|---------------|----------------------------------|--------------------|---------|--------------|
+| String          | simplicity              | yes           | List of Unicode Code Points      | 40 bytes per char  | \-\-    | \-\-         |
+| Text            | human readable text     | yes           | UTF-8 byte array                 | unpinned           | +       | -            |
+| ByteString      | large byte sequences    | no            | Word8 byte array (pointer)       | pinned             | ++      | ++           |
+| ShortByteString | short byte sequences    | no            | Word8 byte array                 | unpinned (usually) | -       | +            |
+| OsString        | interfacing with OS API | no            | Word8 or Word16 byte array       | unpinned (usually) | -       | +            |
+
+## Construction
+
+Now that we know about the different types, we will take a quick look about different ways to construct strings.
+
+### String literals
+
+The Haskell report defines [Character and String literals](https://www.haskell.org/onlinereport/haskell2010/haskellch2.html#x7-200002.6)
+as part of the language.
+
+Whenever you write `"string"` in a Haskell file, the compiler will convert it to/consider it as `[Char]`.
+Likewise, `'c'` will be considered `Char`.
+
+### String Classes
+
+A popular String class is [IsString](https://hackage.haskell.org/package/base-4.19.1.0/docs/Data-String.html#t:IsString),
+which is defined as:
+
+```hs
+class IsString a where
+    fromString :: String -> a
+```
+
+So this allows to convert from `String` to some other compatible type. Note how the type signature does not allow
+failure. So the conversion must be total.
+
+`Text`, `ByteString` and `ShortByteString` have `IsString` instances. `OsString` does not.
+All these instances have problems though:
+
+- **Text**: as explained earlier, surrogate Unicode Code Points in a String cannot be converted to Text,
+  so you'll end up with the replacement char `U+FFFD`
+- **ByteString**/**ShortByteString**: these instances **truncate** to 8 bits and are as such arguably broken, see
+  [Surprising behavior of ByteString literals via IsString](https://github.com/haskell/bytestring/issues/140#issuecomment-2023002164)
+
+My personal recommendation is to stay away from this class and use explicit functions like `pack` instead.
+However, we could also use QuasiQuoters (more on that later).
+
+### OverloadedStrings
+
+This language extensions extends the support for string literals to allow all types that have an `IsString`
+instance. This can be convenient when dealing with lots of Text literals. However, it poses two problems:
+
+- it can make type inference harder (since literals are not merely "String"), so sometimes, having a type annotation is necessary
+- the caveats explained for the `IsString` class apply here as well: ByteString doesn't behave well
+
+Example use:
+
+```hs
+{-# LANGUAGE OverloadedStrings  #-}
+
+myText = "hello world" :: Text
+```
+
+I personally advise against using it.
+
+### QuasiQuoters
+
+This is yet another method to construct string like types. An alternative to literals. It uses
+[Template Haskell](https://serokell.io/blog/introduction-to-template-haskell), which are essentially expressions
+that are run at compile time. This allows us to validate literals much more rigorously and have GHC fail at compile
+time if we attempt to e.g. construct an invalid UTF-8 sequence as Text.
+
+There are many libraries that support quasiquotation. Lots of them also support interpolation (using Haskell expressions/variables)
+inside the string) e.g.:
+
+- [string-interpolate](https://hackage.haskell.org/package/string-interpolate)
+- [string-qq](https://hackage.haskell.org/package/string-qq)
+- [interpolate](https://hackage.haskell.org/package/interpolate)
+- [PyF](https://hackage.haskell.org/package/PyF)
+- [raw-strings-qq](https://hackage.haskell.org/package/raw-strings-qq)
+
+I personally prefer `string-interpolate`. The README gives a
+[nice comparison](https://gitlab.com/williamyaoh/string-interpolate/blob/master/README.md#comparison-to-other-interpolation-libraries)
+to some other libraries (copy-pasted for convenience):
+
+|                                          | string-interpolate | interpolate | formatting | Interpolation | interpolatedstring-perl6 | neat-interpolation |
+|------------------------------------------|--------------------|-------------|------------|---------------|--------------------------|--------------------|
+| String/Text support                      | ✅                  | ✅           | ✅          | ⚠️             | ✅                        | ⚠️                  |
+| ByteString support                       | ✅                  | ✅           | ❌          | ⚠️             | ✅                        | ❌                  |
+| Can interpolate arbitrary Show instances | ✅                  | ✅           | ✅          | ✅             | ✅                        | ❌                  |
+| Unicode-aware                            | ✅                  | ❌           | ⚠️          | ❌             | ❌                        | ⚠️                  |
+| Multiline strings                        | ✅                  | ✅           | ✅          | ✅             | ✅                        | ✅                  |
+| Indentation handling                     | ✅                  | ✅           | ❌          | ✅             | ❌                        | ✅                  |
+| Whitespace/newline chomping              | ✅                  | ❌           | ❌          | ❌             | ❌                        | ❌                  |
+
+An example use case:
+
+```hs
+showWelcomeMessage :: Text -> Integer -> Text
+showWelcomeMessage username visits =
+  [i|Welcome to my website, #{username}! You are visitor #{visits}!|]
+```
+
+It is important to note that having many quasi-quotations in your source files **can slow down compilation time**.
+There are also (sometimes) issues with tooling, such as code formatters or
+[Haskell Language Server](https://haskell-language-server.readthedocs.io/en/stable/).
+
+The `OsString` type provides its quasi-quoter
+[osstr](https://hackage.haskell.org/package/os-string-2.0.2.1/docs/System-OsString.html#v:osstr).
+
+The main advantage, again, is that quasi-quoters can properly fail and do so at compile-time.
+
+## Conversions
+
+There are many ways to convert from one type to another. I propose here the most safe conversions.
+For some cases, we will have to provide the encoding, because it cannot be guessed.
+
+The `Data.ByteString.Encode` module listed further down below is part of the
+[bytestring-encoding](https://hackage.haskell.org/package/bytestring-encoding-0.1.2.0/docs/Data-ByteString-Encoding.html)
+package, which is not shipped with GHC. There are other similar packages like
+[utf8-string](https://hackage.haskell.org/package/utf8-string).
+
+Other than that, we only need the packages that provide the types we're dealing with.
+
+### From String to...
+
+Let's write a neat conversion module:
+
+```hs
+module StringConversions where
+
+import Data.ByteString (ByteString)
+import Data.ByteString.Encoding (TextEncoding)
+import Data.ByteString.Short (ShortByteString)
+import Data.Text (Text)
+import System.OsString
+import System.OsString.Encoding (EncodingException)
+
+import qualified Data.ByteString.Encoding as BE
+import qualified Data.ByteString.Short as SBS
+import qualified Data.Text as T
+import qualified System.OsString as OS
+
+toString :: String -> String
+toString = id
+
+toText :: String -> Text
+toText = T.pack
+
+toByteString :: TextEncoding -> String -> ByteString
+toByteString encoding = BE.encode encoding . T.pack
+
+toShortByteString :: TextEncoding -> String -> ShortByteString
+toShortByteString encoding = SBS.toShort . BE.encode encoding . T.pack
+
+toOsString :: (TextEncoding, TextEncoding) -> String -> Either EncodingException OsString
+toOsString (unixEncoding, windowsEncoding) = OS.encodeWith unixEncoding windowsEncoding
+```
+
+For converting to `ByteString` and `ShortByteString`, we have to explicitly specify
+an encoding for the resulting byte sequence.
+For `OsString` we have to provide encodings per platform, since this type is platform agnostic.
+
+The caveat wrt Text's `pack` not dealing well with surrogates applies.
+
+### From Text to...
+
+```hs
+module TextConversions where
+
+import Data.ByteString (ByteString)
+import Data.ByteString.Encoding (TextEncoding)
+import Data.ByteString.Short (ShortByteString)
+import Data.Text (Text)
+import System.OsString
+import System.OsString.Encoding (EncodingException)
+
+import qualified Data.ByteString.Encoding as BE
+import qualified Data.ByteString.Short as SBS
+import qualified Data.Text as T
+import qualified System.OsString as OS
+
+toString :: Text -> String
+toString = T.unpack
+
+toText :: Text -> Text
+toText = id
+
+toByteString :: TextEncoding -> Text -> ByteString
+toByteString encoding = BE.encode encoding
+
+toShortByteString :: TextEncoding -> Text -> ShortByteString
+toShortByteString encoding = SBS.toShort . BE.encode encoding
+
+toOsString :: (TextEncoding, TextEncoding) -> Text -> Either EncodingException OsString
+toOsString (unixEncoding, windowsEncoding) = OS.encodeWith unixEncoding windowsEncoding . T.unpack
+```
+
+When converting from `Text`, we can essentially reuse all the API that deals
+with just `String` and vice versa.
+
+### From ByteString to...
+
+```hs
+module ByteStringConversions where
+
+import Data.ByteString (ByteString)
+import Data.ByteString.Encoding (TextEncoding)
+import Data.ByteString.Short (ShortByteString)
+import Data.Text (Text)
+import System.OsString
+import System.OsString.Encoding (EncodingException)
+
+import qualified Data.ByteString.Encoding as BE
+import qualified Data.ByteString.Short as SBS
+import qualified Data.Text as T
+import qualified System.OsString as OS
+
+toString :: TextEncoding -> ByteString -> String
+toString encoding = T.unpack . BE.decode encoding
+
+toText :: TextEncoding -> ByteString -> Text
+toText encoding = BE.decode encoding
+
+toByteString :: ByteString -> ByteString
+toByteString = id
+
+toShortByteString :: ByteString -> ShortByteString
+toShortByteString = SBS.toShort
+
+-- | This is hard to write correctly. It depends on where the @ByteString@
+-- comes from. It may not be possible to interpret it on both platforms.
+-- @OsString@ is meant to interface with operating system API, not to manually
+-- construct arbitrary strings. Use the @osstr@ quasi quoter if you need
+-- literals. Or look at the internals in 'System.OsString.Internal.Types'.
+toOsString :: ByteString -> OsString
+toOsString = undefined
+```
+
+For converting to `String` and `Text`, we have to provide an encoding for
+the ByteString in order to decode it.
+
+Converting from a byte sequence of unknown origin to `OsString` is hard.
+The way this usually happens is at the FFI boundaries in `Win32` and `unix`
+package. The question is what does the given byte sequence represent...
+where does it come from, what is its encoding, if any?
+If it comes from operating system API, we can just wrap it into our types,
+see [System.OsString.Internal.Types](https://hackage.haskell.org/package/os-string-2.0.2.1/docs/System-OsString-Internal-Types.html).
+Otherwise, we may need to decode the bytes first and then pick a target encoding.
+
+### From ShortByteString to...
+
+```hs
+module ByteStringConversions where
+
+import Data.ByteString (ByteString)
+import Data.ByteString.Encoding (TextEncoding)
+import Data.ByteString.Short (ShortByteString)
+import Data.Text (Text)
+import System.OsString
+import System.OsString.Encoding (EncodingException)
+
+import qualified Data.ByteString.Encoding as BE
+import qualified Data.ByteString.Short as SBS
+import qualified Data.Text as T
+import qualified System.OsString as OS
+
+toString :: TextEncoding -> ShortByteString -> String
+toString encoding = T.unpack . BE.decode encoding . SBS.fromShort
+
+toText :: TextEncoding -> ShortByteString -> Text
+toText encoding = BE.decode encoding . SBS.fromShort
+
+toByteString :: ShortByteString -> ByteString
+toByteString = SBS.fromShort
+
+toShortByteString :: ShortByteString -> ShortByteString
+toShortByteString = id
+
+-- | This is hard to write correctly. It depends on where the @ShortByteString@
+-- comes from. It may not be possible to interpret it on both platforms.
+-- @OsString@ is meant to interface with operating system API, not to manually
+-- construct arbitrary strings. Use the @osstr@ quasi quoter if you need
+-- literals. Or look at the internals in 'System.OsString.Internal.Types'.
+toOsString :: ShortByteString -> OsString
+toOsString = undefined
+```
+
+The same caveats as for ByteString apply.
+
+### From OsString to...
+
+```hs
+module OsStringConversions where
+
+import Control.Monad.Catch (MonadThrow)
+import Data.ByteString (ByteString)
+import Data.ByteString.Encoding (TextEncoding)
+import Data.ByteString.Short (ShortByteString)
+import Data.Text (Text)
+import System.OsString
+import System.OsString.Encoding (EncodingException)
+
+import qualified Data.ByteString.Encoding as BE
+import qualified Data.ByteString.Short as SBS
+import qualified Data.Text as T
+import qualified System.OsString as OS
+
+toString :: MonadThrow m => OsString -> m String
+toString = OS.decodeUtf
+
+toText :: MonadThrow m => OsString -> m Text
+toText = fmap T.pack . OS.decodeUtf
+
+-- | It depends whether we want the original bytes passed unchanged
+-- and platform specific or whether we want to convert to a unified
+-- representation that is the same on both platforms, but in ByteString
+-- format.
+toByteString :: OsString -> ByteString
+toByteString = undefined
+
+-- | Same as 'toByteString'.
+toShortByteString :: OsString -> ShortByteString
+toShortByteString = undefined
+
+toOsString :: OsString -> OsString
+toOsString = id
+```
+
+OsString always comes with 3 families of decoding and encoding funnctions:
+
+- `encodeUtf`/`decodeUtf`: assumes UTF-8 on unix and UTF-16 LE on windows
+  * we are using this in the code above for simplicity
+- `encodeWith`/`decodeWith`: here we have to pass the encoding for both platforms
+  explicitly
+- `encodeFS`/`decodeFS`: this mimics the behavior of the base library, using
+  PEP-383 style encoding on unix and permissive UTF-16 on windows
+
+### To JSON
+
+A lot of times we want to send our strings over the wire, possibly
+via JSON. We will examine this via the popular [aeson](https://hackage.haskell.org/package/aeson)
+library.
+
+Both `Text` and `String` already have `ToJSON` [instances](https://hackage.haskell.org/package/aeson-2.2.1.0/docs/Data-Aeson.html#t:ToJSON).
+These are easy, because they are unicode and JSON demands UTF-8.
+
+For `ByteString`, `ShortByteString` and `OsString` this gets a bit more
+complicated. It depends on the exact use case. What is the byte sequence
+used for on the machine receiving the json? Also see the discussion
+[Add saner ByteString instances](https://github.com/haskell/aeson/issues/187)
+on the aeson issue tracker.
+
+From my perspective, there are 3 possibilities:
+
+1. convert to `String`, use the existing ToJSON instance and hope the receiver
+   knows how to interpret the data
+2. if you're dealing with binary data, you can convert to e.g. base64 String or Text
+   and then again use the existing instances
+   (there's the [base64-bytestring-type](https://hackage.haskell.org/package/base64-bytestring-type-1.0.1/docs/Data-ByteString-Base64-Type.html)
+   library that does this via a newtype)
+3. convert the byte sequence to `[Word8]`, which has a valid instance as well
+
+For the case of `OsString`, keep in mind that the raw bytes depend on the
+current platform. So you may have to attach more information if you choose
+methods 2 and 3 (e.g. encoding of the byte sequence and platform).
+
 ## Related blog posts
 
 - [Fixing Haskell filepaths, by Julian Ospald](https://hasufell.github.io/posts/2022-06-29-fixing-haskell-filepaths.html)
 - [String types, by FPComplete](https://www.fpcomplete.com/haskell/tutorial/string-types/)
 - [Eat Haskell String Types for Breakfast, by Ziyang Liu](https://free.cofree.io/2020/05/06/string-types/)
 - [Untangling Haskell's Strings](https://mmhaskell.com/blog/2017/5/15/untangling-haskells-strings)
+
 
