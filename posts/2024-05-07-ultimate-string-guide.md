@@ -34,6 +34,7 @@ for deciding which string type to use in a given situation.
    * [CString and CStringLen](#cstring-and-cstringlen)
    * [FilePath](#filepath)
    * [OsPath, PosixPath and WindowsPath](#ospath-posixpath-and-windowspath)
+   * [Lazy vs Strict](#lazy-vs-strict)
    * [String Types Cheat Sheet](#string-types-cheat-sheet)
 * [Construction](#construction)
    * [String literals](#string-literals)
@@ -47,7 +48,18 @@ for deciding which string type to use in a given situation.
    * [From ShortByteString to...](#from-shortbytestring-to)
    * [From OsString to...](#from-osstring-to)
    * [To JSON](#to-json)
+* [A word on lazy IO](#a-word-on-lazy-io)
+* [Streaming](#streaming)
+   * [Via Streamly](#via-streamly)
+* [A note on FilePaths](#a-note-on-filepaths)
+* [Reflection](#reflection)
+   * [What we should know](#what-we-should-know)
+   * [Too many Strings](#too-many-strings)
+   * [What are we missing](#what-are-we-missing)
+* [Special thanks to](#special-thanks-to)
 * [Related blog posts](#related-blog-posts)
+   * [String type posts](#string-type-posts)
+   * [Others](#others)
 
 ## Motivation
 
@@ -396,7 +408,13 @@ Lazy variants are useful for streaming and incremental processing, as the strict
 This is a low level type from the [bytestring](https://hackage.haskell.org/package/bytestring) package, shipped with GHC.
 It is just a sequence of bytes and carries no encoding information. It uses
 **pinned memory**, so it cannot be moved by the GC. As such, it doesn't require
-copying when dealing with the FFI. It is quite efficient and has a large API, but (obviously) lacks text processing
+copying when dealing with the FFI. It is also often more desirable when interacting with FFI, see the GHC
+user guide:
+
+- [GHC differences to the FFI Chapter](https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/ffi.html#ghc-differences-to-the-ffi-chapter)
+- [GHC extensions to the FFI Chapter](https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/ffi.html#ghc-extensions-to-the-ffi-chapter)
+
+ByteString is quite efficient and has a large API, but (obviously) lacks text processing
 facilities, because it has no knowledge of unicode (or other textual formats). Most operations work on `Word8` boundaries.
 
 The definition for strict ByteString is (as of [0.12.1.0](https://hackage.haskell.org/package/bytestring-0.12.1.0)):
@@ -643,6 +661,21 @@ type OsPath = OsString
 
 Use them whenever you can with the new filepath API. Refer to the
 [Fixing Haskell filepaths](https://hasufell.github.io/posts/2022-06-29-fixing-haskell-filepaths.html) blog post for more details.
+
+### Lazy vs Strict
+
+The properties of lazy vs strict variants for `Text` and `ByteString` might already
+be obvious for many Haskellers:
+
+- **Lazy**:
+  * can be streamed and incrementally processed, potentially in constant space
+  * can express infinite data streams
+  * slightly less efficient in terms of time complexity, depending on number of chunks
+    (compared to their strict counterparts)
+  * can work with lazy IO ([more on that later](#a-word-on-lazy-io))
+- **Strict**:
+  * is the most efficient in terms of time complexity
+  * is always forced into memory
 
 ### String Types Cheat Sheet
 
@@ -1020,7 +1053,7 @@ Some of the named packages expose API for reading and writing files via their la
 - [Data.ByteString.Lazy.readFile](https://hackage.haskell.org/package/bytestring-0.12.1.0/docs/Data-ByteString-Lazy.html#v:readFile)
 
 Lazy IO is a hack to use incremental reading/processing without the use of a
-proper streaming library. The [bytestring documentation](https://hackage.haskell.org/package/bytestring-0.12.1.0/docs/Data-ByteString-Lazy.html#g:25) warns is about it:
+proper streaming library. The [bytestring documentation](https://hackage.haskell.org/package/bytestring-0.12.1.0/docs/Data-ByteString-Lazy.html#g:25) warns about it:
 
 > * The program reads a file and writes the same file. This means that the file may be locked because the handler has not been released when writeFile is executed.
 > * The program reads thousands of files, but due to lazy evaluation, the OS's file descriptor limit is reached before the handlers can be released.
@@ -1095,16 +1128,121 @@ My results on a 189MB file are:
 - text: 0,654s
 - streamly: 0,222s
 
+## A note on FilePaths
+
+Just a quick reminder:
+
+- `String` for filepaths is very wrong
+- `Text` for filepaths is wrong
+- `ByteString` for filepaths is questionable
+- `OsPath` for filepaths is good
+
+For more details, read up on:
+
+- [Fixing Haskell filepaths, by Julian Ospald](https://hasufell.github.io/posts/2022-06-29-fixing-haskell-filepaths.html)
+- [System.OsPath haddocks](https://hackage.haskell.org/package/filepath-1.5.2.0/docs/System-OsPath.html)
+
+## Reflection
+
+### What we should know
+
+Almost at the end of the post, we should now have some insights into Unicode and understand:
+
+- what a character encoding is (Unicode Code Point)
+- what a text encoding is (UTF-8, UTF-16, UTF-32)
+- how the different Unicode Transformation Formats work
+   - and their trade offs (word boundaries, searching, spaces)
+- the problems with Code Points and Surrogates
+   - and how this affects the `Char` type, `Text` and the `IsString` instance
+- that grapheme clusters are the closest definiton of "visible symbol"
+   - and that they can consist of multiple code points
+- that only UTF-8 is ASCII compatible
+
+We understand the weird numbers that the `Show` instance of `Char`/`String`
+sometimes returns.
+
+We have seen a summary of the different string types:
+
+- Text for unicode
+- ByteString/ShortByteString for binary data
+- OsString for operating systems API
+- String for the bin
+
+We know how to construct strings safely, can utilize QuasiQuoters
+to do compile-time validation and know how to convert between different
+types and how to deal with JSON.
+
+We know the dangers of lazy IO and how to utilize streaming libraries instead.
+
+### Too many Strings
+
+After all these topics, I want to address the opinion that gets thrown around
+on the internet a lot: "Haskell has too many String types",
+e.g. on [Hacker News](https://news.ycombinator.com/item?id=14567755).
+
+If we take another look at the [String Types Cheat Sheet](#string-types-cheat-sheet),
+we don't really see any type that could be replaced by another. They all have
+different properties and trade-offs. `ByteString` vs `ShortByteString` may be
+a bit less intuitive, but `Text` is clearly alone in that list. `OsPath`
+is a specialized type that exists in Rust too. Maybe people dislike the Strict/Lazy
+variants, but they do have (again) different properties.
+
+Once these properties are well understood, I find it hard to make an argument
+for less types. However, it is clear that not everyone thinks so:
+
+- [Haskell base proposal: unifying vector-like types](https://www.snoyman.com/blog/2021/03/haskell-base-proposal/)
+- [Discourse thread on vector proposal](https://discourse.haskell.org/t/base-proposal-around-vector-like-types/2112)
+
+I am still unable to see the bigger picture, other than more unification of
+*internal representations*, but less so of public APIs.
+
+As someone who has written a new string type `OsString`, I can say it is really
+hard and not particularly pleasant. But with the rich APIs of `ByteString`
+and `ShortByteString`, coming up with newtypes might not be that difficult.
+
+### What are we missing
+
+We don't have types for:
+
+* Unicode Scalar Values (away with those surrogates)
+* Grapheme Clusters
+
+Especially the latter is something that seems to be potentially useful. We don't
+just want to know the boundaries of unicode code points, but of the actual
+user visible symbols, don't we?
+The `text-icu` package seems to have an [API for beraking on grapheme boundaries](https://hackage.haskell.org/package/text-icu-0.8.0.5/docs/Data-Text-ICU.html#v:breakCharacter),
+but it doesn't look very straight forward. I must admit I haven't looked
+very hard though.
+
+We also don't have a good streaming solution in base. And maybe we
+never will. But that, probably, also means we will never get rid of lazy IO,
+which is a footgun for newcomers and everyone else.
+
+My next project is likely going to be strongly typed filepaths, which
+[do](https://hackage.haskell.org/package/hpath) [already](https://hackage.haskell.org/package/path) [exist](https://hackage.haskell.org/package/strong-path), just not in combination with `OsPath`.
+
+## Special thanks to
+
+- Andrew Lelechenko
+- Jonathan Knowles
+- Mike Pilgrim
+- John Ericson
+- Tom Ellis
+- Ἑκάτη
+- Ben Gamari
+- streamly maintainers for their cutting edge API
+- Other people I pinged about this topic
 
 ## Related blog posts
+
+### String type posts
 
 - [Fixing Haskell filepaths, by Julian Ospald](https://hasufell.github.io/posts/2022-06-29-fixing-haskell-filepaths.html)
 - [String types, by FPComplete](https://www.fpcomplete.com/haskell/tutorial/string-types/)
 - [Eat Haskell String Types for Breakfast, by Ziyang Liu](https://free.cofree.io/2020/05/06/string-types/)
 - [Untangling Haskell's Strings](https://mmhaskell.com/blog/2017/5/15/untangling-haskells-strings)
 
------
+### Others
 
-- special case filepath
-- PEP 383
-
+- [From conduit to streamly](https://hasufell.github.io/posts/2021-10-22-conduit-to-streamly.html)
+- [Fast Haskell: Competing with C at parsing XML](https://chrisdone.com/posts/fast-haskell-c-parsing-xml/)
