@@ -1,5 +1,6 @@
 ---
 title: The ultimate guide to Haskell Strings
+subtitle: Haskell Strings are really simple, I promise
 author: Julian Ospald
 tags: haskell, unicode, string
 ---
@@ -136,20 +137,20 @@ the standard, here are some pointers:
 
 - the actual standard: [https://www.unicode.org/versions/latest/](https://www.unicode.org/versions/latest/)
 - Wikipedia Unicode article: [https://en.wikipedia.org/wiki/Unicode](https://en.wikipedia.org/wiki/Unicode)
-- brief unicode introduction for JavaScript developers: [https://exploringjs.com/impatient-js/ch_unicode.html](https://exploringjs.com/impatient-js/ch_unicode.html)
+- brief Unicode introduction for JavaScript developers: [https://exploringjs.com/impatient-js/ch_unicode.html](https://exploringjs.com/impatient-js/ch_unicode.html)
 
-The goal of unicode is to be universal, efficient and unambiguous. In order to achieve that, it needs:
+The goal of Unicode is to be universal, efficient and unambiguous. In order to achieve that, it needs:
 
 - a character encoding: translating e.g. `a` or `쟬` to something unambiguous
 - a text encoding: translating a sequence of characters into an efficient byte format
 
 The term "character" is quite overloaded and we will go through different definitions along the way.
 
-### Unicode Codepoint
+### Unicode Code Point
 
-Unicode Codepoints are a way of encoding a single character through numerical values. It ranges from the hexadecimal values 0 to 10FFFF,
+Unicode Code Points are a way of encoding a single character through numerical values. It ranges from the hexadecimal values 0 to 10FFFF,
 which we saw before in the definition of `chr :: Int -> Char`.
-The formal notation of codepoints is `U+0000` to `U+10FFFF`.
+The formal notation of code points is `U+0000` to `U+10FFFF`.
 
 It is essentially a static mapping, e.g.:
 
@@ -165,7 +166,7 @@ It is essentially a static mapping, e.g.:
 This allows us a couple of observations:
 
 - the hex values `61` for `a` and `62` for `b` correspond to the [ASCII character set](https://en.wikipedia.org/wiki/ASCII) (cool)
-- it can express chinese and other non-latin characters
+- it can express Chinese and other non-Latin characters
 - some "characters" (in this case actually emoji) are expressed by multiple code points, such as 🇯🇵
 
 However, this is just a mapping for a single character. In order to efficiently represent a whole text, several
@@ -183,33 +184,34 @@ and splitting feasible. UTF-16 and UTF-8 are also optimized for size.
 The most simple encoding for text would be to just use the code point values. The issue with this is that
 the maximum code point value is `U+10FFFF`, which only fits into 21 bits.
 
-UTF-32 is a fixed-length encoding that uses 32 bits (four bytes) and as such can hold all possible unicode
+UTF-32 is a fixed-length encoding that uses 32 bits (four bytes) and as such can hold all possible Unicode
 values without any actual transformation.
 
 The upside of this is that it's simple, the downside is that it's wasting space, because most values don't
 need the whole 21 bits (e.g. ASCII just needs 7 bits).
 
-UTF-32 is not ASCII compatible, meaning a program that only understands ASCII won't accidentially work with UTF-32 text,
-even if all of the characters used are in the ASCII set (e.g. only latin characters from `[a-zA-Z]`).
+UTF-32 is not ASCII compatible, meaning a program that only understands ASCII won't accidentally work with UTF-32 text,
+even if all of the characters used are in the ASCII set (e.g. only Latin characters from `[a-zA-Z]`).
 
 ### UTF-16
 
 This is a [variable-width character encoding](https://en.wikipedia.org/wiki/Variable-width_encoding), most notably
-[used on windows](https://learn.microsoft.com/en-us/windows/win32/learnwin32/working-with-strings).
+[used on Windows](https://learn.microsoft.com/en-us/windows/win32/learnwin32/working-with-strings).
 
-Since we only have access to 16 bits per machine word, only the code points from `U+0000` to `U+FFFF`
-(with the exception of surrogates, which I will explain later) are encoded "directly".
+Code points from `U+0000` to `U+FFFF` are expressed "directly" via 2 bytes (16 bits),
+with the exception of surrogates, which I will explain later.
 
-Code points from `U+10000` to `U+10FFFF` need two 16-bit words. In order to encode these without
-being accidentially ambiguous, **surrogates** were introduced (another option would have been magic bits as used by UTF-8,
-but I guess the format wasn't designed with extension in mind). These surrogates must always come in pairs and express:
+Code points from `U+10000` to `U+10FFFF` don't fit into 2 bytes. In order to encode these without
+being accidentally ambiguous, **surrogates** were introduced (another option would have been magic bits as used by UTF-8,
+but I guess the format wasn't designed with extension in mind). These surrogates must always come in pairs
+(so 4 bytes) and are in the following ranges:
 
 - low surrogates: `U+DC00` to `U+DFFF`
 - high surrogates: `U+D800` to `U+DBFF`
 
-Through bit shuffling, these two bytes allows to map to values in the `U+10000` to `U+10FFFF` range.
+Through bit shuffling, these 2-byte pairs allow to map to values in the `U+10000` to `U+10FFFF` range.
 For the interested reader, the algorithm is as follows
-([cited from wikipedia](https://en.wikipedia.org/wiki/UTF-16#Code_points_from_U+010000_to_U+10FFFF)):
+([cited from Wikipedia](https://en.wikipedia.org/wiki/UTF-16#Code_points_from_U+010000_to_U+10FFFF)):
 
 > * 0x10000 is subtracted from the code point (U), leaving a 20-bit number (U') in the hex number range 0x00000–0xFFFFF.
 > * The high ten bits (in the range 0x000–0x3FF) are added to 0xD800 to give the first 16-bit code unit or high surrogate (W1), which will be in the range 0xD800–0xDBFF.
@@ -218,13 +220,12 @@ For the interested reader, the algorithm is as follows
 UTF-16 is not ASCII compatible either. It is more space efficient than UTF-32 though. For some languages, it can
 even be more space efficient than UTF-8.
 
-
 ### Unicode Scalar Values
 
 It is important to understand that the Haskell `Char` type (which is essentially a Code Point) can represent surrogates
 that are used in UTF-16.
 
-The unicode standard also defines the concept of [Unicode Scalar Values](http://www.unicode.org/versions/Unicode5.2.0/ch03.pdf#page=35):
+The Unicode standard also defines the concept of [Unicode Scalar Values](http://www.unicode.org/versions/Unicode5.2.0/ch03.pdf#page=35):
 
 > Any Unicode code point except high-surrogate and low-surrogate code points. In other words, the ranges of integers 0 to D7FF16 and E00016 to 10FFFF16 inclusive.
 
@@ -233,10 +234,11 @@ So, code point without surrogates. This will become relevant for UTF-8.
 ### UTF-8
 
 This is similar to UTF-16 a variable-width character encoding. It's often used in web APIs (most notably JSON) and is
-often the default on unix systems.
+often the default on Unix systems.
 
-Here a word is only 8 bit. The number of bytes required depends on the range of the code point and
-varies between 1 and 4 bytes. The whole bit conversion between code point and UTF-8 is illustrated in the following table (adopted from [wikipedia](https://en.wikipedia.org/wiki/UTF-8#Encoding)):
+Here, a Unicode Code Point is represented by a sequence of bytes. The number of bytes required depends on the range of the code point and
+varies between 1 and 4 bytes. The whole bit conversion between code point and UTF-8 is illustrated in the following table (adopted
+from [Wikipedia](https://en.wikipedia.org/wiki/UTF-8#Encoding)):
 
 | First code point | Last code point | Byte 1   | Byte 2   | Byte 3   | Byte 4   |
 |------------------|-----------------|----------|----------|----------|----------|
@@ -251,7 +253,7 @@ must be read for translating to a code point.
 Notable properties of UTF-8 are:
 
 - it is ASCII backwards compatible: a program written for UTF-8 will also understand plain ASCII encoding
-- unicode code points in the surrogate range `U+D800` to `U+DFFF` are considered invalid byte sequences
+- Unicode code points in the surrogate range `U+D800` to `U+DFFF` are considered invalid byte sequences
   - as a result: UTF-8 only expresses Unicode Scalar Values
 
 ### Unicode summary
@@ -295,7 +297,6 @@ However, it is a **questionable default for a String type**, because:
   the [haddock documentation of Data.String](https://hackage.haskell.org/package/base-4.19.1.0/docs/Data-String.html#t:String)
   goes into more detail
 - it is often confusing for users who don't have a good mental model of what a *Unicode Code Point* is
-  (and is uncommon or non-existent in other languages)
 - it causes problems for certain conversions (e.g. `String -> Text`), because of surrogates
   (it should have been Unicode Scalar Values instead or maybe even Grapheme Clusters)
 
@@ -319,11 +320,14 @@ Show is for debugging, so that seems fine. However this behavior has been challe
 
 Luckily, we have many more String types:
 
-- proper unicode text
+- proper Unicode text
     - [Text](https://hackage.haskell.org/package/text-2.1.1/docs/Data-Text.html#t:Text) (strict and lazy)
+    - [ShortText](https://hackage.haskell.org/package/text-short-0.1.5/docs/Data-Text-Short.html#t:ShortText)
 - byte sequences
     - [ByteString](https://hackage.haskell.org/package/bytestring-0.12.1.0/docs/Data-ByteString.html#t:ByteString) (strict and lazy)
     - [ShortByteString](https://hackage.haskell.org/package/bytestring-0.12.1.0/docs/Data-ByteString-Short.html#t:ShortByteString)
+    - [Bytes](https://hackage.haskell.org/package/byteslice-0.2.13.2/docs/Data-Bytes.html#t:Bytes)
+    - [Chunks](https://hackage.haskell.org/package/byteslice-0.2.13.2/docs/Data-Bytes-Chunks.html#t:Chunks)
 - bytes sequences dealing with platform API differences
     - [OsString](https://hackage.haskell.org/package/os-string-2.0.2.1/docs/System-OsString.html#t:OsString)
     - [PosixString](https://hackage.haskell.org/package/os-string-2.0.2.1/docs/System-OsString-Posix.html#t:PosixString)
@@ -351,7 +355,7 @@ which is shipped with GHC. This type is meant for human readable Unicode text an
 API is in fact more complete than the one for `String`, containing functions like `stripPrefix` and `toLower`.
 
 Internally, Text uses a UTF-8 encoded byte array since version 2.0 and UTF-16 before version 2.0. So it is always
-guaranteed to be valid unicode.
+guaranteed to be valid Unicode.
 
 The current definition for strict `Text` is (as of [2.1.1](https://hackage.haskell.org/package/text-2.1.1)):
 
@@ -363,9 +367,26 @@ data Text = Text
     {-# UNPACK #-} !Int     -- ^ length in bytes (not in Char!), pointing to an end of UTF-8 sequence
 ```
 
+#### Intermezzo on Slicing
+
 As we can see here, this type allows efficient slicing to avoid unnecessary `memcpy` for many operations.
-E.g. `init` and `tail` are *O(1)* time and space. `splitAt` is *O(1)*, but *O(n)* time, because UTF-8 complicates
-the offset computation.
+E.g. `init` and `tail` are *O(1)* time and space. `splitAt` is *O(1)* space, but *O(n)* time, because UTF-8 complicates
+the offset computation (remember, a Unicode Code Point encoding can be anywhere between 1 and 4 bytes in UTF-8).
+
+As an example, `init` just manipulates the "length" field, but keeps the original byte array.
+
+This means that slicing comes at two minor costs. First, if you split the Text in half, the GC
+cannot clean up anything and the whole byte array is still in memory, as long as you use one of the halves.
+This can be alleviated by using the [Data.Text.copy](https://hackage.haskell.org/package/text-2.1.1/docs/Data-Text.html#v:copy)
+operation, but has to be done manually.
+
+Second, we carry two unboxed `Int`s around for the "offset" and "length" fields, which is 2 words "overhead".
+For more information on boxed and unboxed types, see the GHC user guide:
+
+- [Unboxed types and primitive operations](https://downloads.haskell.org/ghc/9.6.5/docs/users_guide/exts/primitives.html)
+- [`UNPACK` pragma](https://downloads.haskell.org/ghc/9.6.5/docs/users_guide/exts/pragmas.html#unpack-pragma)
+
+#### Back to Text
 
 The lazy Text variant is as follows:
 
@@ -374,32 +395,41 @@ data Text = Empty
           | Chunk {-# UNPACK #-} !T.Text Text
 ```
 
+This has the same structure as a list, and as such can also be potentially streamed in constant space or allow
+the GC to clean up unused chunks after splitting/slicing.
+
 Text does not allow to represent surrogates. It is a sequence of [Unicode Scalar Values](http://www.unicode.org/versions/Unicode5.2.0/ch03.pdf#page=35).
 Invalid values will be converted to the replacement character `U+FFFD` silently when using e.g. `pack`. You might be thinking that's not
 a problem... but I have to disappoint you. There is a reason `String` allows surrogates: [PEP-383](https://peps.python.org/pep-0383/).
-This is an abomination and base uses it: On unix, it uses [`getFileSystemEncoding`](https://hackage.haskell.org/package/base-4.16.1.0/docs/GHC-IO-Encoding.html#v:getFileSystemEncoding) and [`mkTextEncoding`](https://hackage.haskell.org/package/base-4.16.1.0/docs/GHC-IO-Encoding.html#v:mkTextEncoding) to pick a round-trippable encoding for filepaths. E.g. if your locale returns `en_US.UTF-8` you'll get `UTF-8//ROUNDTRIP` TextEncoding, which is based on PEP-383 and invalid bytes get translated to some special representation (lone surrogates) in order to be roundtripped. This has been described in my blog
+This is an abomination and base uses it: On Unix, it uses
+[`getFileSystemEncoding`](https://hackage.haskell.org/package/base-4.16.1.0/docs/GHC-IO-Encoding.html#v:getFileSystemEncoding) and
+[`mkTextEncoding`](https://hackage.haskell.org/package/base-4.16.1.0/docs/GHC-IO-Encoding.html#v:mkTextEncoding) to
+pick a round-trippable encoding for filepaths. E.g. if your locale returns `en_US.UTF-8` you'll get `UTF-8//ROUNDTRIP`
+`TextEncoding`, which is based on PEP-383 and invalid bytes get translated to some special representation
+(lone surrogates) in order to be roundtripped. This has been described in my blog
 [Fixing 'FilePath' in Haskell](https://hasufell.github.io/posts/2022-06-29-fixing-haskell-filepaths.html).
 
 #### Text summary
 
 Invariants:
 
-- is always unicode
+- is always Unicode
 - never encodes surrogates (uses replacement char `U+FFFD`)
 - unpinned memory
 
 Useful for:
 
-- anything that fits ASCII or unicode
+- anything that fits ASCII or Unicode
 - large human readable text processing that requires efficient formats
-- complex unicode handling via advanced libraries such as [text-icu](https://hackage.haskell.org/package/text-icu)
+- complex Unicode handling via advanced libraries such as [text-icu](https://hackage.haskell.org/package/text-icu)
 - quite efficient slicing
 
 Not so useful for:
 
 - dealing with C FFI
-- trying to store or deal with non-unicode encodings
+- trying to store or deal with non-Unicode encodings
 - dealing with filepaths
+- lots of small Unicode texts
 
 Lazy variants are useful for streaming and incremental processing, as the strict variant requires the whole content to be in memory.
 
@@ -415,7 +445,7 @@ user guide:
 - [GHC extensions to the FFI Chapter](https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/ffi.html#ghc-extensions-to-the-ffi-chapter)
 
 ByteString is quite efficient and has a large API, but (obviously) lacks text processing
-facilities, because it has no knowledge of unicode (or other textual formats). Most operations work on `Word8` boundaries.
+facilities, because it has no knowledge of Unicode (or other textual formats). Most operations work on `Word8` boundaries.
 
 The definition for strict ByteString is (as of [0.12.1.0](https://hackage.haskell.org/package/bytestring-0.12.1.0)):
 
@@ -425,8 +455,8 @@ data ByteString = BS {-# UNPACK #-} !(ForeignPtr Word8) -- payload
 ```
 
 This allows, similar to Text, slicing without copying memory (through pointer arithmetic and the length field).
-Since we're not dealing with unicode, but just `Word8` boundaries, operations like `splitAt` are *O(1)* time and
-space.
+Since we're not dealing with Unicode, but just `Word8` boundaries, operations like `splitAt` are *O(1)* time and
+space. We don't need an offset field, because we can just advance the pointer instead.
 
 And the lazy counterpart, which looks similar to lazy Text:
 
@@ -456,12 +486,12 @@ Useful for:
 - very efficient slicing
 - dealing with raw bytes (e.g. web servers)
 - dealing with C FFI
-- storing non-unicode encodings e.g. via a newtype wrapper
+- storing non-Unicode encodings e.g. via a newtype wrapper
 - fast parsers, see the excellent blog post from Chris Done on [Fast Haskell: Competing with C at parsing XML](https://chrisdone.com/posts/fast-haskell-c-parsing-xml/)
 
 Not so useful for:
 
-- dealing with unicode or human readable text
+- dealing with Unicode or human readable text
 - dealing with lots of small byte sequences
 
 Lazy variants, again, are useful for streaming and incremental processing, as the strict variant requires the whole content to be in memory.
@@ -472,7 +502,7 @@ This type is from the bytestring package as well and lives under
 [Data.ByteString.Short](https://hackage.haskell.org/package/bytestring-0.12.1.0/docs/Data-ByteString-Short.html).
 
 It has the same API as `ByteString` since [0.11.3.0](https://hackage.haskell.org/package/bytestring-0.11.3.0/changelog),
-so can be used as a drop-in replacement. The main difference is that it could be backed by *unpinned memory*, so causes no
+so can be used as a drop-in replacement. The main difference is that it is usually backed by *unpinned memory*, so causes no
 heap fragmentation (unless you use the internal API to construct pinned `ByteArray`s). It also has no lazy variant.
 
 The definition as of [0.12.1.0](https://hackage.haskell.org/package/bytestring-0.12.1.0) is:
@@ -484,11 +514,12 @@ newtype ShortByteString =
   }
 ```
 
-This makes it suitable for things like unix filepaths. But we will explore better filepath types later.
+This makes it suitable for things like Unix filepaths. But we will explore better filepath types later.
 
 The name is maybe a little bit misleading. It can very well be used for large data as well, if you
 don't mind its strictness (the whole content is always in memory). **However, this type does not allow slicing**,
-unlike `Text` and `ByteString`, and so a lot of operations cause `memcpy`.
+unlike `Text` and `ByteString`, and so a lot of operations cause `memcpy`. This however has the advantage that we save
+2 words compared to e.g. `Text`, because we don't need an offset or length field.
 
 Interfacing with C FFI triggers memory copy as well, because we need pinned memory.
 
@@ -503,11 +534,11 @@ Useful for:
 - lots of small to medium sized byte sequences
 - large data, if strictness is desired and efficient slicing not needed
 - dealing with C FFI (although it incurs `memcpy`)
-- storing non-unicode encodings e.g. via a newtype wrapper
+- storing non-Unicode encodings e.g. via a newtype wrapper
 
 Not so useful for:
 
-- dealing with unicode or human readable text
+- dealing with Unicode or human readable text
 - fast parsers, because no lazy variant and no efficient slicing
 
 ### OsString, PosixString and WindowsString
@@ -527,7 +558,7 @@ quite different.
 Simplified, the Haskell definitions are:
 
 ```hs
--- | Commonly used windows string as wide character bytes.
+-- | Commonly used Windows string as wide character bytes.
 newtype WindowsString = WindowsString ShortByteString
 
 -- | Commonly used Posix string as uninterpreted @char[]@ array.
@@ -546,8 +577,8 @@ newtype OsString = OsString
 #endif
 ```
 
-As we can see, on unix, we're basically dealing with `Word8` sequences (`char[]`),
-but on windows, we're dealing with `Word16` sequences (`wchar_t*`).
+As we can see, on Unix, we're basically dealing with `Word8` sequences (`char[]`),
+but on Windows, we're dealing with `Word16` sequences (`wchar_t*`).
 
 The constructors are internal and it is impossible to pattern match on the wrong platform in `OsString`, due
 to the CPP.
@@ -566,7 +597,7 @@ And at the same time, we are able to write safe, platform agnostic code utilizin
 - [System.File.OsPath](https://hackage.haskell.org/package/file-io-0.1.1/docs/System-File-OsPath.html)
 
 This strategy has been used for filepaths, where `unix` package uses `PosixString`, `Win32` package uses `WindowsString`
-and the platform agnostic `directory` and `filo-io` packages use `OsString`, combining the APIs of unix and windows. More
+and the platform agnostic `directory` and `filo-io` packages use `OsString`, combining the APIs of Unix and Windows. More
 information on this with examples and API explanation can be found
 [here](https://hasufell.github.io/posts/2022-06-29-fixing-haskell-filepaths.html).
 
@@ -586,7 +617,7 @@ Useful for:
 
 - writing type safe operating system APIs
    - while maintaining the original bytes without decoding
-   - abstracting over unix and windows
+   - abstracting over Unix and Windows
    - making minimal assumptions on underlying encodings
 
 Not so useful for:
@@ -648,7 +679,7 @@ This is not a very good choice for filepaths. Use the new `OsPath` instead.
 These are equivalent to `OsString`, `PosixString` and `WindowsString`. They are just type synonyms:
 
 ```hs
--- | FilePath for windows.
+-- | FilePath for Windows.
 type WindowsPath = WindowsString
 
 -- | FilePath for posix systems.
@@ -669,6 +700,7 @@ be obvious for many Haskellers:
 
 - **Lazy**:
   * can be streamed and incrementally processed, potentially in constant space
+  * can allow the GC to clean up unused chunks after slicing/splitting
   * can express infinite data streams
   * slightly less efficient in terms of time complexity, depending on number of chunks
     (compared to their strict counterparts)
@@ -676,16 +708,24 @@ be obvious for many Haskellers:
 - **Strict**:
   * is the most efficient in terms of time complexity
   * is always forced into memory
+  * has less overhead than lazy types
 
 ### String Types Cheat Sheet
 
-| Type            | purpose                 | unicode aware | internal representation          | memory properties  | slicing | FFI suitable |
-|-----------------|-------------------------|---------------|----------------------------------|--------------------|---------|--------------|
-| String          | simplicity              | yes           | List of Unicode Code Points      | 40 bytes per char  | \-\-    | \-\-         |
-| Text            | human readable text     | yes           | UTF-8 byte array                 | unpinned           | +       | -            |
-| ByteString      | large byte sequences    | no            | Word8 byte array (pointer)       | pinned             | ++      | ++           |
-| ShortByteString | short byte sequences    | no            | Word8 byte array                 | unpinned (usually) | -       | +            |
-| OsString        | interfacing with OS API | no            | Word8 or Word16 byte array       | unpinned (usually) | -       | +            |
+A few notes on the below table:
+
+- Unicode aware means whether we have access to text processing functions (e.g. split by Unicode Code Point etc.)
+- memory overhead compares the whole data type to the raw data (e.g. additional length/offset fields or pointer indirection)
+- the overhead for lazy types is multiplied by the number of chunks
+- some types are unpinned by default (e.g. `ShortByteString`) but can manually be constructed as pinned via internal API
+
+| Type            | purpose                 | Unicode aware | internal representation     | memory overhead   | pinned | slicing | FFI suitable |
+|-----------------|-------------------------|---------------|-----------------------------|-------------------|--------|---------|--------------|
+| String          | simplicity              | yes           | List of Unicode Code Points | 4 words per char, +1 word in total  | no     | \-\-    | \-\-         |
+| Text            | human readable text     | yes           | UTF-8 byte array            | 2 words           | no     | +       | -            |
+| ByteString      | large byte sequences    | no            | Word8 byte array (pointer)  | 1 word            | yes    | ++      | ++           |
+| ShortByteString | short byte sequences    | no            | Word8 byte array            | none              | no     | -       | +            |
+| OsString        | interfacing with OS API | no            | Word8 or Word16 byte array  | none              | no     | -       | +            |
 
 ## Construction
 
@@ -756,6 +796,7 @@ inside the string) e.g.:
 - [interpolate](https://hackage.haskell.org/package/interpolate)
 - [PyF](https://hackage.haskell.org/package/PyF)
 - [raw-strings-qq](https://hackage.haskell.org/package/raw-strings-qq)
+- [streamly](https://streamly.composewell.com/haddocks/streamly-core-0.2.2/Streamly-Unicode-String.html#v:str)
 
 I personally prefer `string-interpolate`. The README gives a
 [nice comparison](https://gitlab.com/williamyaoh/string-interpolate/blob/master/README.md#comparison-to-other-interpolation-libraries)
@@ -839,7 +880,7 @@ For converting to `ByteString` and `ShortByteString`, we have to explicitly spec
 an encoding for the resulting byte sequence.
 For `OsString` we have to provide encodings per platform, since this type is platform agnostic.
 
-The caveat wrt Text's `pack` not dealing well with surrogates applies.
+The caveat wrt. Text's `pack` not dealing well with surrogates applies.
 
 ### From Text to...
 
@@ -1007,12 +1048,12 @@ toOsString = id
 
 OsString always comes with 3 families of decoding and encoding functions:
 
-- `encodeUtf`/`decodeUtf`: assumes UTF-8 on unix and UTF-16 LE on windows
+- `encodeUtf`/`decodeUtf`: assumes UTF-8 on Unix and UTF-16 LE on Windows
   * we are using this in the code above for simplicity
 - `encodeWith`/`decodeWith`: here we have to pass the encoding for both platforms
   explicitly
 - `encodeFS`/`decodeFS`: this mimics the behavior of the base library, using
-  PEP-383 style encoding on unix and permissive UTF-16 on windows
+  PEP-383 style encoding on Unix and permissive UTF-16 on Windows
 
 ### To JSON
 
@@ -1021,11 +1062,11 @@ via JSON. We will examine this via the popular [aeson](https://hackage.haskell.o
 library.
 
 Both `Text` and `String` already have `ToJSON` [instances](https://hackage.haskell.org/package/aeson-2.2.1.0/docs/Data-Aeson.html#t:ToJSON).
-These are easy, because they are unicode and JSON demands UTF-8.
+These are easy, because they are Unicode and JSON demands UTF-8.
 
 For `ByteString`, `ShortByteString` and `OsString` this gets a bit more
 complicated. It depends on the exact use case. What is the byte sequence
-used for on the machine receiving the json? Also see the discussion
+used for on the machine receiving the JSON? Also see the discussion
 [Add saner ByteString instances](https://github.com/haskell/aeson/issues/187)
 on the aeson issue tracker.
 
@@ -1039,11 +1080,11 @@ From my perspective, there are 3 possibilities:
 3. convert the byte sequence to `[Word8]`, which has a valid instance as well
 
 For the case of `OsString`, keep in mind that the raw bytes depend on the
-current platform (`char[]` array on unix and `wchar_t*` on windows). So you may
+current platform (`char[]` array on Unix and `wchar_t*` on Windows). So you may
 have to attach more information if you choose
 methods 2 and 3 (e.g. encoding of the byte sequence and platform). And you
-need a strategy to deal with e.g. a windows machine sending binary data
-to a unix machine. As such, I recommend using [`decodeUtf`](https://hackage.haskell.org/package/os-string-2.0.2.1/docs/System-OsString.html#g:3) to get a String. The target machine can then use [`encodeUtf`](https://hackage.haskell.org/package/os-string-2.0.2.1/docs/System-OsString.html#v:encodeUtf) to get back an OsString.
+need a strategy to deal with e.g. a Windows machine sending binary data
+to a Unix machine. As such, I recommend using [`decodeUtf`](https://hackage.haskell.org/package/os-string-2.0.2.1/docs/System-OsString.html#g:3) to get a String. The target machine can then use [`encodeUtf`](https://hackage.haskell.org/package/os-string-2.0.2.1/docs/System-OsString.html#v:encodeUtf) to get back an OsString.
 
 ## A word on lazy IO
 
@@ -1090,7 +1131,7 @@ decodeUtf8 :: Monad m => Stream m Word8 -> Stream m Char
 encodeUtf8 :: Monad m => Stream m Char -> Stream m Word8
 ```
 
-A very simple program to print the last unicode char of a file via streamly is:
+A very simple program to print the last Unicode char of a file via streamly is:
 
 ```hs
 import System.Environment (getArgs)
@@ -1103,17 +1144,17 @@ import qualified Streamly.Unicode.Stream as Unicode
 main :: IO ()
 main = do
   (file:_) <- getArgs
-  c <- getFirstCharFromFile file
+  c <- getLastCharFromFile file
   print c
 
-getFirstCharFromFile :: FilePath -> IO (Maybe Char)
-getFirstCharFromFile file = stream `Fold.drive` fold
+getLastCharFromFile :: FilePath -> IO (Maybe Char)
+getLastCharFromFile file = stream `Fold.drive` fold
  where
   stream :: Stream IO Char
   stream = Unicode.decodeUtf8Chunks $ File.readChunks file
 
   fold :: Monad m => Fold m a (Maybe a)
-  fold = Fold.one
+  fold = Fold.latest
 ```
 
 To compile this program you need the `streamly-core` package. As we can see
@@ -1154,7 +1195,7 @@ Almost at the end of the post, we should now have some insights into Unicode and
    - and their trade offs (word boundaries, searching, spaces)
 - the problems with Code Points and Surrogates
    - and how this affects the `Char` type, `Text` and the `IsString` instance
-- that grapheme clusters are the closest definiton of "visible symbol"
+- that grapheme clusters are the closest definition of "visible symbol"
    - and that they can consist of multiple code points
 - that only UTF-8 is ASCII compatible
 
@@ -1163,7 +1204,7 @@ sometimes returns.
 
 We have seen a summary of the different string types:
 
-- Text for unicode
+- Text for Unicode
 - ByteString/ShortByteString for binary data
 - OsString for operating systems API
 - String for the bin
@@ -1196,8 +1237,7 @@ for less types. However, it is clear that not everyone thinks so:
 I am still unable to see the bigger picture, other than more unification of
 *internal representations*, but less so of public APIs.
 
-As someone who has written a new string type `OsString`, I can say it is really
-hard and not particularly pleasant. But with the rich APIs of `ByteString`
+Writing a new string type can be really hard. But with the rich APIs of `ByteString`
 and `ShortByteString`, coming up with newtypes might not be that difficult.
 
 ### What are we missing
@@ -1208,15 +1248,15 @@ We don't have types for:
 * Grapheme Clusters
 
 Especially the latter is something that seems to be potentially useful. We don't
-just want to know the boundaries of unicode code points, but of the actual
+just want to know the boundaries of Unicode code points, but of the actual
 user visible symbols, don't we?
-The `text-icu` package seems to have an [API for beraking on grapheme boundaries](https://hackage.haskell.org/package/text-icu-0.8.0.5/docs/Data-Text-ICU.html#v:breakCharacter),
+The `text-icu` package seems to have an [API for breaking on grapheme boundaries](https://hackage.haskell.org/package/text-icu-0.8.0.5/docs/Data-Text-ICU.html#v:breakCharacter),
 but it doesn't look very straight forward. I must admit I haven't looked
 very hard though.
 
 We also don't have a good streaming solution in base. And maybe we
 never will. But that, probably, also means we will never get rid of lazy IO,
-which is a footgun for newcomers and everyone else.
+which is a foot-gun for newcomers and everyone else.
 
 My next project is likely going to be strongly typed filepaths, which
 [do](https://hackage.haskell.org/package/hpath) [already](https://hackage.haskell.org/package/path) [exist](https://hackage.haskell.org/package/strong-path), just not in combination with `OsPath`.
@@ -1241,10 +1281,13 @@ My next project is likely going to be strongly typed filepaths, which
 - [String types, by FPComplete](https://www.fpcomplete.com/haskell/tutorial/string-types/)
 - [Eat Haskell String Types for Breakfast, by Ziyang Liu](https://free.cofree.io/2020/05/06/string-types/)
 - [Untangling Haskell's Strings](https://mmhaskell.com/blog/2017/5/15/untangling-haskells-strings)
+- [Haskell Strings, by Chris Warburton](http://www.chriswarbo.net/blog/2020-06-08-haskell_strings.html)
 
 ### Others
 
 - [From conduit to streamly](https://hasufell.github.io/posts/2021-10-22-conduit-to-streamly.html)
 - [Fast Haskell: Competing with C at parsing XML](https://chrisdone.com/posts/fast-haskell-c-parsing-xml/)
+- [Beating C With 80 Lines Of Haskell: Wc](https://chrispenner.ca/posts/wc)
 - [Haskell base proposal: unifying vector-like types](https://www.snoyman.com/blog/2021/03/haskell-base-proposal/)
 - [Haskell base proposal, part 2: unifying vector-like types](https://www.snoyman.com/blog/2021/03/haskell-base-proposal-2/)
+- [The text package: finally with UTF-8, by Andrew Lelechenko](https://github.com/Bodigrim/my-talks/blob/master/zurihac2022/slides.pdf)
