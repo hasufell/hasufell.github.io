@@ -540,7 +540,8 @@ This type is from the bytestring package as well and lives under
 
 It has the same API as `ByteString` since [0.11.3.0](https://hackage.haskell.org/package/bytestring-0.11.3.0/changelog),
 so can be used as a drop-in replacement. The main difference is that it is usually backed by *unpinned memory*, so causes no
-heap fragmentation (unless you use the internal API to construct pinned `ByteArray`s). It also has no lazy variant.
+heap fragmentation. It is possible to construct it pinned via internal API, but slicing operations like `splitAt`
+will return unpinned byte strings.
 
 The definition as of [0.12.1.0](https://hackage.haskell.org/package/bytestring-0.12.1.0) is:
 
@@ -556,9 +557,11 @@ This makes it suitable for things like Unix filepaths. But we will explore bette
 The name is maybe a little bit misleading. It can very well be used for large data as well, if you
 don't mind its strictness (the whole content is always in memory). **However, this type does not allow slicing**,
 unlike `Text` and `ByteString`, and so a lot of operations cause `memcpy`. This however has the advantage that we save
-2 words compared to e.g. `Text`, because we don't need an offset or length field.
+3 words compared to e.g. `Text`, because we don't need an offset or length field.
 
 Interfacing with C FFI triggers memory copy as well, because we need pinned memory.
+
+There is no lazy variant.
 
 #### ShortByteString summary
 
@@ -586,7 +589,8 @@ This type is from the `byteslice` package and lives under
 not shipped by GHC.
 
 It is a essentially a `ShortByteString` with 0-copy slicing (`init`, `splitAt` etc.).
-It can be constructed as a pinned or unpinned byte sequence.
+It can be constructed as a pinned or unpinned byte sequence and all the usual operations for
+it will maintain that invariant.
 
 The definition as of [0.2.13.2](https://hackage.haskell.org/package/byteslice-0.2.13.2) is:
 
@@ -815,6 +819,9 @@ A few notes on the below table:
 - memory overhead compares the whole data type to the raw data (e.g. additional length/offset fields or pointer indirection)
 - the overhead for lazy types is multiplied by the number of chunks
 - some types are unpinned by default (e.g. `ShortByteString`) but can manually be constructed as pinned via internal API
+
+The memory overhead measurements are best effort and explained in more detail in
+[this gist](https://gist.github.com/hasufell/61ca8ef438cc912e7446bcc7b1f25028).
 
 | Type                | purpose                                      | Unicode aware | internal representation             | memory overhead             | pinned | slicing | FFI suitable | streaming |
 |---------------------|----------------------------------------------|---------------|-------------------------------------|-----------------------------|--------|---------|--------------|-----------|
