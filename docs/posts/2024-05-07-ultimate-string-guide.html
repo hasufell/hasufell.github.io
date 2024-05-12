@@ -127,13 +127,10 @@
 <h2 id="toc">TOC</h2>
 <ul>
 <li><a href="#motivation">Motivation</a></li>
-<li><a href="#string-in-prelude">String in Prelude</a>
-<ul>
-<li><a href="#char">Char</a></li>
-</ul></li>
+<li><a href="#string-in-prelude">String in Prelude</a></li>
 <li><a href="#unicode">Unicode</a>
 <ul>
-<li><a href="#unicode-codepoint">Unicode Codepoint</a></li>
+<li><a href="#unicode-code-point">Unicode Code Point</a></li>
 <li><a href="#utf-32">UTF-32</a></li>
 <li><a href="#utf-16">UTF-16</a></li>
 <li><a href="#unicode-scalar-values">Unicode Scalar Values</a></li>
@@ -141,31 +138,22 @@
 <li><a href="#unicode-summary">Unicode summary</a></li>
 </ul></li>
 <li><a href="#back-to-haskell-string-type">Back to Haskell String type</a></li>
-<li><a href="#string-types-overview">String Types overview</a></li>
-<li><a href="#which-string-type-to-pick">Which String type to pick</a>
+<li><a href="#string-types">String types</a>
 <ul>
-<li><a href="#text">Text</a>
-<ul>
-<li><a href="#text-summary">Text summary</a></li>
-</ul></li>
-<li><a href="#bytestring">ByteString</a>
-<ul>
-<li><a href="#bytestring-summary">ByteString summary</a></li>
-</ul></li>
-<li><a href="#shortbytestring">ShortByteString</a>
-<ul>
-<li><a href="#shortbytestring-summary">ShortByteString summary</a></li>
-</ul></li>
-<li><a href="#osstring-posixstring-and-windowsstring">OsString, PosixString and WindowsString</a>
-<ul>
-<li><a href="#osstring-posixstring-and-windowsstring-summary">OsString, PosixString and WindowsString summary</a></li>
-</ul></li>
+<li><a href="#text">Text</a></li>
+<li><a href="#shorttext">ShortText</a></li>
+<li><a href="#bytestring">ByteString</a></li>
+<li><a href="#shortbytestring">ShortByteString</a></li>
+<li><a href="#bytes">Bytes</a></li>
+<li><a href="#osstring-posixstring-and-windowsstring">OsString, PosixString and WindowsString</a></li>
 <li><a href="#cstring-and-cstringlen">CString and CStringLen</a></li>
 <li><a href="#filepath">FilePath</a></li>
 <li><a href="#ospath-posixpath-and-windowspath">OsPath, PosixPath and WindowsPath</a></li>
-<li><a href="#lazy-vs-strict">Lazy vs Strict</a></li>
-<li><a href="#string-types-cheat-sheet">String Types Cheat Sheet</a></li>
 </ul></li>
+<li><a href="#lazy-vs-strict">Lazy vs Strict</a></li>
+<li><a href="#slicable-vs-non-slicable">Slicable vs non-slicable</a></li>
+<li><a href="#pinned-vs-unpinned">Pinned vs unpinned</a></li>
+<li><a href="#string-types-cheat-sheet">String Types Cheat Sheet</a></li>
 <li><a href="#construction">Construction</a>
 <ul>
 <li><a href="#string-literals">String literals</a></li>
@@ -183,10 +171,7 @@
 <li><a href="#to-json">To JSON</a></li>
 </ul></li>
 <li><a href="#a-word-on-lazy-io">A word on lazy IO</a></li>
-<li><a href="#streaming">Streaming</a>
-<ul>
-<li><a href="#via-streamly">Via Streamly</a></li>
-</ul></li>
+<li><a href="#streaming">Streaming</a></li>
 <li><a href="#a-note-on-filepaths">A note on FilePaths</a></li>
 <li><a href="#reflection">Reflection</a>
 <ul>
@@ -195,11 +180,7 @@
 <li><a href="#what-are-we-missing">What are we missing</a></li>
 </ul></li>
 <li><a href="#special-thanks-to">Special thanks to</a></li>
-<li><a href="#related-blog-posts">Related blog posts</a>
-<ul>
-<li><a href="#string-type-posts">String type posts</a></li>
-<li><a href="#others">Others</a></li>
-</ul></li>
+<li><a href="#links-and-relevant-stuff">Links and relevant stuff</a></li>
 </ul>
 <h2 id="motivation">Motivation</h2>
 <p>In 2022 I implemented the <a href="https://hasufell.github.io/posts/2022-06-29-fixing-haskell-filepaths.html">Abstract FilePath proposal</a>, which lead to several new String types, such as <code>OsString</code>.</p>
@@ -240,16 +221,16 @@
 <ul>
 <li>the actual standard: <a href="https://www.unicode.org/versions/latest/">https://www.unicode.org/versions/latest/</a></li>
 <li>Wikipedia Unicode article: <a href="https://en.wikipedia.org/wiki/Unicode">https://en.wikipedia.org/wiki/Unicode</a></li>
-<li>brief unicode introduction for JavaScript developers: <a href="https://exploringjs.com/impatient-js/ch_unicode.html">https://exploringjs.com/impatient-js/ch_unicode.html</a></li>
+<li>brief Unicode introduction for JavaScript developers: <a href="https://exploringjs.com/impatient-js/ch_unicode.html">https://exploringjs.com/impatient-js/ch_unicode.html</a></li>
 </ul>
-<p>The goal of unicode is to be universal, efficient and unambiguous. In order to achieve that, it needs:</p>
+<p>The goal of Unicode is to be universal, efficient and unambiguous. In order to achieve that, it needs:</p>
 <ul>
 <li>a character encoding: translating e.g. <code>a</code> or <code>쟬</code> to something unambiguous</li>
 <li>a text encoding: translating a sequence of characters into an efficient byte format</li>
 </ul>
 <p>The term “character” is quite overloaded and we will go through different definitions along the way.</p>
-<h3 id="unicode-codepoint">Unicode Codepoint</h3>
-<p>Unicode Codepoints are a way of encoding a single character through numerical values. It ranges from the hexadecimal values 0 to 10FFFF, which we saw before in the definition of <code>chr :: Int -&gt; Char</code>. The formal notation of codepoints is <code>U+0000</code> to <code>U+10FFFF</code>.</p>
+<h3 id="unicode-code-point">Unicode Code Point</h3>
+<p>Unicode Code Points are a way of encoding a single character through numerical values. It ranges from the hexadecimal values 0 to 10FFFF, which we saw before in the definition of <code>chr :: Int -&gt; Char</code>. The formal notation of code points is <code>U+0000</code> to <code>U+10FFFF</code>.</p>
 <p>It is essentially a static mapping, e.g.:</p>
 <table>
 <thead>
@@ -288,7 +269,7 @@
 <p>This allows us a couple of observations:</p>
 <ul>
 <li>the hex values <code>61</code> for <code>a</code> and <code>62</code> for <code>b</code> correspond to the <a href="https://en.wikipedia.org/wiki/ASCII">ASCII character set</a> (cool)</li>
-<li>it can express chinese and other non-latin characters</li>
+<li>it can express Chinese and other non-Latin characters</li>
 <li>some “characters” (in this case actually emoji) are expressed by multiple code points, such as 🇯🇵</li>
 </ul>
 <p>However, this is just a mapping for a single character. In order to efficiently represent a whole text, several Unicode Transformation Formats were developed, most notably:</p>
@@ -300,18 +281,18 @@
 <p>Such transformation formats are necessary to understand code point boundaries in a sequence of bytes and make searching and splitting feasible. UTF-16 and UTF-8 are also optimized for size.</p>
 <h3 id="utf-32">UTF-32</h3>
 <p>The most simple encoding for text would be to just use the code point values. The issue with this is that the maximum code point value is <code>U+10FFFF</code>, which only fits into 21 bits.</p>
-<p>UTF-32 is a fixed-length encoding that uses 32 bits (four bytes) and as such can hold all possible unicode values without any actual transformation.</p>
+<p>UTF-32 is a fixed-length encoding that uses 32 bits (four bytes) and as such can hold all possible Unicode values without any actual transformation.</p>
 <p>The upside of this is that it’s simple, the downside is that it’s wasting space, because most values don’t need the whole 21 bits (e.g. ASCII just needs 7 bits).</p>
-<p>UTF-32 is not ASCII compatible, meaning a program that only understands ASCII won’t accidentially work with UTF-32 text, even if all of the characters used are in the ASCII set (e.g. only latin characters from <code>[a-zA-Z]</code>).</p>
+<p>UTF-32 is not ASCII compatible, meaning a program that only understands ASCII won’t accidentally work with UTF-32 text, even if all of the characters used are in the ASCII set (e.g. only Latin characters from <code>[a-zA-Z]</code>).</p>
 <h3 id="utf-16">UTF-16</h3>
-<p>This is a <a href="https://en.wikipedia.org/wiki/Variable-width_encoding">variable-width character encoding</a>, most notably <a href="https://learn.microsoft.com/en-us/windows/win32/learnwin32/working-with-strings">used on windows</a>.</p>
-<p>Since we only have access to 16 bits per machine word, only the code points from <code>U+0000</code> to <code>U+FFFF</code> (with the exception of surrogates, which I will explain later) are encoded “directly”.</p>
-<p>Code points from <code>U+10000</code> to <code>U+10FFFF</code> need two 16-bit words. In order to encode these without being accidentially ambiguous, <strong>surrogates</strong> were introduced (another option would have been magic bits as used by UTF-8, but I guess the format wasn’t designed with extension in mind). These surrogates must always come in pairs and express:</p>
+<p>This is a <a href="https://en.wikipedia.org/wiki/Variable-width_encoding">variable-width character encoding</a>, most notably <a href="https://learn.microsoft.com/en-us/windows/win32/learnwin32/working-with-strings">used on Windows</a>.</p>
+<p>Code points from <code>U+0000</code> to <code>U+FFFF</code> are expressed “directly” via 2 bytes (16 bits), with the exception of surrogates, which I will explain later.</p>
+<p>Code points from <code>U+10000</code> to <code>U+10FFFF</code> don’t fit into 2 bytes. In order to encode these without being accidentally ambiguous, <strong>surrogates</strong> were introduced (another option would have been magic bits as used by UTF-8, but I guess the format wasn’t designed with extension in mind). These surrogates must always come in pairs (so 4 bytes) and are in the following ranges:</p>
 <ul>
 <li>low surrogates: <code>U+DC00</code> to <code>U+DFFF</code></li>
 <li>high surrogates: <code>U+D800</code> to <code>U+DBFF</code></li>
 </ul>
-<p>Through bit shuffling, these two bytes allows to map to values in the <code>U+10000</code> to <code>U+10FFFF</code> range. For the interested reader, the algorithm is as follows (<a href="https://en.wikipedia.org/wiki/UTF-16#Code_points_from_U+010000_to_U+10FFFF">cited from wikipedia</a>):</p>
+<p>Through bit shuffling, these 2-byte pairs allow to map to values in the <code>U+10000</code> to <code>U+10FFFF</code> range. For the interested reader, the algorithm is as follows (<a href="https://en.wikipedia.org/wiki/UTF-16#Code_points_from_U+010000_to_U+10FFFF">cited from Wikipedia</a>):</p>
 <blockquote>
 <ul>
 <li>0x10000 is subtracted from the code point (U), leaving a 20-bit number (U’) in the hex number range 0x00000–0xFFFFF.</li>
@@ -322,14 +303,14 @@
 <p>UTF-16 is not ASCII compatible either. It is more space efficient than UTF-32 though. For some languages, it can even be more space efficient than UTF-8.</p>
 <h3 id="unicode-scalar-values">Unicode Scalar Values</h3>
 <p>It is important to understand that the Haskell <code>Char</code> type (which is essentially a Code Point) can represent surrogates that are used in UTF-16.</p>
-<p>The unicode standard also defines the concept of <a href="http://www.unicode.org/versions/Unicode5.2.0/ch03.pdf#page=35">Unicode Scalar Values</a>:</p>
+<p>The Unicode standard also defines the concept of <a href="http://www.unicode.org/versions/Unicode5.2.0/ch03.pdf#page=35">Unicode Scalar Values</a>:</p>
 <blockquote>
 <p>Any Unicode code point except high-surrogate and low-surrogate code points. In other words, the ranges of integers 0 to D7FF16 and E00016 to 10FFFF16 inclusive.</p>
 </blockquote>
 <p>So, code point without surrogates. This will become relevant for UTF-8.</p>
 <h3 id="utf-8">UTF-8</h3>
-<p>This is similar to UTF-16 a variable-width character encoding. It’s often used in web APIs (most notably JSON) and is often the default on unix systems.</p>
-<p>Here a word is only 8 bit. The number of bytes required depends on the range of the code point and varies between 1 and 4 bytes. The whole bit conversion between code point and UTF-8 is illustrated in the following table (adopted from <a href="https://en.wikipedia.org/wiki/UTF-8#Encoding">wikipedia</a>):</p>
+<p>This is similar to UTF-16 a variable-width character encoding. It’s often used in web APIs (most notably JSON) and is often the default on Unix systems.</p>
+<p>Here, a Unicode Code Point is represented by a sequence of bytes. The number of bytes required depends on the range of the code point and varies between 1 and 4 bytes. The whole bit conversion between code point and UTF-8 is illustrated in the following table (adopted from <a href="https://en.wikipedia.org/wiki/UTF-8#Encoding">Wikipedia</a>):</p>
 <table>
 <thead>
 <tr class="header">
@@ -380,7 +361,7 @@
 <p>Notable properties of UTF-8 are:</p>
 <ul>
 <li>it is ASCII backwards compatible: a program written for UTF-8 will also understand plain ASCII encoding</li>
-<li>unicode code points in the surrogate range <code>U+D800</code> to <code>U+DFFF</code> are considered invalid byte sequences
+<li>Unicode code points in the surrogate range <code>U+D800</code> to <code>U+DFFF</code> are considered invalid byte sequences
 <ul>
 <li>as a result: UTF-8 only expresses Unicode Scalar Values</li>
 </ul></li>
@@ -460,7 +441,7 @@
 <p>However, it is a <strong>questionable default for a String type</strong>, because:</p>
 <ul>
 <li>it is inefficient for large text (carries the overhead of a linked list with thunks for every <code>Char</code>); the <a href="https://hackage.haskell.org/package/base-4.19.1.0/docs/Data-String.html#t:String">haddock documentation of Data.String</a> goes into more detail</li>
-<li>it is often confusing for users who don’t have a good mental model of what a <em>Unicode Code Point</em> is (and is uncommon or non-existent in other languages)</li>
+<li>it is often confusing for users who don’t have a good mental model of what a <em>Unicode Code Point</em> is</li>
 <li>it causes problems for certain conversions (e.g. <code>String -&gt; Text</code>), because of surrogates (it should have been Unicode Scalar Values instead or maybe even Grapheme Clusters)</li>
 </ul>
 <p>Unfortunately, since it’s defined by the Haskell Standard and has been around since the beginning of time, we won’t be able to get rid of it ever.</p>
@@ -471,19 +452,22 @@
 ghci&gt; &quot;쟬&quot;
 &quot;\51180&quot;</code></pre>
 <p>Show is for debugging, so that seems fine. However this behavior has been challenged before: <a href="https://github.com/haskell/core-libraries-committee/issues/26">Proposal: <code>showLitChar</code> (and <code>show @Char</code>) shouldn’t escape readable Unicode characters</a>.</p>
-<h2 id="string-types-overview">String Types overview</h2>
-<p>Luckily, we have many more String types:</p>
+<h2 id="string-types">String types</h2>
+<p>In this section, we will examine each string like type and what its properties and use cases are. <code>String</code> was already discussed and we don’t recommend it, so it’s omitted here.</p>
 <ul>
-<li>proper unicode text
+<li>proper Unicode text
 <ul>
 <li><a href="https://hackage.haskell.org/package/text-2.1.1/docs/Data-Text.html#t:Text">Text</a> (strict and lazy)</li>
+<li><a href="https://hackage.haskell.org/package/text-short-0.1.5/docs/Data-Text-Short.html#t:ShortText">ShortText</a></li>
 </ul></li>
 <li>byte sequences
 <ul>
 <li><a href="https://hackage.haskell.org/package/bytestring-0.12.1.0/docs/Data-ByteString.html#t:ByteString">ByteString</a> (strict and lazy)</li>
 <li><a href="https://hackage.haskell.org/package/bytestring-0.12.1.0/docs/Data-ByteString-Short.html#t:ShortByteString">ShortByteString</a></li>
+<li><a href="https://hackage.haskell.org/package/byteslice-0.2.13.2/docs/Data-Bytes.html#t:Bytes">Bytes</a></li>
+<li><a href="https://hackage.haskell.org/package/byteslice-0.2.13.2/docs/Data-Bytes-Chunks.html#t:Chunks">Chunks</a></li>
 </ul></li>
-<li>bytes sequences dealing with platform API differences
+<li>byte sequences dealing with platform API differences
 <ul>
 <li><a href="https://hackage.haskell.org/package/os-string-2.0.2.1/docs/System-OsString.html#t:OsString">OsString</a></li>
 <li><a href="https://hackage.haskell.org/package/os-string-2.0.2.1/docs/System-OsString-Posix.html#t:PosixString">PosixString</a></li>
@@ -503,63 +487,91 @@ ghci&gt; &quot;쟬&quot;
 </ul></li>
 </ul>
 <p>If we delve more into filepaths, there are actually even more, e.g. strongly typed filepaths. But those are out of scope.</p>
-<h2 id="which-string-type-to-pick">Which String type to pick</h2>
-<p>In this section, we will examine each string like type and what its properties and use cases are. <code>String</code> was already discussed and we don’t recommend it, so it’s omitted here.</p>
 <h3 id="text">Text</h3>
 <p>If you are not sure what you need, you most likely want <code>Text</code> from the <a href="https://hackage.haskell.org/package/text">text package</a>, which is shipped with GHC. This type is meant for human readable Unicode text and has all the primitives you need. The API is in fact more complete than the one for <code>String</code>, containing functions like <code>stripPrefix</code> and <code>toLower</code>.</p>
-<p>Internally, Text uses a UTF-8 encoded byte array since version 2.0 and UTF-16 before version 2.0. So it is always guaranteed to be valid unicode.</p>
+<p>Internally, Text uses a UTF-8 encoded byte array since version 2.0 and UTF-16 before version 2.0. So it is always guaranteed to be valid Unicode.</p>
 <p>The current definition for strict <code>Text</code> is (as of <a href="https://hackage.haskell.org/package/text-2.1.1">2.1.1</a>):</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="co">-- | A space efficient, packed, unboxed Unicode text type.</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Text</span> <span class="ot">=</span> <span class="dt">Text</span></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a>    <span class="ot">{-# UNPACK #-}</span> <span class="op">!</span><span class="dt">A.Array</span> <span class="co">-- ^ bytearray encoded as UTF-8</span></span>
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true"></a>    <span class="ot">{-# UNPACK #-}</span> <span class="op">!</span><span class="dt">Int</span>     <span class="co">-- ^ offset in bytes (not in Char!), pointing to a start of UTF-8 sequence</span></span>
 <span id="cb5-5"><a href="#cb5-5" aria-hidden="true"></a>    <span class="ot">{-# UNPACK #-}</span> <span class="op">!</span><span class="dt">Int</span>     <span class="co">-- ^ length in bytes (not in Char!), pointing to an end of UTF-8 sequence</span></span></code></pre></div>
-<p>As we can see here, this type allows efficient slicing to avoid unnecessary <code>memcpy</code> for many operations. E.g. <code>init</code> and <code>tail</code> are <em>O(1)</em> time and space. <code>splitAt</code> is <em>O(1)</em>, but <em>O(n)</em> time, because UTF-8 complicates the offset computation.</p>
+<p>As we can see here, this type allows efficient slicing to avoid unnecessary <code>memcpy</code> for many operations. E.g. <code>init</code> and <code>tail</code> are <em>O(1)</em> time and space. <code>splitAt</code> is <em>O(1)</em> space, but <em>O(n)</em> time, because UTF-8 complicates the offset computation (remember, a Unicode Code Point encoding can be anywhere between 1 and 4 bytes in UTF-8).</p>
+<p>We explain more about this later in <a href="#slicable-vs-non-slicable">Slicable vs non-slicable</a>.</p>
 <p>The lazy Text variant is as follows:</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Text</span> <span class="ot">=</span> <span class="dt">Empty</span></span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a>          <span class="op">|</span> <span class="dt">Chunk</span> <span class="ot">{-# UNPACK #-}</span> <span class="op">!</span><span class="dt">T.Text</span> <span class="dt">Text</span></span></code></pre></div>
-<p>Text does not allow to represent surrogates. It is a sequence of <a href="http://www.unicode.org/versions/Unicode5.2.0/ch03.pdf#page=35">Unicode Scalar Values</a>. Invalid values will be converted to the replacement character <code>U+FFFD</code> silently when using e.g. <code>pack</code>. You might be thinking that’s not a problem… but I have to disappoint you. There is a reason <code>String</code> allows surrogates: <a href="https://peps.python.org/pep-0383/">PEP-383</a>. This is an abomination and base uses it: On unix, it uses <a href="https://hackage.haskell.org/package/base-4.16.1.0/docs/GHC-IO-Encoding.html#v:getFileSystemEncoding"><code>getFileSystemEncoding</code></a> and <a href="https://hackage.haskell.org/package/base-4.16.1.0/docs/GHC-IO-Encoding.html#v:mkTextEncoding"><code>mkTextEncoding</code></a> to pick a round-trippable encoding for filepaths. E.g. if your locale returns <code>en_US.UTF-8</code> you’ll get <code>UTF-8//ROUNDTRIP</code> TextEncoding, which is based on PEP-383 and invalid bytes get translated to some special representation (lone surrogates) in order to be roundtripped. This has been described in my blog <a href="https://hasufell.github.io/posts/2022-06-29-fixing-haskell-filepaths.html">Fixing ‘FilePath’ in Haskell</a>.</p>
+<p>This has the same structure as a list, and as such can also be potentially streamed in constant space or allow the GC to clean up unused chunks after splitting/slicing.</p>
+<p>Text does not allow to represent surrogates. It is a sequence of <a href="http://www.unicode.org/versions/Unicode5.2.0/ch03.pdf#page=35">Unicode Scalar Values</a>. Invalid values will be converted to the replacement character <code>U+FFFD</code> silently when using e.g. <code>pack</code>. You might be thinking that’s not a problem… but I have to disappoint you. There is a reason <code>String</code> allows surrogates: <a href="https://peps.python.org/pep-0383/">PEP-383</a>. This is an abomination and base uses it: On Unix, it uses <a href="https://hackage.haskell.org/package/base-4.16.1.0/docs/GHC-IO-Encoding.html#v:getFileSystemEncoding"><code>getFileSystemEncoding</code></a> and <a href="https://hackage.haskell.org/package/base-4.16.1.0/docs/GHC-IO-Encoding.html#v:mkTextEncoding"><code>mkTextEncoding</code></a> to pick a round-trippable encoding for filepaths. E.g. if your locale returns <code>en_US.UTF-8</code> you’ll get <code>UTF-8//ROUNDTRIP</code> <code>TextEncoding</code>, which is based on PEP-383 and invalid bytes get translated to some special representation (lone surrogates) in order to be roundtripped. This has been described in my blog <a href="https://hasufell.github.io/posts/2022-06-29-fixing-haskell-filepaths.html">Fixing ‘FilePath’ in Haskell</a>.</p>
 <h4 id="text-summary">Text summary</h4>
 <p>Invariants:</p>
 <ul>
-<li>is always unicode</li>
+<li>is always Unicode</li>
 <li>never encodes surrogates (uses replacement char <code>U+FFFD</code>)</li>
-<li>unpinned memory</li>
+<li>unpinned memory (can be moved by the GC at any time, see the <a href="#pinned-vs-unpinned">Pinned vs unpinned</a> section)</li>
+<li>strict and lazy variants</li>
 </ul>
 <p>Useful for:</p>
 <ul>
-<li>anything that fits ASCII or unicode</li>
+<li>anything that fits ASCII or Unicode</li>
 <li>large human readable text processing that requires efficient formats</li>
-<li>complex unicode handling via advanced libraries such as <a href="https://hackage.haskell.org/package/text-icu">text-icu</a></li>
+<li>complex Unicode handling via advanced libraries such as <a href="https://hackage.haskell.org/package/text-icu">text-icu</a></li>
 <li>quite efficient slicing</li>
 </ul>
 <p>Not so useful for:</p>
 <ul>
 <li>dealing with C FFI</li>
-<li>trying to store or deal with non-unicode encodings</li>
+<li>trying to store or deal with non-Unicode encodings</li>
 <li>dealing with filepaths</li>
+<li>lots of small Unicode texts</li>
 </ul>
 <p>Lazy variants are useful for streaming and incremental processing, as the strict variant requires the whole content to be in memory.</p>
+<h3 id="shorttext">ShortText</h3>
+<p>This is an alternative Unicode text type that is meant for lots of small text sequences. It is part of the <a href="https://hackage.haskell.org/package/text-short">text-short</a> package. The definition is as follows:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">ShortText</span> <span class="ot">=</span> <span class="dt">ShortText</span> <span class="dt">ShortByteString</span></span></code></pre></div>
+<p>So there is no length or offset field. This means it has all the same properties as an unpinned <code>ShortByteString</code>, except that the data is guaranteed to be valid UTF-8.</p>
+<h4 id="shorttext-summary">ShortText summary</h4>
+<p>Invariants:</p>
+<ul>
+<li>is always Unicode</li>
+<li>never encodes surrogates (uses replacement char <code>U+FFFD</code>)</li>
+<li>unpinned memory (can be moved by the GC at any time)</li>
+<li>strict</li>
+</ul>
+<p>Useful for:</p>
+<ul>
+<li>anything that fits ASCII or Unicode</li>
+<li>lots of small text sequences</li>
+</ul>
+<p>Not so useful for:</p>
+<ul>
+<li>using with <code>text-icu</code> package, which expects <code>Text</code></li>
+<li>efficient slicing</li>
+<li>dealing with C FFI</li>
+<li>trying to store or deal with non-Unicode encodings</li>
+<li>dealing with filepaths</li>
+</ul>
 <h3 id="bytestring">ByteString</h3>
-<p>This is a low level type from the <a href="https://hackage.haskell.org/package/bytestring">bytestring</a> package, shipped with GHC. It is just a sequence of bytes and carries no encoding information. It uses <strong>pinned memory</strong>, so it cannot be moved by the GC. As such, it doesn’t require copying when dealing with the FFI. It is also often more desirable when interacting with FFI, see the GHC user guide:</p>
+<p>This is a low level type from the <a href="https://hackage.haskell.org/package/bytestring">bytestring</a> package, shipped with GHC. It is just a sequence of bytes and carries no encoding information. It uses <strong>pinned memory</strong> (see <a href="#pinned-vs-unpinned">Pinned vs unpinned</a> section). As such, it doesn’t require copying when dealing with the FFI. It is also often more desirable when interacting with FFI, see the GHC user guide:</p>
 <ul>
 <li><a href="https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/ffi.html#ghc-differences-to-the-ffi-chapter">GHC differences to the FFI Chapter</a></li>
 <li><a href="https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/ffi.html#ghc-extensions-to-the-ffi-chapter">GHC extensions to the FFI Chapter</a></li>
 </ul>
-<p>ByteString is quite efficient and has a large API, but (obviously) lacks text processing facilities, because it has no knowledge of unicode (or other textual formats). Most operations work on <code>Word8</code> boundaries.</p>
+<p>ByteString is quite efficient and has a large API, but (obviously) lacks text processing facilities, because it has no knowledge of Unicode (or other textual formats). Most operations work on <code>Word8</code> boundaries.</p>
 <p>The definition for strict ByteString is (as of <a href="https://hackage.haskell.org/package/bytestring-0.12.1.0">0.12.1.0</a>):</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">ByteString</span> <span class="ot">=</span> <span class="dt">BS</span> <span class="ot">{-# UNPACK #-}</span> <span class="op">!</span>(<span class="dt">ForeignPtr</span> <span class="dt">Word8</span>) <span class="co">-- payload</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a>                     <span class="ot">{-# UNPACK #-}</span> <span class="op">!</span><span class="dt">Int</span>                <span class="co">-- length</span></span></code></pre></div>
-<p>This allows, similar to Text, slicing without copying memory (through pointer arithmetic and the length field). Since we’re not dealing with unicode, but just <code>Word8</code> boundaries, operations like <code>splitAt</code> are <em>O(1)</em> time and space.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">ByteString</span> <span class="ot">=</span> <span class="dt">BS</span> <span class="ot">{-# UNPACK #-}</span> <span class="op">!</span>(<span class="dt">ForeignPtr</span> <span class="dt">Word8</span>) <span class="co">-- payload</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true"></a>                     <span class="ot">{-# UNPACK #-}</span> <span class="op">!</span><span class="dt">Int</span>                <span class="co">-- length</span></span></code></pre></div>
+<p>This allows, similar to Text, slicing without copying memory (through pointer arithmetic and the length field). Since we’re not dealing with Unicode, but just <code>Word8</code> boundaries, operations like <code>splitAt</code> are <em>O(1)</em> time and space. We don’t need an offset field, because we can just advance the pointer instead.</p>
 <p>And the lazy counterpart, which looks similar to lazy Text:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">ByteString</span> <span class="ot">=</span> <span class="dt">Empty</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true"></a>                <span class="op">|</span> <span class="dt">Chunk</span>  <span class="ot">{-# UNPACK #-}</span> <span class="op">!</span><span class="dt">S.StrictByteString</span> <span class="dt">ByteString</span></span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">ByteString</span> <span class="ot">=</span> <span class="dt">Empty</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true"></a>                <span class="op">|</span> <span class="dt">Chunk</span>  <span class="ot">{-# UNPACK #-}</span> <span class="op">!</span><span class="dt">S.StrictByteString</span> <span class="dt">ByteString</span></span></code></pre></div>
 <p>There is an API variant <a href="https://hackage.haskell.org/package/bytestring-0.12.1.0/docs/Data-ByteString-Char8.html">Data.ByteString.Char8</a>, which allows operations to work on <code>Char</code> boundaries. However, it can be misleading to newcomers, because it actually truncates all Chars to 8 bits. <strong>You should avoid this, unless you know what you are doing.</strong> It is more likely that you are looking for decoding libraries, where you can specify which encoding to use, e.g. <a href="https://hackage.haskell.org/package/bytestring-encoding-0.1.2.0/docs/Data-ByteString-Encoding.html#v:decode">bytestring-encoding</a>.</p>
 <p>It also has to be noted that pinned memory can cause memory fragmentation for lots of small ByteStrings (this is also discussed in <a href="https://hasufell.github.io/posts/2022-06-29-fixing-haskell-filepaths.html">Fixing ‘FilePath’ in Haskell</a>). An alternative type is <code>ShortByteString</code>, which will be discussed next.</p>
 <h4 id="bytestring-summary">ByteString summary</h4>
 <p>Invariants:</p>
 <ul>
 <li>pinned memory</li>
+<li>strict and lazy variants</li>
 </ul>
 <p>Useful for:</p>
 <ul>
@@ -567,66 +579,103 @@ ghci&gt; &quot;쟬&quot;
 <li>very efficient slicing</li>
 <li>dealing with raw bytes (e.g. web servers)</li>
 <li>dealing with C FFI</li>
-<li>storing non-unicode encodings e.g. via a newtype wrapper</li>
+<li>storing non-Unicode encodings e.g. via a newtype wrapper</li>
 <li>fast parsers, see the excellent blog post from Chris Done on <a href="https://chrisdone.com/posts/fast-haskell-c-parsing-xml/">Fast Haskell: Competing with C at parsing XML</a></li>
 </ul>
 <p>Not so useful for:</p>
 <ul>
-<li>dealing with unicode or human readable text</li>
+<li>dealing with Unicode or human readable text</li>
 <li>dealing with lots of small byte sequences</li>
 </ul>
 <p>Lazy variants, again, are useful for streaming and incremental processing, as the strict variant requires the whole content to be in memory.</p>
 <h3 id="shortbytestring">ShortByteString</h3>
 <p>This type is from the bytestring package as well and lives under <a href="https://hackage.haskell.org/package/bytestring-0.12.1.0/docs/Data-ByteString-Short.html">Data.ByteString.Short</a>.</p>
-<p>It has the same API as <code>ByteString</code> since <a href="https://hackage.haskell.org/package/bytestring-0.11.3.0/changelog">0.11.3.0</a>, so can be used as a drop-in replacement. The main difference is that it could be backed by <em>unpinned memory</em>, so causes no heap fragmentation (unless you use the internal API to construct pinned <code>ByteArray</code>s). It also has no lazy variant.</p>
+<p>It has the same API as <code>ByteString</code> since <a href="https://hackage.haskell.org/package/bytestring-0.11.3.0/changelog">0.11.3.0</a>, so can be used as a drop-in replacement. The main difference is that it is usually backed by <em>unpinned memory</em>, so causes no heap fragmentation. It is possible to construct it pinned via internal API, but slicing operations like <code>splitAt</code> will return unpinned byte strings.</p>
 <p>The definition as of <a href="https://hackage.haskell.org/package/bytestring-0.12.1.0">0.12.1.0</a> is:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">ShortByteString</span> <span class="ot">=</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true"></a>  <span class="dt">ShortByteString</span></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true"></a>  {<span class="ot"> unShortByteString ::</span> <span class="dt">ByteArray</span></span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true"></a>  }</span></code></pre></div>
-<p>This makes it suitable for things like unix filepaths. But we will explore better filepath types later.</p>
-<p>The name is maybe a little bit misleading. It can very well be used for large data as well, if you don’t mind its strictness (the whole content is always in memory). <strong>However, this type does not allow slicing</strong>, unlike <code>Text</code> and <code>ByteString</code>, and so a lot of operations cause <code>memcpy</code>.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">ShortByteString</span> <span class="ot">=</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true"></a>  <span class="dt">ShortByteString</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true"></a>  {<span class="ot"> unShortByteString ::</span> <span class="dt">ByteArray</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true"></a>  }</span></code></pre></div>
+<p>This makes it suitable for things like Unix filepaths. But we will explore better filepath types later.</p>
+<p>The name is maybe a little bit misleading. It can very well be used for large data as well, if you don’t mind its strictness (the whole content is always in memory). <strong>However, this type does not allow slicing</strong>, unlike <code>Text</code> and <code>ByteString</code>, and so a lot of operations cause <code>memcpy</code>. This however has the advantage that we save at least 2 words compared to e.g. <code>Text</code>, because we don’t need an offset or length field.</p>
+<p>If you want a similar type, but with slicing capability, use <a href="#bytes">Bytes</a>.</p>
 <p>Interfacing with C FFI triggers memory copy as well, because we need pinned memory.</p>
+<p>There is no lazy variant.</p>
 <h4 id="shortbytestring-summary">ShortByteString summary</h4>
 <p>Invariants:</p>
 <ul>
 <li>unpinned memory (when using the default API)</li>
+<li>always strict</li>
 </ul>
 <p>Useful for:</p>
 <ul>
 <li>lots of small to medium sized byte sequences</li>
 <li>large data, if strictness is desired and efficient slicing not needed</li>
 <li>dealing with C FFI (although it incurs <code>memcpy</code>)</li>
-<li>storing non-unicode encodings e.g. via a newtype wrapper</li>
+<li>storing non-Unicode encodings e.g. via a newtype wrapper</li>
 </ul>
 <p>Not so useful for:</p>
 <ul>
-<li>dealing with unicode or human readable text</li>
+<li>dealing with Unicode or human readable text</li>
 <li>fast parsers, because no lazy variant and no efficient slicing</li>
+</ul>
+<h3 id="bytes">Bytes</h3>
+<p>This type is from the <code>byteslice</code> package and lives under <a href="https://hackage.haskell.org/package/byteslice-0.2.13.2/docs/Data-Bytes.html">Data.Bytes</a>. It is not shipped by GHC.</p>
+<p>It is a essentially a <code>ShortByteString</code> with 0-copy slicing (<code>init</code>, <code>splitAt</code> etc.). It can be constructed as a pinned or unpinned byte sequence and all the usual operations for it will maintain that invariant.</p>
+<p>The definition as of <a href="https://hackage.haskell.org/package/byteslice-0.2.13.2">0.2.13.2</a> is:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Bytes</span> <span class="ot">=</span> <span class="dt">Bytes</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true"></a>  {<span class="ot"> array ::</span> <span class="ot">{-# UNPACK #-}</span> <span class="op">!</span><span class="dt">ByteArray</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true"></a>  ,<span class="ot"> offset ::</span> <span class="ot">{-# UNPACK #-}</span> <span class="op">!</span><span class="dt">Int</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true"></a>  ,<span class="ot"> length ::</span> <span class="ot">{-# UNPACK #-}</span> <span class="op">!</span><span class="dt">Int</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true"></a>  }</span></code></pre></div>
+<p>This is exactly the same definition as the <code>Text</code> type. But it does not maintain UTF-8. It uses <code>ByteArray</code> like <code>ShortByteString</code> does. Compared to <code>ShortByteString</code> however, we have three words more memory overhead.</p>
+<p>The API allows to convert to <code>ByteString</code> and <code>ShortByteString</code>. Depending on whether it was pinned or unpinned, sliced or unsliced, those may be 0-copy operations as well.</p>
+<p>There’s another variant called <code>Chunks</code> in <a href="https://hackage.haskell.org/package/byteslice-0.2.13.2/docs/Data-Bytes-Chunks.html">Data.Bytes.Chunks</a>:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Chunks</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true"></a>  <span class="ot">=</span> <span class="dt">ChunksCons</span> <span class="ot">{-# UNPACK #-}</span> <span class="op">!</span><span class="dt">Bytes</span> <span class="op">!</span><span class="dt">Chunks</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true"></a>  <span class="op">|</span> <span class="dt">ChunksNil</span></span></code></pre></div>
+<p>Although This is quite similar to how lazy <code>Text</code> is defined, this type is not lazy at all. It has <a href="https://downloads.haskell.org/ghc/9.6.5/docs/users_guide/exts/strict.html">bang patterns</a> on both the value and the recursion, so it is spine-strict.</p>
+<p>The only real use case the <code>Chunk</code> type has is when you want to avoid the overhead of constant appending of <code>ByteArray</code>s, because you’re e.g. reading a file incrementally.</p>
+<h4 id="bytes-summary">Bytes summary</h4>
+<p>Invariants:</p>
+<ul>
+<li>can be both pinned or unpinned</li>
+<li>is always strict</li>
+</ul>
+<p>Useful for:</p>
+<ul>
+<li>when you want an unpinned strict ByteString…</li>
+<li>or a slicable ShortByteString</li>
+<li>dealing with C FFI</li>
+<li>parsers, if we don’t mind strictness</li>
+</ul>
+<p>Not so useful for:</p>
+<ul>
+<li>dealing with Unicode or human readable text</li>
 </ul>
 <h3 id="osstring-posixstring-and-windowsstring">OsString, PosixString and WindowsString</h3>
 <p>These are relatively new types, which were first added to <a href="https://hackage.haskell.org/package/filepath-1.4.100.0/changelog">filepath-1.4.100.0</a> as part of a user-space implementation of the <a href="https://gitlab.haskell.org/ghc/ghc/-/wikis/proposal/abstract-file-path">Abstract FilePath Proposal</a>. More details <a href="https://hasufell.github.io/posts/2022-06-29-fixing-haskell-filepaths.html">here</a>.</p>
 <p>Starting with filepath-1.5.0.0, the types were moved to a new home in the <a href="https://hackage.haskell.org/package/os-string">os-string</a> package.</p>
 <p>These types are meant to abstract over platform differences and their encodings when dealing with operating system API. It is similar to the rust type <a href="https://doc.rust-lang.org/std/ffi/struct.OsString.html">OsString</a>, but the implementation is quite different.</p>
 <p>Simplified, the Haskell definitions are:</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true"></a><span class="co">-- | Commonly used windows string as wide character bytes.</span></span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">WindowsString</span> <span class="ot">=</span> <span class="dt">WindowsString</span> <span class="dt">ShortByteString</span></span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true"></a></span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true"></a><span class="co">-- | Commonly used Posix string as uninterpreted @char[]@ array.</span></span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">PosixString</span> <span class="ot">=</span> <span class="dt">PosixString</span> <span class="dt">ShortByteString</span></span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true"></a></span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true"></a><span class="co">-- | Newtype representing short operating system specific strings.</span></span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true"></a><span class="co">--</span></span>
-<span id="cb10-9"><a href="#cb10-9" aria-hidden="true"></a><span class="co">-- Internally this is either 'WindowsString' or 'PosixString',</span></span>
-<span id="cb10-10"><a href="#cb10-10" aria-hidden="true"></a><span class="co">-- depending on the platform. Both use unpinned</span></span>
-<span id="cb10-11"><a href="#cb10-11" aria-hidden="true"></a><span class="co">-- 'ShortByteString' for efficiency.</span></span>
-<span id="cb10-12"><a href="#cb10-12" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">OsString</span> <span class="ot">=</span> <span class="dt">OsString</span></span>
-<span id="cb10-13"><a href="#cb10-13" aria-hidden="true"></a><span class="pp">#if defined(mingw32_HOST_OS)</span></span>
-<span id="cb10-14"><a href="#cb10-14" aria-hidden="true"></a>  <span class="dt">WindowsString</span></span>
-<span id="cb10-15"><a href="#cb10-15" aria-hidden="true"></a><span class="pp">#else</span></span>
-<span id="cb10-16"><a href="#cb10-16" aria-hidden="true"></a>  <span class="dt">PosixString</span></span>
-<span id="cb10-17"><a href="#cb10-17" aria-hidden="true"></a><span class="pp">#endif</span></span></code></pre></div>
-<p>As we can see, on unix, we’re basically dealing with <code>Word8</code> sequences (<code>char[]</code>), but on windows, we’re dealing with <code>Word16</code> sequences (<code>wchar_t*</code>).</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true"></a><span class="co">-- | Commonly used Windows string as wide character bytes.</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">WindowsString</span> <span class="ot">=</span> <span class="dt">WindowsString</span> <span class="dt">ShortByteString</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true"></a></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true"></a><span class="co">-- | Commonly used Posix string as uninterpreted @char[]@ array.</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">PosixString</span> <span class="ot">=</span> <span class="dt">PosixString</span> <span class="dt">ShortByteString</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true"></a></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true"></a><span class="co">-- | Newtype representing short operating system specific strings.</span></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true"></a><span class="co">--</span></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true"></a><span class="co">-- Internally this is either 'WindowsString' or 'PosixString',</span></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true"></a><span class="co">-- depending on the platform. Both use unpinned</span></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true"></a><span class="co">-- 'ShortByteString' for efficiency.</span></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">OsString</span> <span class="ot">=</span> <span class="dt">OsString</span></span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true"></a><span class="pp">#if defined(mingw32_HOST_OS)</span></span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true"></a>  <span class="dt">WindowsString</span></span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true"></a><span class="pp">#else</span></span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true"></a>  <span class="dt">PosixString</span></span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true"></a><span class="pp">#endif</span></span></code></pre></div>
+<p>As we can see, on Unix, we’re basically dealing with <code>Word8</code> sequences (<code>char[]</code>), but on Windows, we’re dealing with <code>Word16</code> sequences (<code>wchar_t*</code>).</p>
 <p>The constructors are internal and it is impossible to pattern match on the wrong platform in <code>OsString</code>, due to the CPP.</p>
 <p>OsString provides a rich API just like ByteString.</p>
 <p>This allows packages like <code>unix</code> and <code>Win32</code> to provide alternatives to <code>String</code>, where the bytes that are received from operating system API is not transformed, decoded or otherwise roundtripped. It is <strong>unchanged</strong>. E.g.:</p>
@@ -638,7 +687,7 @@ ghci&gt; &quot;쟬&quot;
 <ul>
 <li><a href="https://hackage.haskell.org/package/file-io-0.1.1/docs/System-File-OsPath.html">System.File.OsPath</a></li>
 </ul>
-<p>This strategy has been used for filepaths, where <code>unix</code> package uses <code>PosixString</code>, <code>Win32</code> package uses <code>WindowsString</code> and the platform agnostic <code>directory</code> and <code>filo-io</code> packages use <code>OsString</code>, combining the APIs of unix and windows. More information on this with examples and API explanation can be found <a href="https://hasufell.github.io/posts/2022-06-29-fixing-haskell-filepaths.html">here</a>.</p>
+<p>This strategy has been used for filepaths, where <code>unix</code> package uses <code>PosixString</code>, <code>Win32</code> package uses <code>WindowsString</code> and the platform agnostic <code>directory</code> and <code>filo-io</code> packages use <code>OsString</code>, combining the APIs of Unix and Windows. More information on this with examples and API explanation can be found <a href="https://hasufell.github.io/posts/2022-06-29-fixing-haskell-filepaths.html">here</a>.</p>
 <p>It is not restricted to filepaths, but may be extended to dealing with environment variables, program arguments and other bits of operating system API. It is always safer than <code>String</code> and more type safe than <code>ByteString</code>.</p>
 <h4 id="osstring-posixstring-and-windowsstring-summary">OsString, PosixString and WindowsString summary</h4>
 <p>Invariants:</p>
@@ -653,7 +702,7 @@ ghci&gt; &quot;쟬&quot;
 <li>writing type safe operating system APIs
 <ul>
 <li>while maintaining the original bytes without decoding</li>
-<li>abstracting over unix and windows</li>
+<li>abstracting over Unix and Windows</li>
 <li>making minimal assumptions on underlying encodings</li>
 </ul></li>
 </ul>
@@ -666,45 +715,46 @@ ghci&gt; &quot;쟬&quot;
 <h3 id="cstring-and-cstringlen">CString and CStringLen</h3>
 <p>These are part of <code>base</code> and low-level FFI types.</p>
 <p>The definitions are very straight forward:</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true"></a><span class="co">-- | A C string is a reference to an array of C characters terminated by NUL.</span></span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true"></a><span class="kw">type</span> <span class="dt">CString</span>    <span class="ot">=</span> <span class="dt">Ptr</span> <span class="dt">CChar</span></span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true"></a></span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true"></a><span class="co">-- | A string with explicit length information in bytes instead of a</span></span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true"></a><span class="co">-- terminating NUL (allowing NUL characters in the middle of the string).</span></span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true"></a><span class="kw">type</span> <span class="dt">CStringLen</span> <span class="ot">=</span> (<span class="dt">Ptr</span> <span class="dt">CChar</span>, <span class="dt">Int</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb14"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true"></a><span class="co">-- | A C string is a reference to an array of C characters terminated by NUL.</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true"></a><span class="kw">type</span> <span class="dt">CString</span>    <span class="ot">=</span> <span class="dt">Ptr</span> <span class="dt">CChar</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true"></a></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true"></a><span class="co">-- | A string with explicit length information in bytes instead of a</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true"></a><span class="co">-- terminating NUL (allowing NUL characters in the middle of the string).</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true"></a><span class="kw">type</span> <span class="dt">CStringLen</span> <span class="ot">=</span> (<span class="dt">Ptr</span> <span class="dt">CChar</span>, <span class="dt">Int</span>)</span></code></pre></div>
 <p>The haddock also explains the expected properties.</p>
 <p>As an interesting edge case: if you’re converting from <code>ByteString</code> to <code>CString</code> and happen to have a NUL byte in your ByteString, then <code>useAsCString</code> will over-allocate bytes:</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true"></a><span class="ot">useAsCString ::</span> <span class="dt">ByteString</span> <span class="ot">-&gt;</span> (<span class="dt">CString</span> <span class="ot">-&gt;</span> <span class="dt">IO</span> a) <span class="ot">-&gt;</span> <span class="dt">IO</span> a</span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true"></a>useAsCString (<span class="dt">BS</span> fp l) action <span class="ot">=</span></span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true"></a>  allocaBytes (l<span class="op">+</span><span class="dv">1</span>) <span class="op">$</span> \buf <span class="ot">-&gt;</span> <span class="kw">do</span></span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true"></a>    unsafeWithForeignPtr fp <span class="op">$</span> \p <span class="ot">-&gt;</span> copyBytes buf p l</span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true"></a>    pokeByteOff buf l (<span class="dv">0</span><span class="ot">::</span><span class="dt">Word8</span>)</span>
-<span id="cb12-6"><a href="#cb12-6" aria-hidden="true"></a>    action (castPtr buf)</span></code></pre></div>
+<div class="sourceCode" id="cb15"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true"></a><span class="ot">useAsCString ::</span> <span class="dt">ByteString</span> <span class="ot">-&gt;</span> (<span class="dt">CString</span> <span class="ot">-&gt;</span> <span class="dt">IO</span> a) <span class="ot">-&gt;</span> <span class="dt">IO</span> a</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true"></a>useAsCString (<span class="dt">BS</span> fp l) action <span class="ot">=</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true"></a>  allocaBytes (l<span class="op">+</span><span class="dv">1</span>) <span class="op">$</span> \buf <span class="ot">-&gt;</span> <span class="kw">do</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true"></a>    unsafeWithForeignPtr fp <span class="op">$</span> \p <span class="ot">-&gt;</span> copyBytes buf p l</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true"></a>    pokeByteOff buf l (<span class="dv">0</span><span class="ot">::</span><span class="dt">Word8</span>)</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true"></a>    action (castPtr buf)</span></code></pre></div>
 <p>So it can make sense, in some cases, to check your ByteString for NUL bytes.</p>
 <p>We won’t dive into the Haskell C FFI, but this is literally the only proper use case. Refer to the <a href="https://en.wikibooks.org/wiki/Haskell/FFI">wikibook article on Haskell FFI</a>.</p>
 <h3 id="filepath">FilePath</h3>
 <p>This type is a <strong>legacy</strong> filepath type, but is still the most widespread across the ecosystem at the time of writing. It is part of the <a href="https://hackage.haskell.org/package/filepath">filepath</a> package, which is also shipped with GHC.</p>
 <p>The definition is:</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true"></a><span class="kw">type</span> <span class="dt">FilePath</span> <span class="ot">=</span> <span class="dt">String</span></span></code></pre></div>
+<div class="sourceCode" id="cb16"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true"></a><span class="kw">type</span> <span class="dt">FilePath</span> <span class="ot">=</span> <span class="dt">String</span></span></code></pre></div>
 <p>This is not a very good choice for filepaths. Use the new <code>OsPath</code> instead.</p>
 <h3 id="ospath-posixpath-and-windowspath">OsPath, PosixPath and WindowsPath</h3>
 <p>These are equivalent to <code>OsString</code>, <code>PosixString</code> and <code>WindowsString</code>. They are just type synonyms:</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true"></a><span class="co">-- | FilePath for windows.</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true"></a><span class="kw">type</span> <span class="dt">WindowsPath</span> <span class="ot">=</span> <span class="dt">WindowsString</span></span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true"></a></span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true"></a><span class="co">-- | FilePath for posix systems.</span></span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true"></a><span class="kw">type</span> <span class="dt">PosixPath</span> <span class="ot">=</span> <span class="dt">PosixString</span></span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true"></a></span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true"></a><span class="co">-- | Abstract filepath, depending on current platform.</span></span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true"></a><span class="co">-- Matching on the wrong constructor is a compile-time error.</span></span>
-<span id="cb14-9"><a href="#cb14-9" aria-hidden="true"></a><span class="kw">type</span> <span class="dt">OsPath</span> <span class="ot">=</span> <span class="dt">OsString</span></span></code></pre></div>
+<div class="sourceCode" id="cb17"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true"></a><span class="co">-- | FilePath for Windows.</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true"></a><span class="kw">type</span> <span class="dt">WindowsPath</span> <span class="ot">=</span> <span class="dt">WindowsString</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true"></a></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true"></a><span class="co">-- | FilePath for posix systems.</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true"></a><span class="kw">type</span> <span class="dt">PosixPath</span> <span class="ot">=</span> <span class="dt">PosixString</span></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true"></a></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true"></a><span class="co">-- | Abstract filepath, depending on current platform.</span></span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true"></a><span class="co">-- Matching on the wrong constructor is a compile-time error.</span></span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true"></a><span class="kw">type</span> <span class="dt">OsPath</span> <span class="ot">=</span> <span class="dt">OsString</span></span></code></pre></div>
 <p>Use them whenever you can with the new filepath API. Refer to the <a href="https://hasufell.github.io/posts/2022-06-29-fixing-haskell-filepaths.html">Fixing Haskell filepaths</a> blog post for more details.</p>
-<h3 id="lazy-vs-strict">Lazy vs Strict</h3>
+<h2 id="lazy-vs-strict">Lazy vs Strict</h2>
 <p>The properties of lazy vs strict variants for <code>Text</code> and <code>ByteString</code> might already be obvious for many Haskellers:</p>
 <ul>
 <li><strong>Lazy</strong>:
 <ul>
 <li>can be streamed and incrementally processed, potentially in constant space</li>
+<li>can allow the GC to clean up unused chunks after slicing/splitting</li>
 <li>can express infinite data streams</li>
 <li>slightly less efficient in terms of time complexity, depending on number of chunks (compared to their strict counterparts)</li>
 <li>can work with lazy IO (<a href="#a-word-on-lazy-io">more on that later</a>)</li>
@@ -713,75 +763,184 @@ ghci&gt; &quot;쟬&quot;
 <ul>
 <li>is the most efficient in terms of time complexity</li>
 <li>is always forced into memory</li>
+<li>has less overhead than lazy types</li>
 </ul></li>
 </ul>
-<h3 id="string-types-cheat-sheet">String Types Cheat Sheet</h3>
+<p>A lot of time, people use lazy types in conjunction with lazy IO. However, another use case is to use <strong>Builders</strong>. These exist for both Text and ByteString:</p>
+<ul>
+<li><a href="https://hackage.haskell.org/package/bytestring-0.12.1.0/docs/Data-ByteString-Builder.html">Data.ByteString.Builder</a></li>
+<li><a href="https://hackage.haskell.org/package/text-2.1.1/docs/Data-Text-Lazy-Builder.html">Data.Text.Lazy.Builder</a></li>
+</ul>
+<h2 id="slicable-vs-non-slicable">Slicable vs non-slicable</h2>
+<p>All strings are slicable, but some strings can slice without copying data. E.g. compare <code>Text</code> and <code>ShortText</code>:</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Text</span> <span class="ot">=</span> <span class="dt">Text</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true"></a>    <span class="ot">{-# UNPACK #-}</span> <span class="op">!</span><span class="dt">A.Array</span> <span class="co">-- ^ bytearray encoded as UTF-8</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true"></a>    <span class="ot">{-# UNPACK #-}</span> <span class="op">!</span><span class="dt">Int</span>     <span class="co">-- ^ offset in bytes (not in Char!), pointing to a start of UTF-8 sequence</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true"></a>    <span class="ot">{-# UNPACK #-}</span> <span class="op">!</span><span class="dt">Int</span>     <span class="co">-- ^ length in bytes (not in Char!), pointing to an end of UTF-8 sequence</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true"></a></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">ShortText</span> <span class="ot">=</span> <span class="dt">ShortText</span> <span class="dt">ShortByteString</span></span></code></pre></div>
+<p>E.g. when we call <code>splitAt</code> on a <code>Text</code> value, we get back two new <code>Text</code> values that just differ in the “offset” and “length” fields, but can point at the same byte array. If we slice a lot, this can save a lot of <code>memcpy</code>, especially on large data.</p>
+<p>This means that slicing comes at two costs. First, if we split a text in half, the memory of the original byte array can’t be cleaned up by the GC. We just changed the offset and length fields, nothing else. This can be alleviated by using explicit copy operations when you don’t need the whole data anymore, e.g. via <a href="https://hackage.haskell.org/package/text-2.1.1/docs/Data-Text.html#v:copy">Data.Text.copy</a>.</p>
+<p>Second, we carry two unboxed <code>Int</code>s around for the “offset” and “length” fields, which is 2 words “overhead”. For more information on boxed and unboxed types, see the GHC user guide:</p>
+<ul>
+<li><a href="https://downloads.haskell.org/ghc/9.6.5/docs/users_guide/exts/primitives.html">Unboxed types and primitive operations</a></li>
+<li><a href="https://downloads.haskell.org/ghc/9.6.5/docs/users_guide/exts/pragmas.html#unpack-pragma"><code>UNPACK</code> pragma</a></li>
+</ul>
+<p><code>ShortText</code> in contrast, on e.g. <code>splitAt</code>, will create two new byte arrays and copy the data. Here we’re not only saving two words memory overhead (no offset and length field), but also have a bit less indirection at runtime and a bit less memory pressure (which might be useful to fit into CPU cache) as explained in <a href="https://github.com/hasufell/hasufell.github.io/pull/7#issuecomment-2105160701">this comment</a>.</p>
+<p>As such, as the name of the types suggest, a simplified criteria could be:</p>
+<ul>
+<li>slicable type: if you have large strings or need a lot of slicing</li>
+<li>non-slicable type: if you have relatively short strings or don’t need a lot of slicing</li>
+</ul>
+<p>In the end, only profiling can really tell which one is better.</p>
+<h2 id="pinned-vs-unpinned">Pinned vs unpinned</h2>
+<p>Pinned memory means it can’t be moved by the GC. This is useful if we want to move the data directly to foreign code (FFI), without first copying the entire unpinned data to a pinned memory region at the FFI boundary. But it also means that we get memory fragmentation, exactly because the GC cannot move stuff around. If you have lots of small pieces of data with pinned memory, that can severely fragment the heap.</p>
+<p>This and the problems it can cause is explained in more detail in the Well-Typed blog <a href="https://well-typed.com/blog/2020/08/memory-fragmentation/#pinned-data">Understanding Memory Fragmentation</a>.</p>
+<p>The problem of memory fragmentation was also one of the things that motivated the original <a href="https://gitlab.haskell.org/ghc/ghc/-/wikis/proposal/abstract-file-path">Abstract FilePath proposal</a> and later the new <code>OsPath</code> type.</p>
+<h2 id="string-types-cheat-sheet">String Types Cheat Sheet</h2>
+<p>A few notes on the below table:</p>
+<ul>
+<li>Unicode aware means whether we have access to text processing functions (e.g. split by Unicode Code Point etc.)</li>
+<li>memory overhead means: total words required modulo the payload</li>
+<li>the overhead for lazy types is multiplied by the number of chunks</li>
+<li>some types are unpinned by default (e.g. <code>ShortByteString</code>) but can manually be constructed as pinned via internal API</li>
+</ul>
+<p>The memory overhead measurements are best effort and explained in more detail in <a href="https://gist.github.com/hasufell/61ca8ef438cc912e7446bcc7b1f25028">this gist</a>.</p>
 <table>
 <colgroup>
-<col style="width: 12%" />
-<col style="width: 18%" />
 <col style="width: 11%" />
-<col style="width: 25%" />
-<col style="width: 14%" />
-<col style="width: 6%" />
-<col style="width: 10%" />
+<col style="width: 24%" />
+<col style="width: 7%" />
+<col style="width: 19%" />
+<col style="width: 15%" />
+<col style="width: 4%" />
+<col style="width: 4%" />
+<col style="width: 7%" />
+<col style="width: 5%" />
 </colgroup>
 <thead>
 <tr class="header">
 <th>Type</th>
 <th>purpose</th>
-<th>unicode aware</th>
+<th>Unicode aware</th>
 <th>internal representation</th>
-<th>memory properties</th>
+<th>memory overhead</th>
+<th>pinned</th>
 <th>slicing</th>
 <th>FFI suitable</th>
+<th>streaming</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td>String</td>
+<td><strong>String</strong></td>
 <td>simplicity</td>
 <td>yes</td>
 <td>List of Unicode Code Points</td>
-<td>40 bytes per char</td>
+<td>4 words per char + 1 word</td>
+<td>no</td>
 <td>--</td>
 <td>--</td>
+<td>yes</td>
 </tr>
 <tr class="even">
-<td>Text</td>
+<td><strong>Text</strong></td>
 <td>human readable text</td>
 <td>yes</td>
 <td>UTF-8 byte array</td>
-<td>unpinned</td>
+<td>7 words</td>
+<td>no</td>
 <td>+</td>
 <td>-</td>
+<td>no</td>
 </tr>
 <tr class="odd">
-<td>ByteString</td>
+<td><strong>Lazy Text</strong></td>
+<td>human readable text</td>
+<td>yes</td>
+<td>List of chunks of UTF-8 byte arrays</td>
+<td>9 words per chunk + 1 word</td>
+<td>no</td>
+<td>+</td>
+<td>-</td>
+<td>yes</td>
+</tr>
+<tr class="even">
+<td><strong>ShortText</strong></td>
+<td>short human readable texts</td>
+<td>yes</td>
+<td>UTF-8 byte array</td>
+<td>4 words</td>
+<td>yes</td>
+<td>-</td>
+<td>-</td>
+<td>no</td>
+</tr>
+<tr class="odd">
+<td><strong>ByteString</strong></td>
 <td>large byte sequences</td>
 <td>no</td>
 <td>Word8 byte array (pointer)</td>
-<td>pinned</td>
+<td>10 words</td>
+<td>yes</td>
 <td>++</td>
 <td>++</td>
+<td>no</td>
 </tr>
 <tr class="even">
-<td>ShortByteString</td>
+<td><strong>Lazy ByteString</strong></td>
+<td>large byte sequences</td>
+<td>no</td>
+<td>List of chunks of Word8 byte arrays</td>
+<td>12 words per chunk + 1 word</td>
+<td>yes</td>
+<td>++</td>
+<td>++</td>
+<td>yes</td>
+</tr>
+<tr class="odd">
+<td><strong>ShortByteString</strong></td>
 <td>short byte sequences</td>
 <td>no</td>
 <td>Word8 byte array</td>
-<td>unpinned (usually)</td>
+<td>4 words</td>
+<td>no</td>
 <td>-</td>
 <td>+</td>
+<td>no</td>
+</tr>
+<tr class="even">
+<td><strong>Bytes</strong></td>
+<td>slicable ShortByteString / pinned ByteString</td>
+<td>no</td>
+<td>Word8 byte array</td>
+<td>7 words</td>
+<td>both</td>
+<td>++</td>
+<td>+</td>
+<td>no</td>
 </tr>
 <tr class="odd">
-<td>OsString</td>
+<td><strong>Chunks</strong></td>
+<td>Like “Bytes”, but for incremental building</td>
+<td>no</td>
+<td>List of chunks of Word8 byte arrays</td>
+<td>9 words per chunk + 1 word</td>
+<td>both</td>
+<td>++</td>
+<td>+</td>
+<td>no</td>
+</tr>
+<tr class="even">
+<td><strong>OsString</strong></td>
 <td>interfacing with OS API</td>
 <td>no</td>
 <td>Word8 or Word16 byte array</td>
-<td>unpinned (usually)</td>
+<td>4 words</td>
+<td>no</td>
 <td>-</td>
 <td>+</td>
+<td>no</td>
 </tr>
 </tbody>
 </table>
@@ -792,8 +951,8 @@ ghci&gt; &quot;쟬&quot;
 <p>Whenever you write <code>"string"</code> in a Haskell file, the compiler will convert it to/consider it as <code>[Char]</code>. Likewise, <code>'c'</code> will be considered <code>Char</code>.</p>
 <h3 id="string-classes">String Classes</h3>
 <p>A popular String class is <a href="https://hackage.haskell.org/package/base-4.19.1.0/docs/Data-String.html#t:IsString">IsString</a>, which is defined as:</p>
-<div class="sourceCode" id="cb15"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true"></a><span class="kw">class</span> <span class="dt">IsString</span> a <span class="kw">where</span></span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true"></a><span class="ot">    fromString ::</span> <span class="dt">String</span> <span class="ot">-&gt;</span> a</span></code></pre></div>
+<div class="sourceCode" id="cb19"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true"></a><span class="kw">class</span> <span class="dt">IsString</span> a <span class="kw">where</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true"></a><span class="ot">    fromString ::</span> <span class="dt">String</span> <span class="ot">-&gt;</span> a</span></code></pre></div>
 <p>So this allows to convert from <code>String</code> to some other compatible type. Note how the type signature does not allow failure. So the conversion must be total.</p>
 <p><code>Text</code>, <code>ByteString</code> and <code>ShortByteString</code> have <code>IsString</code> instances. <code>OsString</code> does not. All these instances have problems though:</p>
 <ul>
@@ -808,9 +967,9 @@ ghci&gt; &quot;쟬&quot;
 <li>the caveats explained for the <code>IsString</code> class apply here as well: ByteString doesn’t behave well</li>
 </ul>
 <p>Example use:</p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true"></a><span class="ot">{-# LANGUAGE OverloadedStrings  #-}</span></span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true"></a></span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true"></a>myText <span class="ot">=</span> <span class="st">&quot;hello world&quot;</span><span class="ot"> ::</span> <span class="dt">Text</span></span></code></pre></div>
+<div class="sourceCode" id="cb20"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true"></a><span class="ot">{-# LANGUAGE OverloadedStrings  #-}</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true"></a></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true"></a>myText <span class="ot">=</span> <span class="st">&quot;hello world&quot;</span><span class="ot"> ::</span> <span class="dt">Text</span></span></code></pre></div>
 <p>I personally advise against using it.</p>
 <h3 id="quasiquoters">QuasiQuoters</h3>
 <p>This is yet another method to construct string like types. An alternative to literals. It uses <a href="https://serokell.io/blog/introduction-to-template-haskell">Template Haskell</a>, which are essentially expressions that are run at compile time. This allows us to validate literals much more rigorously and have GHC fail at compile time if we attempt to e.g. construct an invalid UTF-8 sequence as Text.</p>
@@ -821,6 +980,7 @@ ghci&gt; &quot;쟬&quot;
 <li><a href="https://hackage.haskell.org/package/interpolate">interpolate</a></li>
 <li><a href="https://hackage.haskell.org/package/PyF">PyF</a></li>
 <li><a href="https://hackage.haskell.org/package/raw-strings-qq">raw-strings-qq</a></li>
+<li><a href="https://streamly.composewell.com/haddocks/streamly-core-0.2.2/Streamly-Unicode-String.html#v:str">streamly</a></li>
 </ul>
 <p>I personally prefer <code>string-interpolate</code>. The README gives a <a href="https://gitlab.com/williamyaoh/string-interpolate/blob/master/README.md#comparison-to-other-interpolation-libraries">nice comparison</a> to some other libraries (copy-pasted for convenience):</p>
 <table>
@@ -911,9 +1071,9 @@ ghci&gt; &quot;쟬&quot;
 </tbody>
 </table>
 <p>An example use case:</p>
-<div class="sourceCode" id="cb17"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true"></a><span class="ot">showWelcomeMessage ::</span> <span class="dt">Text</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Text</span></span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true"></a>showWelcomeMessage username visits <span class="ot">=</span></span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true"></a>  [i|Welcome to my website, #{username}! You are visitor #{visits}!|]</span></code></pre></div>
+<div class="sourceCode" id="cb21"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true"></a><span class="ot">showWelcomeMessage ::</span> <span class="dt">Text</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Text</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true"></a>showWelcomeMessage username visits <span class="ot">=</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true"></a>  [i|Welcome to my website, #{username}! You are visitor #{visits}!|]</span></code></pre></div>
 <p>It is important to note that having many quasi-quotations in your source files <strong>can slow down compilation time</strong>. There are also (sometimes) issues with tooling, such as code formatters or <a href="https://haskell-language-server.readthedocs.io/en/stable/">Haskell Language Server</a>.</p>
 <p>The <code>OsString</code> type provides its own quasi-quoter <a href="https://hackage.haskell.org/package/os-string-2.0.2.1/docs/System-OsString.html#v:osstr">osstr</a>.</p>
 <p>The main advantage, again, is that quasi-quoters can properly fail and do so at compile-time.</p>
@@ -921,194 +1081,195 @@ ghci&gt; &quot;쟬&quot;
 <p>There are many ways to convert from one type to another. I propose here the most safe conversions. For some cases, we will have to provide the encoding, because it cannot be guessed.</p>
 <p>The <code>Data.ByteString.Encode</code> module listed further down below is part of the <a href="https://hackage.haskell.org/package/bytestring-encoding-0.1.2.0/docs/Data-ByteString-Encoding.html">bytestring-encoding</a> package, which is not shipped with GHC. There are other similar packages like <a href="https://hackage.haskell.org/package/utf8-string">utf8-string</a>.</p>
 <p>Other than that, we only need the packages that provide the types we’re dealing with.</p>
+<p>We’re omitting <code>ShortText</code>, because conversions are similar to <code>Text</code>. <code>Bytes</code> can be converted to <code>ByteString</code> or <code>ShortByteString</code> depending on the pinned/unpinned nature and from there we can follow the below strategies.</p>
 <h3 id="from-string-to">From String to…</h3>
 <p>Let’s write a neat conversion module:</p>
-<div class="sourceCode" id="cb18"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true"></a><span class="kw">module</span> <span class="dt">StringConversions</span> <span class="kw">where</span></span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true"></a></span>
-<span id="cb18-3"><a href="#cb18-3" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.ByteString</span> (<span class="dt">ByteString</span>)</span>
-<span id="cb18-4"><a href="#cb18-4" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.ByteString.Encoding</span> (<span class="dt">TextEncoding</span>)</span>
-<span id="cb18-5"><a href="#cb18-5" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.ByteString.Short</span> (<span class="dt">ShortByteString</span>)</span>
-<span id="cb18-6"><a href="#cb18-6" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.Text</span> (<span class="dt">Text</span>)</span>
-<span id="cb18-7"><a href="#cb18-7" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">System.OsString</span></span>
-<span id="cb18-8"><a href="#cb18-8" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">System.OsString.Encoding</span> (<span class="dt">EncodingException</span>)</span>
-<span id="cb18-9"><a href="#cb18-9" aria-hidden="true"></a></span>
-<span id="cb18-10"><a href="#cb18-10" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Data.ByteString.Encoding</span> <span class="kw">as</span> <span class="dt">BE</span></span>
-<span id="cb18-11"><a href="#cb18-11" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Data.ByteString.Short</span> <span class="kw">as</span> <span class="dt">SBS</span></span>
-<span id="cb18-12"><a href="#cb18-12" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Data.Text</span> <span class="kw">as</span> <span class="dt">T</span></span>
-<span id="cb18-13"><a href="#cb18-13" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">System.OsString</span> <span class="kw">as</span> <span class="dt">OS</span></span>
-<span id="cb18-14"><a href="#cb18-14" aria-hidden="true"></a></span>
-<span id="cb18-15"><a href="#cb18-15" aria-hidden="true"></a><span class="ot">toString ::</span> <span class="dt">String</span> <span class="ot">-&gt;</span> <span class="dt">String</span></span>
-<span id="cb18-16"><a href="#cb18-16" aria-hidden="true"></a>toString <span class="ot">=</span> <span class="fu">id</span></span>
-<span id="cb18-17"><a href="#cb18-17" aria-hidden="true"></a></span>
-<span id="cb18-18"><a href="#cb18-18" aria-hidden="true"></a><span class="ot">toText ::</span> <span class="dt">String</span> <span class="ot">-&gt;</span> <span class="dt">Text</span></span>
-<span id="cb18-19"><a href="#cb18-19" aria-hidden="true"></a>toText <span class="ot">=</span> T.pack</span>
-<span id="cb18-20"><a href="#cb18-20" aria-hidden="true"></a></span>
-<span id="cb18-21"><a href="#cb18-21" aria-hidden="true"></a><span class="ot">toByteString ::</span> <span class="dt">TextEncoding</span> <span class="ot">-&gt;</span> <span class="dt">String</span> <span class="ot">-&gt;</span> <span class="dt">ByteString</span></span>
-<span id="cb18-22"><a href="#cb18-22" aria-hidden="true"></a>toByteString encoding <span class="ot">=</span> BE.encode encoding <span class="op">.</span> T.pack</span>
-<span id="cb18-23"><a href="#cb18-23" aria-hidden="true"></a></span>
-<span id="cb18-24"><a href="#cb18-24" aria-hidden="true"></a><span class="ot">toShortByteString ::</span> <span class="dt">TextEncoding</span> <span class="ot">-&gt;</span> <span class="dt">String</span> <span class="ot">-&gt;</span> <span class="dt">ShortByteString</span></span>
-<span id="cb18-25"><a href="#cb18-25" aria-hidden="true"></a>toShortByteString encoding <span class="ot">=</span> SBS.toShort <span class="op">.</span> BE.encode encoding <span class="op">.</span> T.pack</span>
-<span id="cb18-26"><a href="#cb18-26" aria-hidden="true"></a></span>
-<span id="cb18-27"><a href="#cb18-27" aria-hidden="true"></a><span class="ot">toOsString ::</span> (<span class="dt">TextEncoding</span>, <span class="dt">TextEncoding</span>) <span class="ot">-&gt;</span> <span class="dt">String</span> <span class="ot">-&gt;</span> <span class="dt">Either</span> <span class="dt">EncodingException</span> <span class="dt">OsString</span></span>
-<span id="cb18-28"><a href="#cb18-28" aria-hidden="true"></a>toOsString (unixEncoding, windowsEncoding) <span class="ot">=</span> OS.encodeWith unixEncoding windowsEncoding</span></code></pre></div>
+<div class="sourceCode" id="cb22"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true"></a><span class="kw">module</span> <span class="dt">StringConversions</span> <span class="kw">where</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true"></a></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.ByteString</span> (<span class="dt">ByteString</span>)</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.ByteString.Encoding</span> (<span class="dt">TextEncoding</span>)</span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.ByteString.Short</span> (<span class="dt">ShortByteString</span>)</span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.Text</span> (<span class="dt">Text</span>)</span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">System.OsString</span></span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">System.OsString.Encoding</span> (<span class="dt">EncodingException</span>)</span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true"></a></span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Data.ByteString.Encoding</span> <span class="kw">as</span> <span class="dt">BE</span></span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Data.ByteString.Short</span> <span class="kw">as</span> <span class="dt">SBS</span></span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Data.Text</span> <span class="kw">as</span> <span class="dt">T</span></span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">System.OsString</span> <span class="kw">as</span> <span class="dt">OS</span></span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true"></a></span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true"></a><span class="ot">toString ::</span> <span class="dt">String</span> <span class="ot">-&gt;</span> <span class="dt">String</span></span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true"></a>toString <span class="ot">=</span> <span class="fu">id</span></span>
+<span id="cb22-17"><a href="#cb22-17" aria-hidden="true"></a></span>
+<span id="cb22-18"><a href="#cb22-18" aria-hidden="true"></a><span class="ot">toText ::</span> <span class="dt">String</span> <span class="ot">-&gt;</span> <span class="dt">Text</span></span>
+<span id="cb22-19"><a href="#cb22-19" aria-hidden="true"></a>toText <span class="ot">=</span> T.pack</span>
+<span id="cb22-20"><a href="#cb22-20" aria-hidden="true"></a></span>
+<span id="cb22-21"><a href="#cb22-21" aria-hidden="true"></a><span class="ot">toByteString ::</span> <span class="dt">TextEncoding</span> <span class="ot">-&gt;</span> <span class="dt">String</span> <span class="ot">-&gt;</span> <span class="dt">ByteString</span></span>
+<span id="cb22-22"><a href="#cb22-22" aria-hidden="true"></a>toByteString encoding <span class="ot">=</span> BE.encode encoding <span class="op">.</span> T.pack</span>
+<span id="cb22-23"><a href="#cb22-23" aria-hidden="true"></a></span>
+<span id="cb22-24"><a href="#cb22-24" aria-hidden="true"></a><span class="ot">toShortByteString ::</span> <span class="dt">TextEncoding</span> <span class="ot">-&gt;</span> <span class="dt">String</span> <span class="ot">-&gt;</span> <span class="dt">ShortByteString</span></span>
+<span id="cb22-25"><a href="#cb22-25" aria-hidden="true"></a>toShortByteString encoding <span class="ot">=</span> SBS.toShort <span class="op">.</span> BE.encode encoding <span class="op">.</span> T.pack</span>
+<span id="cb22-26"><a href="#cb22-26" aria-hidden="true"></a></span>
+<span id="cb22-27"><a href="#cb22-27" aria-hidden="true"></a><span class="ot">toOsString ::</span> (<span class="dt">TextEncoding</span>, <span class="dt">TextEncoding</span>) <span class="ot">-&gt;</span> <span class="dt">String</span> <span class="ot">-&gt;</span> <span class="dt">Either</span> <span class="dt">EncodingException</span> <span class="dt">OsString</span></span>
+<span id="cb22-28"><a href="#cb22-28" aria-hidden="true"></a>toOsString (unixEncoding, windowsEncoding) <span class="ot">=</span> OS.encodeWith unixEncoding windowsEncoding</span></code></pre></div>
 <p>For converting to <code>ByteString</code> and <code>ShortByteString</code>, we have to explicitly specify an encoding for the resulting byte sequence. For <code>OsString</code> we have to provide encodings per platform, since this type is platform agnostic.</p>
-<p>The caveat wrt Text’s <code>pack</code> not dealing well with surrogates applies.</p>
+<p>The caveat wrt. Text’s <code>pack</code> not dealing well with surrogates applies.</p>
 <h3 id="from-text-to">From Text to…</h3>
-<div class="sourceCode" id="cb19"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true"></a><span class="kw">module</span> <span class="dt">TextConversions</span> <span class="kw">where</span></span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true"></a></span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.ByteString</span> (<span class="dt">ByteString</span>)</span>
-<span id="cb19-4"><a href="#cb19-4" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.ByteString.Encoding</span> (<span class="dt">TextEncoding</span>)</span>
-<span id="cb19-5"><a href="#cb19-5" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.ByteString.Short</span> (<span class="dt">ShortByteString</span>)</span>
-<span id="cb19-6"><a href="#cb19-6" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.Text</span> (<span class="dt">Text</span>)</span>
-<span id="cb19-7"><a href="#cb19-7" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">System.OsString</span></span>
-<span id="cb19-8"><a href="#cb19-8" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">System.OsString.Encoding</span> (<span class="dt">EncodingException</span>)</span>
-<span id="cb19-9"><a href="#cb19-9" aria-hidden="true"></a></span>
-<span id="cb19-10"><a href="#cb19-10" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Data.ByteString.Encoding</span> <span class="kw">as</span> <span class="dt">BE</span></span>
-<span id="cb19-11"><a href="#cb19-11" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Data.ByteString.Short</span> <span class="kw">as</span> <span class="dt">SBS</span></span>
-<span id="cb19-12"><a href="#cb19-12" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Data.Text</span> <span class="kw">as</span> <span class="dt">T</span></span>
-<span id="cb19-13"><a href="#cb19-13" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">System.OsString</span> <span class="kw">as</span> <span class="dt">OS</span></span>
-<span id="cb19-14"><a href="#cb19-14" aria-hidden="true"></a></span>
-<span id="cb19-15"><a href="#cb19-15" aria-hidden="true"></a><span class="ot">toString ::</span> <span class="dt">Text</span> <span class="ot">-&gt;</span> <span class="dt">String</span></span>
-<span id="cb19-16"><a href="#cb19-16" aria-hidden="true"></a>toString <span class="ot">=</span> T.unpack</span>
-<span id="cb19-17"><a href="#cb19-17" aria-hidden="true"></a></span>
-<span id="cb19-18"><a href="#cb19-18" aria-hidden="true"></a><span class="ot">toText ::</span> <span class="dt">Text</span> <span class="ot">-&gt;</span> <span class="dt">Text</span></span>
-<span id="cb19-19"><a href="#cb19-19" aria-hidden="true"></a>toText <span class="ot">=</span> <span class="fu">id</span></span>
-<span id="cb19-20"><a href="#cb19-20" aria-hidden="true"></a></span>
-<span id="cb19-21"><a href="#cb19-21" aria-hidden="true"></a><span class="ot">toByteString ::</span> <span class="dt">TextEncoding</span> <span class="ot">-&gt;</span> <span class="dt">Text</span> <span class="ot">-&gt;</span> <span class="dt">ByteString</span></span>
-<span id="cb19-22"><a href="#cb19-22" aria-hidden="true"></a>toByteString encoding <span class="ot">=</span> BE.encode encoding</span>
-<span id="cb19-23"><a href="#cb19-23" aria-hidden="true"></a></span>
-<span id="cb19-24"><a href="#cb19-24" aria-hidden="true"></a><span class="ot">toShortByteString ::</span> <span class="dt">TextEncoding</span> <span class="ot">-&gt;</span> <span class="dt">Text</span> <span class="ot">-&gt;</span> <span class="dt">ShortByteString</span></span>
-<span id="cb19-25"><a href="#cb19-25" aria-hidden="true"></a>toShortByteString encoding <span class="ot">=</span> SBS.toShort <span class="op">.</span> BE.encode encoding</span>
-<span id="cb19-26"><a href="#cb19-26" aria-hidden="true"></a></span>
-<span id="cb19-27"><a href="#cb19-27" aria-hidden="true"></a><span class="ot">toOsString ::</span> (<span class="dt">TextEncoding</span>, <span class="dt">TextEncoding</span>) <span class="ot">-&gt;</span> <span class="dt">Text</span> <span class="ot">-&gt;</span> <span class="dt">Either</span> <span class="dt">EncodingException</span> <span class="dt">OsString</span></span>
-<span id="cb19-28"><a href="#cb19-28" aria-hidden="true"></a>toOsString (unixEncoding, windowsEncoding) <span class="ot">=</span> OS.encodeWith unixEncoding windowsEncoding <span class="op">.</span> T.unpack</span></code></pre></div>
+<div class="sourceCode" id="cb23"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true"></a><span class="kw">module</span> <span class="dt">TextConversions</span> <span class="kw">where</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true"></a></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.ByteString</span> (<span class="dt">ByteString</span>)</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.ByteString.Encoding</span> (<span class="dt">TextEncoding</span>)</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.ByteString.Short</span> (<span class="dt">ShortByteString</span>)</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.Text</span> (<span class="dt">Text</span>)</span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">System.OsString</span></span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">System.OsString.Encoding</span> (<span class="dt">EncodingException</span>)</span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true"></a></span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Data.ByteString.Encoding</span> <span class="kw">as</span> <span class="dt">BE</span></span>
+<span id="cb23-11"><a href="#cb23-11" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Data.ByteString.Short</span> <span class="kw">as</span> <span class="dt">SBS</span></span>
+<span id="cb23-12"><a href="#cb23-12" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Data.Text</span> <span class="kw">as</span> <span class="dt">T</span></span>
+<span id="cb23-13"><a href="#cb23-13" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">System.OsString</span> <span class="kw">as</span> <span class="dt">OS</span></span>
+<span id="cb23-14"><a href="#cb23-14" aria-hidden="true"></a></span>
+<span id="cb23-15"><a href="#cb23-15" aria-hidden="true"></a><span class="ot">toString ::</span> <span class="dt">Text</span> <span class="ot">-&gt;</span> <span class="dt">String</span></span>
+<span id="cb23-16"><a href="#cb23-16" aria-hidden="true"></a>toString <span class="ot">=</span> T.unpack</span>
+<span id="cb23-17"><a href="#cb23-17" aria-hidden="true"></a></span>
+<span id="cb23-18"><a href="#cb23-18" aria-hidden="true"></a><span class="ot">toText ::</span> <span class="dt">Text</span> <span class="ot">-&gt;</span> <span class="dt">Text</span></span>
+<span id="cb23-19"><a href="#cb23-19" aria-hidden="true"></a>toText <span class="ot">=</span> <span class="fu">id</span></span>
+<span id="cb23-20"><a href="#cb23-20" aria-hidden="true"></a></span>
+<span id="cb23-21"><a href="#cb23-21" aria-hidden="true"></a><span class="ot">toByteString ::</span> <span class="dt">TextEncoding</span> <span class="ot">-&gt;</span> <span class="dt">Text</span> <span class="ot">-&gt;</span> <span class="dt">ByteString</span></span>
+<span id="cb23-22"><a href="#cb23-22" aria-hidden="true"></a>toByteString encoding <span class="ot">=</span> BE.encode encoding</span>
+<span id="cb23-23"><a href="#cb23-23" aria-hidden="true"></a></span>
+<span id="cb23-24"><a href="#cb23-24" aria-hidden="true"></a><span class="ot">toShortByteString ::</span> <span class="dt">TextEncoding</span> <span class="ot">-&gt;</span> <span class="dt">Text</span> <span class="ot">-&gt;</span> <span class="dt">ShortByteString</span></span>
+<span id="cb23-25"><a href="#cb23-25" aria-hidden="true"></a>toShortByteString encoding <span class="ot">=</span> SBS.toShort <span class="op">.</span> BE.encode encoding</span>
+<span id="cb23-26"><a href="#cb23-26" aria-hidden="true"></a></span>
+<span id="cb23-27"><a href="#cb23-27" aria-hidden="true"></a><span class="ot">toOsString ::</span> (<span class="dt">TextEncoding</span>, <span class="dt">TextEncoding</span>) <span class="ot">-&gt;</span> <span class="dt">Text</span> <span class="ot">-&gt;</span> <span class="dt">Either</span> <span class="dt">EncodingException</span> <span class="dt">OsString</span></span>
+<span id="cb23-28"><a href="#cb23-28" aria-hidden="true"></a>toOsString (unixEncoding, windowsEncoding) <span class="ot">=</span> OS.encodeWith unixEncoding windowsEncoding <span class="op">.</span> T.unpack</span></code></pre></div>
 <p>When converting from <code>Text</code>, we can essentially reuse all the API that deals with just <code>String</code> and vice versa.</p>
 <h3 id="from-bytestring-to">From ByteString to…</h3>
-<div class="sourceCode" id="cb20"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true"></a><span class="kw">module</span> <span class="dt">ByteStringConversions</span> <span class="kw">where</span></span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true"></a></span>
-<span id="cb20-3"><a href="#cb20-3" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.ByteString</span> (<span class="dt">ByteString</span>)</span>
-<span id="cb20-4"><a href="#cb20-4" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.ByteString.Encoding</span> (<span class="dt">TextEncoding</span>)</span>
-<span id="cb20-5"><a href="#cb20-5" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.ByteString.Short</span> (<span class="dt">ShortByteString</span>)</span>
-<span id="cb20-6"><a href="#cb20-6" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.Text</span> (<span class="dt">Text</span>)</span>
-<span id="cb20-7"><a href="#cb20-7" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">System.OsString</span></span>
-<span id="cb20-8"><a href="#cb20-8" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">System.OsString.Encoding</span> (<span class="dt">EncodingException</span>)</span>
-<span id="cb20-9"><a href="#cb20-9" aria-hidden="true"></a></span>
-<span id="cb20-10"><a href="#cb20-10" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Data.ByteString.Encoding</span> <span class="kw">as</span> <span class="dt">BE</span></span>
-<span id="cb20-11"><a href="#cb20-11" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Data.ByteString.Short</span> <span class="kw">as</span> <span class="dt">SBS</span></span>
-<span id="cb20-12"><a href="#cb20-12" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Data.Text</span> <span class="kw">as</span> <span class="dt">T</span></span>
-<span id="cb20-13"><a href="#cb20-13" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">System.OsString</span> <span class="kw">as</span> <span class="dt">OS</span></span>
-<span id="cb20-14"><a href="#cb20-14" aria-hidden="true"></a></span>
-<span id="cb20-15"><a href="#cb20-15" aria-hidden="true"></a><span class="ot">toString ::</span> <span class="dt">TextEncoding</span> <span class="ot">-&gt;</span> <span class="dt">ByteString</span> <span class="ot">-&gt;</span> <span class="dt">String</span></span>
-<span id="cb20-16"><a href="#cb20-16" aria-hidden="true"></a>toString encoding <span class="ot">=</span> T.unpack <span class="op">.</span> BE.decode encoding</span>
-<span id="cb20-17"><a href="#cb20-17" aria-hidden="true"></a></span>
-<span id="cb20-18"><a href="#cb20-18" aria-hidden="true"></a><span class="ot">toText ::</span> <span class="dt">TextEncoding</span> <span class="ot">-&gt;</span> <span class="dt">ByteString</span> <span class="ot">-&gt;</span> <span class="dt">Text</span></span>
-<span id="cb20-19"><a href="#cb20-19" aria-hidden="true"></a>toText encoding <span class="ot">=</span> BE.decode encoding</span>
-<span id="cb20-20"><a href="#cb20-20" aria-hidden="true"></a></span>
-<span id="cb20-21"><a href="#cb20-21" aria-hidden="true"></a><span class="ot">toByteString ::</span> <span class="dt">ByteString</span> <span class="ot">-&gt;</span> <span class="dt">ByteString</span></span>
-<span id="cb20-22"><a href="#cb20-22" aria-hidden="true"></a>toByteString <span class="ot">=</span> <span class="fu">id</span></span>
-<span id="cb20-23"><a href="#cb20-23" aria-hidden="true"></a></span>
-<span id="cb20-24"><a href="#cb20-24" aria-hidden="true"></a><span class="ot">toShortByteString ::</span> <span class="dt">ByteString</span> <span class="ot">-&gt;</span> <span class="dt">ShortByteString</span></span>
-<span id="cb20-25"><a href="#cb20-25" aria-hidden="true"></a>toShortByteString <span class="ot">=</span> SBS.toShort</span>
-<span id="cb20-26"><a href="#cb20-26" aria-hidden="true"></a></span>
-<span id="cb20-27"><a href="#cb20-27" aria-hidden="true"></a><span class="co">-- | This is hard to write correctly. It depends on where the @ByteString@</span></span>
-<span id="cb20-28"><a href="#cb20-28" aria-hidden="true"></a><span class="co">-- comes from. It may not be possible to interpret it on both platforms.</span></span>
-<span id="cb20-29"><a href="#cb20-29" aria-hidden="true"></a><span class="co">-- @OsString@ is meant to interface with operating system API, not to manually</span></span>
-<span id="cb20-30"><a href="#cb20-30" aria-hidden="true"></a><span class="co">-- construct arbitrary strings. Use the @osstr@ quasi quoter if you need</span></span>
-<span id="cb20-31"><a href="#cb20-31" aria-hidden="true"></a><span class="co">-- literals. Or look at the internals in 'System.OsString.Internal.Types'.</span></span>
-<span id="cb20-32"><a href="#cb20-32" aria-hidden="true"></a><span class="ot">toOsString ::</span> <span class="dt">ByteString</span> <span class="ot">-&gt;</span> <span class="dt">OsString</span></span>
-<span id="cb20-33"><a href="#cb20-33" aria-hidden="true"></a>toOsString <span class="ot">=</span> <span class="fu">undefined</span></span></code></pre></div>
+<div class="sourceCode" id="cb24"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true"></a><span class="kw">module</span> <span class="dt">ByteStringConversions</span> <span class="kw">where</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true"></a></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.ByteString</span> (<span class="dt">ByteString</span>)</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.ByteString.Encoding</span> (<span class="dt">TextEncoding</span>)</span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.ByteString.Short</span> (<span class="dt">ShortByteString</span>)</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.Text</span> (<span class="dt">Text</span>)</span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">System.OsString</span></span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">System.OsString.Encoding</span> (<span class="dt">EncodingException</span>)</span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true"></a></span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Data.ByteString.Encoding</span> <span class="kw">as</span> <span class="dt">BE</span></span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Data.ByteString.Short</span> <span class="kw">as</span> <span class="dt">SBS</span></span>
+<span id="cb24-12"><a href="#cb24-12" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Data.Text</span> <span class="kw">as</span> <span class="dt">T</span></span>
+<span id="cb24-13"><a href="#cb24-13" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">System.OsString</span> <span class="kw">as</span> <span class="dt">OS</span></span>
+<span id="cb24-14"><a href="#cb24-14" aria-hidden="true"></a></span>
+<span id="cb24-15"><a href="#cb24-15" aria-hidden="true"></a><span class="ot">toString ::</span> <span class="dt">TextEncoding</span> <span class="ot">-&gt;</span> <span class="dt">ByteString</span> <span class="ot">-&gt;</span> <span class="dt">String</span></span>
+<span id="cb24-16"><a href="#cb24-16" aria-hidden="true"></a>toString encoding <span class="ot">=</span> T.unpack <span class="op">.</span> BE.decode encoding</span>
+<span id="cb24-17"><a href="#cb24-17" aria-hidden="true"></a></span>
+<span id="cb24-18"><a href="#cb24-18" aria-hidden="true"></a><span class="ot">toText ::</span> <span class="dt">TextEncoding</span> <span class="ot">-&gt;</span> <span class="dt">ByteString</span> <span class="ot">-&gt;</span> <span class="dt">Text</span></span>
+<span id="cb24-19"><a href="#cb24-19" aria-hidden="true"></a>toText encoding <span class="ot">=</span> BE.decode encoding</span>
+<span id="cb24-20"><a href="#cb24-20" aria-hidden="true"></a></span>
+<span id="cb24-21"><a href="#cb24-21" aria-hidden="true"></a><span class="ot">toByteString ::</span> <span class="dt">ByteString</span> <span class="ot">-&gt;</span> <span class="dt">ByteString</span></span>
+<span id="cb24-22"><a href="#cb24-22" aria-hidden="true"></a>toByteString <span class="ot">=</span> <span class="fu">id</span></span>
+<span id="cb24-23"><a href="#cb24-23" aria-hidden="true"></a></span>
+<span id="cb24-24"><a href="#cb24-24" aria-hidden="true"></a><span class="ot">toShortByteString ::</span> <span class="dt">ByteString</span> <span class="ot">-&gt;</span> <span class="dt">ShortByteString</span></span>
+<span id="cb24-25"><a href="#cb24-25" aria-hidden="true"></a>toShortByteString <span class="ot">=</span> SBS.toShort</span>
+<span id="cb24-26"><a href="#cb24-26" aria-hidden="true"></a></span>
+<span id="cb24-27"><a href="#cb24-27" aria-hidden="true"></a><span class="co">-- | This is hard to write correctly. It depends on where the @ByteString@</span></span>
+<span id="cb24-28"><a href="#cb24-28" aria-hidden="true"></a><span class="co">-- comes from. It may not be possible to interpret it on both platforms.</span></span>
+<span id="cb24-29"><a href="#cb24-29" aria-hidden="true"></a><span class="co">-- @OsString@ is meant to interface with operating system API, not to manually</span></span>
+<span id="cb24-30"><a href="#cb24-30" aria-hidden="true"></a><span class="co">-- construct arbitrary strings. Use the @osstr@ quasi quoter if you need</span></span>
+<span id="cb24-31"><a href="#cb24-31" aria-hidden="true"></a><span class="co">-- literals. Or look at the internals in 'System.OsString.Internal.Types'.</span></span>
+<span id="cb24-32"><a href="#cb24-32" aria-hidden="true"></a><span class="ot">toOsString ::</span> <span class="dt">ByteString</span> <span class="ot">-&gt;</span> <span class="dt">OsString</span></span>
+<span id="cb24-33"><a href="#cb24-33" aria-hidden="true"></a>toOsString <span class="ot">=</span> <span class="fu">undefined</span></span></code></pre></div>
 <p>For converting to <code>String</code> and <code>Text</code>, we have to provide an encoding for the ByteString in order to decode it.</p>
 <p>Converting from a byte sequence of unknown origin to <code>OsString</code> is hard. The way this usually happens is at the FFI boundaries in <code>Win32</code> and <code>unix</code> package. The question is what does the given byte sequence represent… where does it come from, what is its encoding, if any? If it comes from operating system API, we can just wrap it into our types, see <a href="https://hackage.haskell.org/package/os-string-2.0.2.1/docs/System-OsString-Internal-Types.html">System.OsString.Internal.Types</a>. Otherwise, we may need to decode the bytes first and then pick a target encoding.</p>
 <h3 id="from-shortbytestring-to">From ShortByteString to…</h3>
-<div class="sourceCode" id="cb21"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true"></a><span class="kw">module</span> <span class="dt">ByteStringConversions</span> <span class="kw">where</span></span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true"></a></span>
-<span id="cb21-3"><a href="#cb21-3" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.ByteString</span> (<span class="dt">ByteString</span>)</span>
-<span id="cb21-4"><a href="#cb21-4" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.ByteString.Encoding</span> (<span class="dt">TextEncoding</span>)</span>
-<span id="cb21-5"><a href="#cb21-5" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.ByteString.Short</span> (<span class="dt">ShortByteString</span>)</span>
-<span id="cb21-6"><a href="#cb21-6" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.Text</span> (<span class="dt">Text</span>)</span>
-<span id="cb21-7"><a href="#cb21-7" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">System.OsString</span></span>
-<span id="cb21-8"><a href="#cb21-8" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">System.OsString.Encoding</span> (<span class="dt">EncodingException</span>)</span>
-<span id="cb21-9"><a href="#cb21-9" aria-hidden="true"></a></span>
-<span id="cb21-10"><a href="#cb21-10" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Data.ByteString.Encoding</span> <span class="kw">as</span> <span class="dt">BE</span></span>
-<span id="cb21-11"><a href="#cb21-11" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Data.ByteString.Short</span> <span class="kw">as</span> <span class="dt">SBS</span></span>
-<span id="cb21-12"><a href="#cb21-12" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Data.Text</span> <span class="kw">as</span> <span class="dt">T</span></span>
-<span id="cb21-13"><a href="#cb21-13" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">System.OsString</span> <span class="kw">as</span> <span class="dt">OS</span></span>
-<span id="cb21-14"><a href="#cb21-14" aria-hidden="true"></a></span>
-<span id="cb21-15"><a href="#cb21-15" aria-hidden="true"></a><span class="ot">toString ::</span> <span class="dt">TextEncoding</span> <span class="ot">-&gt;</span> <span class="dt">ShortByteString</span> <span class="ot">-&gt;</span> <span class="dt">String</span></span>
-<span id="cb21-16"><a href="#cb21-16" aria-hidden="true"></a>toString encoding <span class="ot">=</span> T.unpack <span class="op">.</span> BE.decode encoding <span class="op">.</span> SBS.fromShort</span>
-<span id="cb21-17"><a href="#cb21-17" aria-hidden="true"></a></span>
-<span id="cb21-18"><a href="#cb21-18" aria-hidden="true"></a><span class="ot">toText ::</span> <span class="dt">TextEncoding</span> <span class="ot">-&gt;</span> <span class="dt">ShortByteString</span> <span class="ot">-&gt;</span> <span class="dt">Text</span></span>
-<span id="cb21-19"><a href="#cb21-19" aria-hidden="true"></a>toText encoding <span class="ot">=</span> BE.decode encoding <span class="op">.</span> SBS.fromShort</span>
-<span id="cb21-20"><a href="#cb21-20" aria-hidden="true"></a></span>
-<span id="cb21-21"><a href="#cb21-21" aria-hidden="true"></a><span class="ot">toByteString ::</span> <span class="dt">ShortByteString</span> <span class="ot">-&gt;</span> <span class="dt">ByteString</span></span>
-<span id="cb21-22"><a href="#cb21-22" aria-hidden="true"></a>toByteString <span class="ot">=</span> SBS.fromShort</span>
-<span id="cb21-23"><a href="#cb21-23" aria-hidden="true"></a></span>
-<span id="cb21-24"><a href="#cb21-24" aria-hidden="true"></a><span class="ot">toShortByteString ::</span> <span class="dt">ShortByteString</span> <span class="ot">-&gt;</span> <span class="dt">ShortByteString</span></span>
-<span id="cb21-25"><a href="#cb21-25" aria-hidden="true"></a>toShortByteString <span class="ot">=</span> <span class="fu">id</span></span>
-<span id="cb21-26"><a href="#cb21-26" aria-hidden="true"></a></span>
-<span id="cb21-27"><a href="#cb21-27" aria-hidden="true"></a><span class="co">-- | This is hard to write correctly. It depends on where the @ShortByteString@</span></span>
-<span id="cb21-28"><a href="#cb21-28" aria-hidden="true"></a><span class="co">-- comes from. It may not be possible to interpret it on both platforms.</span></span>
-<span id="cb21-29"><a href="#cb21-29" aria-hidden="true"></a><span class="co">-- @OsString@ is meant to interface with operating system API, not to manually</span></span>
-<span id="cb21-30"><a href="#cb21-30" aria-hidden="true"></a><span class="co">-- construct arbitrary strings. Use the @osstr@ quasi quoter if you need</span></span>
-<span id="cb21-31"><a href="#cb21-31" aria-hidden="true"></a><span class="co">-- literals. Or look at the internals in 'System.OsString.Internal.Types'.</span></span>
-<span id="cb21-32"><a href="#cb21-32" aria-hidden="true"></a><span class="ot">toOsString ::</span> <span class="dt">ShortByteString</span> <span class="ot">-&gt;</span> <span class="dt">OsString</span></span>
-<span id="cb21-33"><a href="#cb21-33" aria-hidden="true"></a>toOsString <span class="ot">=</span> <span class="fu">undefined</span></span></code></pre></div>
+<div class="sourceCode" id="cb25"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true"></a><span class="kw">module</span> <span class="dt">ByteStringConversions</span> <span class="kw">where</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true"></a></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.ByteString</span> (<span class="dt">ByteString</span>)</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.ByteString.Encoding</span> (<span class="dt">TextEncoding</span>)</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.ByteString.Short</span> (<span class="dt">ShortByteString</span>)</span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.Text</span> (<span class="dt">Text</span>)</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">System.OsString</span></span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">System.OsString.Encoding</span> (<span class="dt">EncodingException</span>)</span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true"></a></span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Data.ByteString.Encoding</span> <span class="kw">as</span> <span class="dt">BE</span></span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Data.ByteString.Short</span> <span class="kw">as</span> <span class="dt">SBS</span></span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Data.Text</span> <span class="kw">as</span> <span class="dt">T</span></span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">System.OsString</span> <span class="kw">as</span> <span class="dt">OS</span></span>
+<span id="cb25-14"><a href="#cb25-14" aria-hidden="true"></a></span>
+<span id="cb25-15"><a href="#cb25-15" aria-hidden="true"></a><span class="ot">toString ::</span> <span class="dt">TextEncoding</span> <span class="ot">-&gt;</span> <span class="dt">ShortByteString</span> <span class="ot">-&gt;</span> <span class="dt">String</span></span>
+<span id="cb25-16"><a href="#cb25-16" aria-hidden="true"></a>toString encoding <span class="ot">=</span> T.unpack <span class="op">.</span> BE.decode encoding <span class="op">.</span> SBS.fromShort</span>
+<span id="cb25-17"><a href="#cb25-17" aria-hidden="true"></a></span>
+<span id="cb25-18"><a href="#cb25-18" aria-hidden="true"></a><span class="ot">toText ::</span> <span class="dt">TextEncoding</span> <span class="ot">-&gt;</span> <span class="dt">ShortByteString</span> <span class="ot">-&gt;</span> <span class="dt">Text</span></span>
+<span id="cb25-19"><a href="#cb25-19" aria-hidden="true"></a>toText encoding <span class="ot">=</span> BE.decode encoding <span class="op">.</span> SBS.fromShort</span>
+<span id="cb25-20"><a href="#cb25-20" aria-hidden="true"></a></span>
+<span id="cb25-21"><a href="#cb25-21" aria-hidden="true"></a><span class="ot">toByteString ::</span> <span class="dt">ShortByteString</span> <span class="ot">-&gt;</span> <span class="dt">ByteString</span></span>
+<span id="cb25-22"><a href="#cb25-22" aria-hidden="true"></a>toByteString <span class="ot">=</span> SBS.fromShort</span>
+<span id="cb25-23"><a href="#cb25-23" aria-hidden="true"></a></span>
+<span id="cb25-24"><a href="#cb25-24" aria-hidden="true"></a><span class="ot">toShortByteString ::</span> <span class="dt">ShortByteString</span> <span class="ot">-&gt;</span> <span class="dt">ShortByteString</span></span>
+<span id="cb25-25"><a href="#cb25-25" aria-hidden="true"></a>toShortByteString <span class="ot">=</span> <span class="fu">id</span></span>
+<span id="cb25-26"><a href="#cb25-26" aria-hidden="true"></a></span>
+<span id="cb25-27"><a href="#cb25-27" aria-hidden="true"></a><span class="co">-- | This is hard to write correctly. It depends on where the @ShortByteString@</span></span>
+<span id="cb25-28"><a href="#cb25-28" aria-hidden="true"></a><span class="co">-- comes from. It may not be possible to interpret it on both platforms.</span></span>
+<span id="cb25-29"><a href="#cb25-29" aria-hidden="true"></a><span class="co">-- @OsString@ is meant to interface with operating system API, not to manually</span></span>
+<span id="cb25-30"><a href="#cb25-30" aria-hidden="true"></a><span class="co">-- construct arbitrary strings. Use the @osstr@ quasi quoter if you need</span></span>
+<span id="cb25-31"><a href="#cb25-31" aria-hidden="true"></a><span class="co">-- literals. Or look at the internals in 'System.OsString.Internal.Types'.</span></span>
+<span id="cb25-32"><a href="#cb25-32" aria-hidden="true"></a><span class="ot">toOsString ::</span> <span class="dt">ShortByteString</span> <span class="ot">-&gt;</span> <span class="dt">OsString</span></span>
+<span id="cb25-33"><a href="#cb25-33" aria-hidden="true"></a>toOsString <span class="ot">=</span> <span class="fu">undefined</span></span></code></pre></div>
 <p>The same caveats as for ByteString apply.</p>
 <h3 id="from-osstring-to">From OsString to…</h3>
-<div class="sourceCode" id="cb22"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true"></a><span class="kw">module</span> <span class="dt">OsStringConversions</span> <span class="kw">where</span></span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true"></a></span>
-<span id="cb22-3"><a href="#cb22-3" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Control.Monad.Catch</span> (<span class="dt">MonadThrow</span>)</span>
-<span id="cb22-4"><a href="#cb22-4" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.ByteString</span> (<span class="dt">ByteString</span>)</span>
-<span id="cb22-5"><a href="#cb22-5" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.ByteString.Encoding</span> (<span class="dt">TextEncoding</span>)</span>
-<span id="cb22-6"><a href="#cb22-6" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.ByteString.Short</span> (<span class="dt">ShortByteString</span>)</span>
-<span id="cb22-7"><a href="#cb22-7" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.Text</span> (<span class="dt">Text</span>)</span>
-<span id="cb22-8"><a href="#cb22-8" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">System.OsString</span></span>
-<span id="cb22-9"><a href="#cb22-9" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">System.OsString.Encoding</span> (<span class="dt">EncodingException</span>)</span>
-<span id="cb22-10"><a href="#cb22-10" aria-hidden="true"></a></span>
-<span id="cb22-11"><a href="#cb22-11" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Data.ByteString.Encoding</span> <span class="kw">as</span> <span class="dt">BE</span></span>
-<span id="cb22-12"><a href="#cb22-12" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Data.ByteString.Short</span> <span class="kw">as</span> <span class="dt">SBS</span></span>
-<span id="cb22-13"><a href="#cb22-13" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Data.Text</span> <span class="kw">as</span> <span class="dt">T</span></span>
-<span id="cb22-14"><a href="#cb22-14" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">System.OsString</span> <span class="kw">as</span> <span class="dt">OS</span></span>
-<span id="cb22-15"><a href="#cb22-15" aria-hidden="true"></a></span>
-<span id="cb22-16"><a href="#cb22-16" aria-hidden="true"></a><span class="ot">toString ::</span> <span class="dt">MonadThrow</span> m <span class="ot">=&gt;</span> <span class="dt">OsString</span> <span class="ot">-&gt;</span> m <span class="dt">String</span></span>
-<span id="cb22-17"><a href="#cb22-17" aria-hidden="true"></a>toString <span class="ot">=</span> OS.decodeUtf</span>
-<span id="cb22-18"><a href="#cb22-18" aria-hidden="true"></a></span>
-<span id="cb22-19"><a href="#cb22-19" aria-hidden="true"></a><span class="ot">toText ::</span> <span class="dt">MonadThrow</span> m <span class="ot">=&gt;</span> <span class="dt">OsString</span> <span class="ot">-&gt;</span> m <span class="dt">Text</span></span>
-<span id="cb22-20"><a href="#cb22-20" aria-hidden="true"></a>toText <span class="ot">=</span> <span class="fu">fmap</span> T.pack <span class="op">.</span> OS.decodeUtf</span>
-<span id="cb22-21"><a href="#cb22-21" aria-hidden="true"></a></span>
-<span id="cb22-22"><a href="#cb22-22" aria-hidden="true"></a><span class="co">-- | It depends whether we want the original bytes passed unchanged</span></span>
-<span id="cb22-23"><a href="#cb22-23" aria-hidden="true"></a><span class="co">-- and platform specific or whether we want to convert to a unified</span></span>
-<span id="cb22-24"><a href="#cb22-24" aria-hidden="true"></a><span class="co">-- representation that is the same on both platforms, but in ByteString</span></span>
-<span id="cb22-25"><a href="#cb22-25" aria-hidden="true"></a><span class="co">-- format.</span></span>
-<span id="cb22-26"><a href="#cb22-26" aria-hidden="true"></a><span class="ot">toByteString ::</span> <span class="dt">OsString</span> <span class="ot">-&gt;</span> <span class="dt">ByteString</span></span>
-<span id="cb22-27"><a href="#cb22-27" aria-hidden="true"></a>toByteString <span class="ot">=</span> <span class="fu">undefined</span></span>
-<span id="cb22-28"><a href="#cb22-28" aria-hidden="true"></a></span>
-<span id="cb22-29"><a href="#cb22-29" aria-hidden="true"></a><span class="co">-- | Same as 'toByteString'.</span></span>
-<span id="cb22-30"><a href="#cb22-30" aria-hidden="true"></a><span class="ot">toShortByteString ::</span> <span class="dt">OsString</span> <span class="ot">-&gt;</span> <span class="dt">ShortByteString</span></span>
-<span id="cb22-31"><a href="#cb22-31" aria-hidden="true"></a>toShortByteString <span class="ot">=</span> <span class="fu">undefined</span></span>
-<span id="cb22-32"><a href="#cb22-32" aria-hidden="true"></a></span>
-<span id="cb22-33"><a href="#cb22-33" aria-hidden="true"></a><span class="ot">toOsString ::</span> <span class="dt">OsString</span> <span class="ot">-&gt;</span> <span class="dt">OsString</span></span>
-<span id="cb22-34"><a href="#cb22-34" aria-hidden="true"></a>toOsString <span class="ot">=</span> <span class="fu">id</span></span></code></pre></div>
+<div class="sourceCode" id="cb26"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true"></a><span class="kw">module</span> <span class="dt">OsStringConversions</span> <span class="kw">where</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true"></a></span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Control.Monad.Catch</span> (<span class="dt">MonadThrow</span>)</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.ByteString</span> (<span class="dt">ByteString</span>)</span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.ByteString.Encoding</span> (<span class="dt">TextEncoding</span>)</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.ByteString.Short</span> (<span class="dt">ShortByteString</span>)</span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.Text</span> (<span class="dt">Text</span>)</span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">System.OsString</span></span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">System.OsString.Encoding</span> (<span class="dt">EncodingException</span>)</span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true"></a></span>
+<span id="cb26-11"><a href="#cb26-11" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Data.ByteString.Encoding</span> <span class="kw">as</span> <span class="dt">BE</span></span>
+<span id="cb26-12"><a href="#cb26-12" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Data.ByteString.Short</span> <span class="kw">as</span> <span class="dt">SBS</span></span>
+<span id="cb26-13"><a href="#cb26-13" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Data.Text</span> <span class="kw">as</span> <span class="dt">T</span></span>
+<span id="cb26-14"><a href="#cb26-14" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">System.OsString</span> <span class="kw">as</span> <span class="dt">OS</span></span>
+<span id="cb26-15"><a href="#cb26-15" aria-hidden="true"></a></span>
+<span id="cb26-16"><a href="#cb26-16" aria-hidden="true"></a><span class="ot">toString ::</span> <span class="dt">MonadThrow</span> m <span class="ot">=&gt;</span> <span class="dt">OsString</span> <span class="ot">-&gt;</span> m <span class="dt">String</span></span>
+<span id="cb26-17"><a href="#cb26-17" aria-hidden="true"></a>toString <span class="ot">=</span> OS.decodeUtf</span>
+<span id="cb26-18"><a href="#cb26-18" aria-hidden="true"></a></span>
+<span id="cb26-19"><a href="#cb26-19" aria-hidden="true"></a><span class="ot">toText ::</span> <span class="dt">MonadThrow</span> m <span class="ot">=&gt;</span> <span class="dt">OsString</span> <span class="ot">-&gt;</span> m <span class="dt">Text</span></span>
+<span id="cb26-20"><a href="#cb26-20" aria-hidden="true"></a>toText <span class="ot">=</span> <span class="fu">fmap</span> T.pack <span class="op">.</span> OS.decodeUtf</span>
+<span id="cb26-21"><a href="#cb26-21" aria-hidden="true"></a></span>
+<span id="cb26-22"><a href="#cb26-22" aria-hidden="true"></a><span class="co">-- | It depends whether we want the original bytes passed unchanged</span></span>
+<span id="cb26-23"><a href="#cb26-23" aria-hidden="true"></a><span class="co">-- and platform specific or whether we want to convert to a unified</span></span>
+<span id="cb26-24"><a href="#cb26-24" aria-hidden="true"></a><span class="co">-- representation that is the same on both platforms, but in ByteString</span></span>
+<span id="cb26-25"><a href="#cb26-25" aria-hidden="true"></a><span class="co">-- format.</span></span>
+<span id="cb26-26"><a href="#cb26-26" aria-hidden="true"></a><span class="ot">toByteString ::</span> <span class="dt">OsString</span> <span class="ot">-&gt;</span> <span class="dt">ByteString</span></span>
+<span id="cb26-27"><a href="#cb26-27" aria-hidden="true"></a>toByteString <span class="ot">=</span> <span class="fu">undefined</span></span>
+<span id="cb26-28"><a href="#cb26-28" aria-hidden="true"></a></span>
+<span id="cb26-29"><a href="#cb26-29" aria-hidden="true"></a><span class="co">-- | Same as 'toByteString'.</span></span>
+<span id="cb26-30"><a href="#cb26-30" aria-hidden="true"></a><span class="ot">toShortByteString ::</span> <span class="dt">OsString</span> <span class="ot">-&gt;</span> <span class="dt">ShortByteString</span></span>
+<span id="cb26-31"><a href="#cb26-31" aria-hidden="true"></a>toShortByteString <span class="ot">=</span> <span class="fu">undefined</span></span>
+<span id="cb26-32"><a href="#cb26-32" aria-hidden="true"></a></span>
+<span id="cb26-33"><a href="#cb26-33" aria-hidden="true"></a><span class="ot">toOsString ::</span> <span class="dt">OsString</span> <span class="ot">-&gt;</span> <span class="dt">OsString</span></span>
+<span id="cb26-34"><a href="#cb26-34" aria-hidden="true"></a>toOsString <span class="ot">=</span> <span class="fu">id</span></span></code></pre></div>
 <p>OsString always comes with 3 families of decoding and encoding functions:</p>
 <ul>
-<li><code>encodeUtf</code>/<code>decodeUtf</code>: assumes UTF-8 on unix and UTF-16 LE on windows
+<li><code>encodeUtf</code>/<code>decodeUtf</code>: assumes UTF-8 on Unix and UTF-16 LE on Windows
 <ul>
 <li>we are using this in the code above for simplicity</li>
 </ul></li>
 <li><code>encodeWith</code>/<code>decodeWith</code>: here we have to pass the encoding for both platforms explicitly</li>
-<li><code>encodeFS</code>/<code>decodeFS</code>: this mimics the behavior of the base library, using PEP-383 style encoding on unix and permissive UTF-16 on windows</li>
+<li><code>encodeFS</code>/<code>decodeFS</code>: this mimics the behavior of the base library, using PEP-383 style encoding on Unix and permissive UTF-16 on Windows</li>
 </ul>
 <h3 id="to-json">To JSON</h3>
 <p>A lot of times we want to send our strings over the wire, possibly via JSON. We will examine this via the popular <a href="https://hackage.haskell.org/package/aeson">aeson</a> library.</p>
-<p>Both <code>Text</code> and <code>String</code> already have <code>ToJSON</code> <a href="https://hackage.haskell.org/package/aeson-2.2.1.0/docs/Data-Aeson.html#t:ToJSON">instances</a>. These are easy, because they are unicode and JSON demands UTF-8.</p>
-<p>For <code>ByteString</code>, <code>ShortByteString</code> and <code>OsString</code> this gets a bit more complicated. It depends on the exact use case. What is the byte sequence used for on the machine receiving the json? Also see the discussion <a href="https://github.com/haskell/aeson/issues/187">Add saner ByteString instances</a> on the aeson issue tracker.</p>
+<p>Both <code>Text</code> and <code>String</code> already have <code>ToJSON</code> <a href="https://hackage.haskell.org/package/aeson-2.2.1.0/docs/Data-Aeson.html#t:ToJSON">instances</a>. These are easy, because they are Unicode and JSON demands UTF-8.</p>
+<p>For <code>ByteString</code>, <code>ShortByteString</code> and <code>OsString</code> this gets a bit more complicated. It depends on the exact use case. What is the byte sequence used for on the machine receiving the JSON? Also see the discussion <a href="https://github.com/haskell/aeson/issues/187">Add saner ByteString instances</a> on the aeson issue tracker.</p>
 <p>From my perspective, there are 3 possibilities:</p>
 <ol type="1">
 <li>convert to <code>String</code> (e.g. by assuming UTF-8 or UTF-16), use the existing ToJSON instance and hope the receiver knows how to interpret the data</li>
 <li>if you’re dealing with binary data, you can convert to e.g. base64 String or Text and then again use the existing instances (there’s the <a href="https://hackage.haskell.org/package/base64-bytestring-type-1.0.1/docs/Data-ByteString-Base64-Type.html">base64-bytestring-type</a> library that does this via a newtype)</li>
 <li>convert the byte sequence to <code>[Word8]</code>, which has a valid instance as well</li>
 </ol>
-<p>For the case of <code>OsString</code>, keep in mind that the raw bytes depend on the current platform (<code>char[]</code> array on unix and <code>wchar_t*</code> on windows). So you may have to attach more information if you choose methods 2 and 3 (e.g. encoding of the byte sequence and platform). And you need a strategy to deal with e.g. a windows machine sending binary data to a unix machine. As such, I recommend using <a href="https://hackage.haskell.org/package/os-string-2.0.2.1/docs/System-OsString.html#g:3"><code>decodeUtf</code></a> to get a String. The target machine can then use <a href="https://hackage.haskell.org/package/os-string-2.0.2.1/docs/System-OsString.html#v:encodeUtf"><code>encodeUtf</code></a> to get back an OsString.</p>
+<p>For the case of <code>OsString</code>, keep in mind that the raw bytes depend on the current platform (<code>char[]</code> array on Unix and <code>wchar_t*</code> on Windows). So you may have to attach more information if you choose methods 2 and 3 (e.g. encoding of the byte sequence and platform). And you need a strategy to deal with e.g. a Windows machine sending binary data to a Unix machine. As such, I recommend using <a href="https://hackage.haskell.org/package/os-string-2.0.2.1/docs/System-OsString.html#g:3"><code>decodeUtf</code></a> to get a String. The target machine can then use <a href="https://hackage.haskell.org/package/os-string-2.0.2.1/docs/System-OsString.html#v:encodeUtf"><code>encodeUtf</code></a> to get back an OsString.</p>
 <h2 id="a-word-on-lazy-io">A word on lazy IO</h2>
 <p>Some of the named packages expose API for reading and writing files via their lazy variants:</p>
 <ul>
@@ -1135,30 +1296,30 @@ ghci&gt; &quot;쟬&quot;
 <h3 id="via-streamly">Via Streamly</h3>
 <p>A couple of years ago I wrote the blog post <a href="https://hasufell.github.io/posts/2021-10-22-conduit-to-streamly.html">From conduit to streamly</a>, which gives an introduction into both streamly and conduit. The streamly API has diverged quite a bit since then, with multiple major versions. So I won’t go into much detail about it.</p>
 <p>However, streamly is one notable example which provides an alternative to the <code>[Char]</code> type in <a href="https://hackage.haskell.org/package/streamly-core-0.2.2/docs/Streamly-Unicode-Stream.html">Streamly.Unicode.Stream</a>:</p>
-<div class="sourceCode" id="cb23"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true"></a><span class="ot">decodeUtf8 ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> <span class="dt">Stream</span> m <span class="dt">Word8</span> <span class="ot">-&gt;</span> <span class="dt">Stream</span> m <span class="dt">Char</span></span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true"></a><span class="ot">encodeUtf8 ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> <span class="dt">Stream</span> m <span class="dt">Char</span> <span class="ot">-&gt;</span> <span class="dt">Stream</span> m <span class="dt">Word8</span></span></code></pre></div>
-<p>A very simple program to print the last unicode char of a file via streamly is:</p>
-<div class="sourceCode" id="cb24"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">System.Environment</span> (getArgs)</span>
-<span id="cb24-2"><a href="#cb24-2" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Streamly.Data.Stream</span> (<span class="dt">Stream</span>)</span>
-<span id="cb24-3"><a href="#cb24-3" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Streamly.Data.Fold</span> (<span class="dt">Fold</span>)</span>
-<span id="cb24-4"><a href="#cb24-4" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Streamly.Data.Fold</span> <span class="kw">as</span> <span class="dt">Fold</span></span>
-<span id="cb24-5"><a href="#cb24-5" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Streamly.FileSystem.File</span> <span class="kw">as</span> <span class="dt">File</span></span>
-<span id="cb24-6"><a href="#cb24-6" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Streamly.Unicode.Stream</span> <span class="kw">as</span> <span class="dt">Unicode</span></span>
-<span id="cb24-7"><a href="#cb24-7" aria-hidden="true"></a></span>
-<span id="cb24-8"><a href="#cb24-8" aria-hidden="true"></a><span class="ot">main ::</span> <span class="dt">IO</span> ()</span>
-<span id="cb24-9"><a href="#cb24-9" aria-hidden="true"></a>main <span class="ot">=</span> <span class="kw">do</span></span>
-<span id="cb24-10"><a href="#cb24-10" aria-hidden="true"></a>  (file<span class="op">:</span>_) <span class="ot">&lt;-</span> getArgs</span>
-<span id="cb24-11"><a href="#cb24-11" aria-hidden="true"></a>  c <span class="ot">&lt;-</span> getFirstCharFromFile file</span>
-<span id="cb24-12"><a href="#cb24-12" aria-hidden="true"></a>  <span class="fu">print</span> c</span>
-<span id="cb24-13"><a href="#cb24-13" aria-hidden="true"></a></span>
-<span id="cb24-14"><a href="#cb24-14" aria-hidden="true"></a><span class="ot">getFirstCharFromFile ::</span> <span class="dt">FilePath</span> <span class="ot">-&gt;</span> <span class="dt">IO</span> (<span class="dt">Maybe</span> <span class="dt">Char</span>)</span>
-<span id="cb24-15"><a href="#cb24-15" aria-hidden="true"></a>getFirstCharFromFile file <span class="ot">=</span> stream <span class="ot">`Fold.drive`</span> fold</span>
-<span id="cb24-16"><a href="#cb24-16" aria-hidden="true"></a> <span class="kw">where</span></span>
-<span id="cb24-17"><a href="#cb24-17" aria-hidden="true"></a><span class="ot">  stream ::</span> <span class="dt">Stream</span> <span class="dt">IO</span> <span class="dt">Char</span></span>
-<span id="cb24-18"><a href="#cb24-18" aria-hidden="true"></a>  stream <span class="ot">=</span> Unicode.decodeUtf8Chunks <span class="op">$</span> File.readChunks file</span>
-<span id="cb24-19"><a href="#cb24-19" aria-hidden="true"></a></span>
-<span id="cb24-20"><a href="#cb24-20" aria-hidden="true"></a><span class="ot">  fold ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> <span class="dt">Fold</span> m a (<span class="dt">Maybe</span> a)</span>
-<span id="cb24-21"><a href="#cb24-21" aria-hidden="true"></a>  fold <span class="ot">=</span> Fold.one</span></code></pre></div>
+<div class="sourceCode" id="cb27"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true"></a><span class="ot">decodeUtf8 ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> <span class="dt">Stream</span> m <span class="dt">Word8</span> <span class="ot">-&gt;</span> <span class="dt">Stream</span> m <span class="dt">Char</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true"></a><span class="ot">encodeUtf8 ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> <span class="dt">Stream</span> m <span class="dt">Char</span> <span class="ot">-&gt;</span> <span class="dt">Stream</span> m <span class="dt">Word8</span></span></code></pre></div>
+<p>A very simple program to print the last Unicode char of a file via streamly is:</p>
+<div class="sourceCode" id="cb28"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">System.Environment</span> (getArgs)</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Streamly.Data.Stream</span> (<span class="dt">Stream</span>)</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Streamly.Data.Fold</span> (<span class="dt">Fold</span>)</span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Streamly.Data.Fold</span> <span class="kw">as</span> <span class="dt">Fold</span></span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Streamly.FileSystem.File</span> <span class="kw">as</span> <span class="dt">File</span></span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Streamly.Unicode.Stream</span> <span class="kw">as</span> <span class="dt">Unicode</span></span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true"></a></span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true"></a><span class="ot">main ::</span> <span class="dt">IO</span> ()</span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true"></a>main <span class="ot">=</span> <span class="kw">do</span></span>
+<span id="cb28-10"><a href="#cb28-10" aria-hidden="true"></a>  (file<span class="op">:</span>_) <span class="ot">&lt;-</span> getArgs</span>
+<span id="cb28-11"><a href="#cb28-11" aria-hidden="true"></a>  c <span class="ot">&lt;-</span> getLastCharFromFile file</span>
+<span id="cb28-12"><a href="#cb28-12" aria-hidden="true"></a>  <span class="fu">print</span> c</span>
+<span id="cb28-13"><a href="#cb28-13" aria-hidden="true"></a></span>
+<span id="cb28-14"><a href="#cb28-14" aria-hidden="true"></a><span class="ot">getLastCharFromFile ::</span> <span class="dt">FilePath</span> <span class="ot">-&gt;</span> <span class="dt">IO</span> (<span class="dt">Maybe</span> <span class="dt">Char</span>)</span>
+<span id="cb28-15"><a href="#cb28-15" aria-hidden="true"></a>getLastCharFromFile file <span class="ot">=</span> stream <span class="ot">`Fold.drive`</span> fold</span>
+<span id="cb28-16"><a href="#cb28-16" aria-hidden="true"></a> <span class="kw">where</span></span>
+<span id="cb28-17"><a href="#cb28-17" aria-hidden="true"></a><span class="ot">  stream ::</span> <span class="dt">Stream</span> <span class="dt">IO</span> <span class="dt">Char</span></span>
+<span id="cb28-18"><a href="#cb28-18" aria-hidden="true"></a>  stream <span class="ot">=</span> Unicode.decodeUtf8Chunks <span class="op">$</span> File.readChunks file</span>
+<span id="cb28-19"><a href="#cb28-19" aria-hidden="true"></a></span>
+<span id="cb28-20"><a href="#cb28-20" aria-hidden="true"></a><span class="ot">  fold ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> <span class="dt">Fold</span> m a (<span class="dt">Maybe</span> a)</span>
+<span id="cb28-21"><a href="#cb28-21" aria-hidden="true"></a>  fold <span class="ot">=</span> Fold.latest</span></code></pre></div>
 <p>To compile this program you need the <code>streamly-core</code> package. As we can see here we can create streams of Unicode Chars easily while reading from a file… without lazy IO and without the need for the lazy Text type.</p>
 <p>If you want to compare the performance of string vs text vs streamly, you can check out the code here in my <a href="https://github.com/hasufell/streamly-string">example repository</a>. My results on a 189MB file are:</p>
 <ul>
@@ -1193,7 +1354,7 @@ ghci&gt; &quot;쟬&quot;
 <ul>
 <li>and how this affects the <code>Char</code> type, <code>Text</code> and the <code>IsString</code> instance</li>
 </ul></li>
-<li>that grapheme clusters are the closest definiton of “visible symbol”
+<li>that grapheme clusters are the closest definition of “visible symbol”
 <ul>
 <li>and that they can consist of multiple code points</li>
 </ul></li>
@@ -1202,8 +1363,9 @@ ghci&gt; &quot;쟬&quot;
 <p>We understand the weird numbers that the <code>Show</code> instance of <code>Char</code>/<code>String</code> sometimes returns.</p>
 <p>We have seen a summary of the different string types:</p>
 <ul>
-<li>Text for unicode</li>
+<li>Text/ShortText for Unicode</li>
 <li>ByteString/ShortByteString for binary data</li>
+<li>The very flexible Bytes type</li>
 <li>OsString for operating systems API</li>
 <li>String for the bin</li>
 </ul>
@@ -1211,49 +1373,81 @@ ghci&gt; &quot;쟬&quot;
 <p>We know the dangers of lazy IO and how to utilize streaming libraries instead.</p>
 <h3 id="too-many-strings">Too many Strings</h3>
 <p>After all these topics, I want to address the opinion that gets thrown around on the internet a lot: “Haskell has too many String types”, e.g. on <a href="https://news.ycombinator.com/item?id=14567755">Hacker News</a>.</p>
-<p>If we take another look at the <a href="#string-types-cheat-sheet">String Types Cheat Sheet</a>, we don’t really see any type that could be replaced by another. They all have different properties and trade-offs. <code>ByteString</code> vs <code>ShortByteString</code> may be a bit less intuitive, but <code>Text</code> is clearly alone in that list. <code>OsPath</code> is a specialized type that exists in Rust too. Maybe people dislike the Strict/Lazy variants, but they do have (again) different properties.</p>
+<p>If we take another look at the <a href="#string-types-cheat-sheet">String Types Cheat Sheet</a>, we don’t really see any type that could be replaced by another. They all have different properties and trade-offs. <code>ByteString</code> vs <code>ShortByteString</code> may be a bit less intuitive, but e.g. <code>Text</code> is clearly different. <code>OsPath</code> is a specialized type that exists in Rust too. Maybe people dislike the Strict/Lazy variants, but they do have (again) different properties.</p>
 <p>Once these properties are well understood, I find it hard to make an argument for less types. However, it is clear that not everyone thinks so:</p>
 <ul>
 <li><a href="https://www.snoyman.com/blog/2021/03/haskell-base-proposal/">Haskell base proposal: unifying vector-like types</a></li>
 <li><a href="https://discourse.haskell.org/t/base-proposal-around-vector-like-types/2112">Discourse thread on vector proposal</a></li>
 </ul>
 <p>I am still unable to see the bigger picture, other than more unification of <em>internal representations</em>, but less so of public APIs.</p>
-<p>As someone who has written a new string type <code>OsString</code>, I can say it is really hard and not particularly pleasant. But with the rich APIs of <code>ByteString</code> and <code>ShortByteString</code>, coming up with newtypes might not be that difficult.</p>
+<p>E.g. if we compare the following 3 types, we see a pattern:</p>
+<div class="sourceCode" id="cb29"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Text</span> <span class="ot">=</span> <span class="dt">Text</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true"></a>    <span class="ot">{-# UNPACK #-}</span> <span class="op">!</span><span class="dt">A.Array</span> <span class="co">-- ^ bytearray encoded as UTF-8</span></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true"></a>    <span class="ot">{-# UNPACK #-}</span> <span class="op">!</span><span class="dt">Int</span>     <span class="co">-- ^ offset in bytes (not in Char!), pointing to a start of UTF-8 sequence</span></span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true"></a>    <span class="ot">{-# UNPACK #-}</span> <span class="op">!</span><span class="dt">Int</span>     <span class="co">-- ^ length in bytes (not in Char!), pointing to an end of UTF-8 sequence</span></span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true"></a></span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Vector</span> a <span class="ot">=</span> <span class="dt">Vector</span> <span class="ot">{-# UNPACK #-}</span> <span class="op">!</span><span class="dt">Int</span></span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true"></a>                       <span class="ot">{-# UNPACK #-}</span> <span class="op">!</span><span class="dt">Int</span></span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true"></a>                       <span class="ot">{-# UNPACK #-}</span> <span class="op">!</span>(<span class="dt">Array</span> a)</span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true"></a></span>
+<span id="cb29-10"><a href="#cb29-10" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Bytes</span> <span class="ot">=</span> <span class="dt">Bytes</span></span>
+<span id="cb29-11"><a href="#cb29-11" aria-hidden="true"></a>  {<span class="ot"> array ::</span> <span class="ot">{-# UNPACK #-}</span> <span class="op">!</span><span class="dt">ByteArray</span></span>
+<span id="cb29-12"><a href="#cb29-12" aria-hidden="true"></a>  ,<span class="ot"> offset ::</span> <span class="ot">{-# UNPACK #-}</span> <span class="op">!</span><span class="dt">Int</span></span>
+<span id="cb29-13"><a href="#cb29-13" aria-hidden="true"></a>  ,<span class="ot"> length ::</span> <span class="ot">{-# UNPACK #-}</span> <span class="op">!</span><span class="dt">Int</span></span>
+<span id="cb29-14"><a href="#cb29-14" aria-hidden="true"></a>  }</span></code></pre></div>
+<p>A unification of internal representations would e.g. allow 0-cost conversions, unless an invariant needs to be checked (like valid unicode).</p>
+<p><code>Text</code> could maybe be a newytpe over <code>Bytes</code>. But that won’t actually save us a type. We still need the newtype to write an API that maintains the “valid unicode” invariant, which <code>Bytes</code> does not guarantee.</p>
+<p>It is also hard to argue for the removal of the “short” types <code>ShortText</code> and <code>ShortByteString</code> as described in the section <a href="#slicable-vs-non-slicable">Slicable vs non-slicable</a>.</p>
+<p>Writing a new string type from scratch can be really hard. But with the rich APIs of <code>ByteString</code>, <code>ShortByteString</code> and <code>Bytes</code>, coming up with newtypes might not be that difficult.</p>
 <h3 id="what-are-we-missing">What are we missing</h3>
 <p>We don’t have types for:</p>
 <ul>
 <li>Unicode Scalar Values (away with those surrogates)</li>
 <li>Grapheme Clusters</li>
 </ul>
-<p>Especially the latter is something that seems to be potentially useful. We don’t just want to know the boundaries of unicode code points, but of the actual user visible symbols, don’t we? The <code>text-icu</code> package seems to have an <a href="https://hackage.haskell.org/package/text-icu-0.8.0.5/docs/Data-Text-ICU.html#v:breakCharacter">API for beraking on grapheme boundaries</a>, but it doesn’t look very straight forward. I must admit I haven’t looked very hard though.</p>
-<p>We also don’t have a good streaming solution in base. And maybe we never will. But that, probably, also means we will never get rid of lazy IO, which is a footgun for newcomers and everyone else.</p>
+<p>Especially the latter is something that seems to be potentially useful. We don’t just want to know the boundaries of Unicode code points, but of the actual user visible symbols, don’t we? The <code>text-icu</code> package seems to have an <a href="https://hackage.haskell.org/package/text-icu-0.8.0.5/docs/Data-Text-ICU.html#v:breakCharacter">API for breaking on grapheme boundaries</a>, but it doesn’t look very straight forward. I must admit I haven’t looked very hard though.</p>
+<p>We also don’t have a good streaming solution in base. And maybe we never will. But that, probably, also means we will never get rid of lazy IO, which is a foot-gun for newcomers and everyone else.</p>
 <p>My next project is likely going to be strongly typed filepaths, which <a href="https://hackage.haskell.org/package/hpath">do</a> <a href="https://hackage.haskell.org/package/path">already</a> <a href="https://hackage.haskell.org/package/strong-path">exist</a>, just not in combination with <code>OsPath</code>.</p>
 <h2 id="special-thanks-to">Special thanks to</h2>
 <ul>
 <li>Andrew Lelechenko</li>
 <li>Jonathan Knowles</li>
-<li>Mike Pilgrim</li>
+<li>Mike Pilgrem</li>
 <li>John Ericson</li>
-<li>Tom Ellis</li>
-<li>Ἑκάτη</li>
-<li>Ben Gamari</li>
 <li>streamly maintainers for their cutting edge API</li>
+<li>all the text, bytestring, byteslice, short-text etc. maintainers</li>
 <li>Other people I pinged about this topic</li>
 </ul>
-<h2 id="related-blog-posts">Related blog posts</h2>
-<h3 id="string-type-posts">String type posts</h3>
+<h2 id="links-and-relevant-stuff">Links and relevant stuff</h2>
+<h3 id="string-type-blog-posts">String type blog posts</h3>
 <ul>
 <li><a href="https://hasufell.github.io/posts/2022-06-29-fixing-haskell-filepaths.html">Fixing Haskell filepaths, by Julian Ospald</a></li>
 <li><a href="https://www.fpcomplete.com/haskell/tutorial/string-types/">String types, by FPComplete</a></li>
 <li><a href="https://free.cofree.io/2020/05/06/string-types/">Eat Haskell String Types for Breakfast, by Ziyang Liu</a></li>
 <li><a href="https://mmhaskell.com/blog/2017/5/15/untangling-haskells-strings">Untangling Haskell’s Strings</a></li>
+<li><a href="http://www.chriswarbo.net/blog/2020-06-08-haskell_strings.html">Haskell Strings, by Chris Warburton</a></li>
+<li><a href="https://www.fpcomplete.com/haskell/library/vector/">vector: Efficient Packed-Memory Data Representations, by FPComplete</a></li>
 </ul>
-<h3 id="others">Others</h3>
+<h3 id="other-blog-posts">Other blog posts</h3>
 <ul>
 <li><a href="https://hasufell.github.io/posts/2021-10-22-conduit-to-streamly.html">From conduit to streamly</a></li>
 <li><a href="https://chrisdone.com/posts/fast-haskell-c-parsing-xml/">Fast Haskell: Competing with C at parsing XML</a></li>
+<li><a href="https://chrispenner.ca/posts/wc">Beating C With 80 Lines Of Haskell: Wc</a></li>
 <li><a href="https://www.snoyman.com/blog/2021/03/haskell-base-proposal/">Haskell base proposal: unifying vector-like types</a></li>
 <li><a href="https://www.snoyman.com/blog/2021/03/haskell-base-proposal-2/">Haskell base proposal, part 2: unifying vector-like types</a></li>
+<li><a href="https://github.com/Bodigrim/my-talks/blob/master/zurihac2022/slides.pdf">The text package: finally with UTF-8, by Andrew Lelechenko</a></li>
+</ul>
+<h3 id="interesting-issues">Interesting issues</h3>
+<ul>
+<li><a href="https://github.com/haskell/bytestring/issues/193">Quit using ForeignPtr in favor of ByteArray#</a></li>
+</ul>
+<h3 id="string-types-not-discussed-here">String types not discussed here</h3>
+<ul>
+<li><a href="https://hackage.haskell.org/package/monoid-subclasses">monoid-subclasses</a></li>
+<li><a href="https://hackage.haskell.org/package/vector-0.13.1.0/docs/Data-Vector.html">Data.Vector</a></li>
+<li><a href="https://hackage.haskell.org/package/bytestring-0.12.1.0/docs/Data-ByteString-Builder.html">Data.ByteString.Builder</a></li>
+<li><a href="https://hackage.haskell.org/package/ghc-9.8.2/docs/GHC-Data-FastString.html">GHC.Data.FastString</a></li>
+<li><a href="https://hackage.haskell.org/package/jsaddle-0.9.9.0/docs/Data-JSString.html">Data.JSString</a></li>
 </ul>
 </div>
 
@@ -1264,17 +1458,8 @@ ghci&gt; &quot;쟬&quot;
       
       <li>
         <h3>
-          <a href="../posts/2021-10-22-conduit-to-streamly.html">
-            From conduit to streamly
-            <small>October 22, 2021</small>
-          </a>
-        </h3>
-      </li>
-    
-      <li>
-        <h3>
           <a href="../posts/2024-04-21-static-linking.html">
-            2024-04-21-static-linking
+            Getting your Haskell executable statically linked without Nix
             <small>April 21, 2024</small>
           </a>
         </h3>
@@ -1283,8 +1468,17 @@ ghci&gt; &quot;쟬&quot;
       <li>
         <h3>
           <a href="../posts/2023-11-14-ghcup-is-not-an-installer.html">
-            2023-11-14-ghcup-is-not-an-installer
+            GHCup is not an installer
             <small>November 14, 2023</small>
+          </a>
+        </h3>
+      </li>
+    
+      <li>
+        <h3>
+          <a href="../posts/2022-06-29-fixing-haskell-filepaths.html">
+            Fixing 'FilePath' in Haskell
+            <small>June 29, 2022</small>
           </a>
         </h3>
       </li>
