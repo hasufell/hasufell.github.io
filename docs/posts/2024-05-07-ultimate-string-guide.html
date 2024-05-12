@@ -1,21 +1,129 @@
-<?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom">
-    <title>Hasufell's blog</title>
-    <link href="https://github.com/hasufell/hasufell.github.io/atom.xml" rel="self" />
-    <link href="https://github.com/hasufell/hasufell.github.io" />
-    <id>https://github.com/hasufell/hasufell.github.io/atom.xml</id>
-    <author>
-        <name>Julian Ospald</name>
-        <email>hasufell@posteo.de</email>
-    </author>
-    <updated>2024-05-07T00:00:00Z</updated>
-    <entry>
-    <title>The ultimate guide to Haskell Strings</title>
-    <link href="https://github.com/hasufell/hasufell.github.io/posts/2024-05-07-ultimate-string-guide.html" />
-    <id>https://github.com/hasufell/hasufell.github.io/posts/2024-05-07-ultimate-string-guide.html</id>
-    <published>2024-05-07T00:00:00Z</published>
-    <updated>2024-05-07T00:00:00Z</updated>
-    <summary type="html"><![CDATA[<p>This guide is aimed at Haskellers who seek to improve their understanding of String types, be it beginners or seasoned developers. It is also meant to be a quick reference/cheat sheet for deciding which string type to use in a given situation.</p>
+<!DOCTYPE html>
+<html lang="en-us">
+
+  <head>
+  <!---
+  <link href="http://gmpg.org/xfn/11" rel="profile">
+  -->
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+
+  <title>
+    
+      The ultimate guide to Haskell Strings &middot; Hasufell's blog
+    
+  </title>
+
+  
+      
+  <link rel="canonical" href="https://hasufell.github.io/posts/2024-05-07-ultimate-string-guide.html">
+      
+  
+
+  <link rel="stylesheet" href="https://hasufell.github.io/css/poole.css">
+  <link rel="stylesheet" href="https://hasufell.github.io/css/syntax.css">
+  <link rel="stylesheet" href="https://hasufell.github.io/css/lanyon.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=PT+Serif:400,400italic,700%7CPT+Sans:400">
+
+  <!---
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="{{ '/public/apple-touch-icon-precomposed.png' | absolute_url }}">
+  <link rel="shortcut icon" href="{{ '/public/favicon.ico' | absolute_url }}">
+  -->
+
+  <link rel="alternate" type="application/rss+xml" title="RSS" href="https://hasufell.github.io/atom.xml">
+
+  <!--- deactivate google analytics
+  {% if site.google_analytics_id %}
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+    ga('create', '{{ site.google_analytics_id }}', 'auto');
+    ga('send', 'pageview');
+  </script>
+  {% endif %}
+  -->
+</head>
+
+
+  <body>
+
+    <!-- Target for toggling the sidebar `.sidebar-checkbox` is for regular
+     styles, `#sidebar-checkbox` for behavior. -->
+<input type="checkbox" class="sidebar-checkbox" id="sidebar-checkbox">
+
+<!-- Toggleable sidebar -->
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-item">
+    <p>Hasufell's blog</p>
+  </div>
+
+  <nav class="sidebar-nav">
+    <a class="sidebar-nav-item" href="https://hasufell.github.io">Home</a>
+
+    <!--- The code below dynamically generates a sidebar nav of the files in the folder /pages -->
+
+    
+      
+        <a class="sidebar-nav-item" href="https://hasufell.github.io/pages/About.html">About</a>
+      
+    
+      
+        <a class="sidebar-nav-item" href="https://hasufell.github.io/pages/Contact.html">Contact</a>
+      
+    
+
+    <a class="sidebar-nav-item" href="https://hasufell.github.io/archive.html">Archive</a>
+
+    <a class="sidebar-nav-item" href="https://github.com/hasufell/hasufell.github.io">GitHub project</a>
+
+  </nav>
+
+  <div class="sidebar-item">
+    <p>
+      &copy; 2021. All rights reserved.
+    </p>
+    <p>
+        <img src="https://hasufell.github.io/images/haskell-logo.png" class="logo" style="display: inline;" />
+        Site created with
+        <a href="https://jaspervdj.be/hakyll">Hakyll</a>.
+        <br>
+        Modified theme
+        <a href="https://github.com/hahey/lanyon-hakyll">lanyon-hakyll</a>
+        based on
+        <a href="https://lanyon.getpoole.com/">Lanyon</a>.
+    </p>
+  </div>
+</div>
+
+
+    <!-- Wrap is the content to shift when toggling the sidebar. We wrap the
+         content to avoid any CSS collisions with our real content. -->
+    <div class="wrap">
+      <div class="masthead">
+        <div class="container">
+          <h3 class="masthead-title">
+            <a href="https://hasufell.github.io" title="Home">Hasufell's blog</a>
+            <small>haskell and tech, mostly</small>
+          </h3>
+        </div>
+      </div>
+
+      <div class="container content">
+          <div class="post">
+    <h1 class="post-title">
+      <a href="../posts/2024-05-07-ultimate-string-guide.html">
+        The ultimate guide to Haskell Strings
+      </a>
+    </h1>
+    <span class="post-date">May  7, 2024,
+      
+         Posted by Julian Ospald
+      
+    </span>
+     <p>This guide is aimed at Haskellers who seek to improve their understanding of String types, be it beginners or seasoned developers. It is also meant to be a quick reference/cheat sheet for deciding which string type to use in a given situation.</p>
 <h2 id="toc">TOC</h2>
 <ul>
 <li><a href="#motivation">Motivation</a></li>
@@ -91,7 +199,7 @@
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true"></a></span>
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true"></a><span class="co">-- Character type</span></span>
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true"></a></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Char</span> <span class="ot">=</span> <span class="op">...</span> <span class="ch">&#39;a&#39;</span> <span class="op">|</span> <span class="ch">&#39;b&#39;</span> <span class="op">...</span> <span class="co">-- Unicode values</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Char</span> <span class="ot">=</span> <span class="op">...</span> <span class="ch">'a'</span> <span class="op">|</span> <span class="ch">'b'</span> <span class="op">...</span> <span class="co">-- Unicode values</span></span>
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true"></a></span>
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true"></a><span class="kw">type</span>  <span class="dt">String</span> <span class="ot">=</span> [<span class="dt">Char</span>]</span></code></pre></div>
 <p>Since lists are one of the most idiomatic data types in Haskell, this allows us to easily pattern match on strings, because they are just a list of characters. E.g. the following function returns the first character of a string and its remainder or <code>Nothing</code> if the list is empty.</p>
@@ -558,9 +666,9 @@ ghci&gt; &quot;쟬&quot;
 <span id="cb13-6"><a href="#cb13-6" aria-hidden="true"></a></span>
 <span id="cb13-7"><a href="#cb13-7" aria-hidden="true"></a><span class="co">-- | Newtype representing short operating system specific strings.</span></span>
 <span id="cb13-8"><a href="#cb13-8" aria-hidden="true"></a><span class="co">--</span></span>
-<span id="cb13-9"><a href="#cb13-9" aria-hidden="true"></a><span class="co">-- Internally this is either &#39;WindowsString&#39; or &#39;PosixString&#39;,</span></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true"></a><span class="co">-- Internally this is either 'WindowsString' or 'PosixString',</span></span>
 <span id="cb13-10"><a href="#cb13-10" aria-hidden="true"></a><span class="co">-- depending on the platform. Both use unpinned</span></span>
-<span id="cb13-11"><a href="#cb13-11" aria-hidden="true"></a><span class="co">-- &#39;ShortByteString&#39; for efficiency.</span></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true"></a><span class="co">-- 'ShortByteString' for efficiency.</span></span>
 <span id="cb13-12"><a href="#cb13-12" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">OsString</span> <span class="ot">=</span> <span class="dt">OsString</span></span>
 <span id="cb13-13"><a href="#cb13-13" aria-hidden="true"></a><span class="pp">#if defined(mingw32_HOST_OS)</span></span>
 <span id="cb13-14"><a href="#cb13-14" aria-hidden="true"></a>  <span class="dt">WindowsString</span></span>
@@ -1067,7 +1175,7 @@ ghci&gt; &quot;쟬&quot;
 <span id="cb24-28"><a href="#cb24-28" aria-hidden="true"></a><span class="co">-- comes from. It may not be possible to interpret it on both platforms.</span></span>
 <span id="cb24-29"><a href="#cb24-29" aria-hidden="true"></a><span class="co">-- @OsString@ is meant to interface with operating system API, not to manually</span></span>
 <span id="cb24-30"><a href="#cb24-30" aria-hidden="true"></a><span class="co">-- construct arbitrary strings. Use the @osstr@ quasi quoter if you need</span></span>
-<span id="cb24-31"><a href="#cb24-31" aria-hidden="true"></a><span class="co">-- literals. Or look at the internals in &#39;System.OsString.Internal.Types&#39;.</span></span>
+<span id="cb24-31"><a href="#cb24-31" aria-hidden="true"></a><span class="co">-- literals. Or look at the internals in 'System.OsString.Internal.Types'.</span></span>
 <span id="cb24-32"><a href="#cb24-32" aria-hidden="true"></a><span class="ot">toOsString ::</span> <span class="dt">ByteString</span> <span class="ot">-&gt;</span> <span class="dt">OsString</span></span>
 <span id="cb24-33"><a href="#cb24-33" aria-hidden="true"></a>toOsString <span class="ot">=</span> <span class="fu">undefined</span></span></code></pre></div>
 <p>For converting to <code>String</code> and <code>Text</code>, we have to provide an encoding for the ByteString in order to decode it.</p>
@@ -1103,7 +1211,7 @@ ghci&gt; &quot;쟬&quot;
 <span id="cb25-28"><a href="#cb25-28" aria-hidden="true"></a><span class="co">-- comes from. It may not be possible to interpret it on both platforms.</span></span>
 <span id="cb25-29"><a href="#cb25-29" aria-hidden="true"></a><span class="co">-- @OsString@ is meant to interface with operating system API, not to manually</span></span>
 <span id="cb25-30"><a href="#cb25-30" aria-hidden="true"></a><span class="co">-- construct arbitrary strings. Use the @osstr@ quasi quoter if you need</span></span>
-<span id="cb25-31"><a href="#cb25-31" aria-hidden="true"></a><span class="co">-- literals. Or look at the internals in &#39;System.OsString.Internal.Types&#39;.</span></span>
+<span id="cb25-31"><a href="#cb25-31" aria-hidden="true"></a><span class="co">-- literals. Or look at the internals in 'System.OsString.Internal.Types'.</span></span>
 <span id="cb25-32"><a href="#cb25-32" aria-hidden="true"></a><span class="ot">toOsString ::</span> <span class="dt">ShortByteString</span> <span class="ot">-&gt;</span> <span class="dt">OsString</span></span>
 <span id="cb25-33"><a href="#cb25-33" aria-hidden="true"></a>toOsString <span class="ot">=</span> <span class="fu">undefined</span></span></code></pre></div>
 <p>The same caveats as for ByteString apply.</p>
@@ -1136,7 +1244,7 @@ ghci&gt; &quot;쟬&quot;
 <span id="cb26-26"><a href="#cb26-26" aria-hidden="true"></a><span class="ot">toByteString ::</span> <span class="dt">OsString</span> <span class="ot">-&gt;</span> <span class="dt">ByteString</span></span>
 <span id="cb26-27"><a href="#cb26-27" aria-hidden="true"></a>toByteString <span class="ot">=</span> <span class="fu">undefined</span></span>
 <span id="cb26-28"><a href="#cb26-28" aria-hidden="true"></a></span>
-<span id="cb26-29"><a href="#cb26-29" aria-hidden="true"></a><span class="co">-- | Same as &#39;toByteString&#39;.</span></span>
+<span id="cb26-29"><a href="#cb26-29" aria-hidden="true"></a><span class="co">-- | Same as 'toByteString'.</span></span>
 <span id="cb26-30"><a href="#cb26-30" aria-hidden="true"></a><span class="ot">toShortByteString ::</span> <span class="dt">OsString</span> <span class="ot">-&gt;</span> <span class="dt">ShortByteString</span></span>
 <span id="cb26-31"><a href="#cb26-31" aria-hidden="true"></a>toShortByteString <span class="ot">=</span> <span class="fu">undefined</span></span>
 <span id="cb26-32"><a href="#cb26-32" aria-hidden="true"></a></span>
@@ -1340,715 +1448,58 @@ ghci&gt; &quot;쟬&quot;
 <li><a href="https://hackage.haskell.org/package/bytestring-0.12.1.0/docs/Data-ByteString-Builder.html">Data.ByteString.Builder</a></li>
 <li><a href="https://hackage.haskell.org/package/ghc-9.8.2/docs/GHC-Data-FastString.html">GHC.Data.FastString</a></li>
 <li><a href="https://hackage.haskell.org/package/jsaddle-0.9.9.0/docs/Data-JSString.html">Data.JSString</a></li>
-</ul>]]></summary>
-</entry>
-<entry>
-    <title>Getting your Haskell executable statically linked without Nix</title>
-    <link href="https://github.com/hasufell/hasufell.github.io/posts/2024-04-21-static-linking.html" />
-    <id>https://github.com/hasufell/hasufell.github.io/posts/2024-04-21-static-linking.html</id>
-    <published>2024-04-21T00:00:00Z</published>
-    <updated>2024-04-21T00:00:00Z</updated>
-    <summary type="html"><![CDATA[<h2 id="motivation">Motivation</h2>
-<p>Following the excellent post from Tom Sydney <a href="https://cs-syd.eu/posts/2024-04-20-static-linking-haskell-nix">“Getting your Haskell executable statically linked with Nix”</a>, I want to present an alternative approach.</p>
-<p>I believe nix has questionable ergnomics and most Haskell developers don’t need it, even if they want to link their binaries statically.</p>
-<h2 id="musl-and-alpine-linux">Musl and Alpine Linux</h2>
-<p>GHC/cabal don’t really know how to do partial static linking, unless you employ some trickery. So we need a system where we can link everything statically, including libc. This leads us to the Musl libc, which has good support for static linking.</p>
-<p>Two prominent choices for musl based Linux distributions are:</p>
-<ul>
-<li>Alpine Linux</li>
-<li>Void Linux musl</li>
 </ul>
-<p>In this guide, we pick Alpine.</p>
-<h2 id="ghcup-and-ghc">GHCup and GHC</h2>
-<p>In order to use Alpine Linux as a build environment, we need proper toolchain support. GHCup supports Alpine Linux as a first class citizen, so you should be able to install GHC on Alpine. If you run into issues, <a href="https://github.com/haskell/ghcup-hs/issues/new">open a bug report</a>.</p>
-<p>Note that you do not need a statically linked GHC to build a static binary. This is a misconception.</p>
-<h2 id="build-environment">Build environment</h2>
-<p>We need a clean build environment that is reproducible (-ish). We can use docker, which has excellent support for Alpine Linux containers.</p>
-<h2 id="tying-everything-together">Tying everything together</h2>
-<p>To tie everything together, we start an interactive shell in a docker container:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a>$ <span class="ex">docker</span> run --rm -ti alpine:3.19 sh</span></code></pre></div>
-<p>Then we install pre-requisites:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a>$ <span class="ex">apk</span> update</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a>$ <span class="ex">apk</span> add curl gcc g++ git gmp-dev libc-dev libffi-dev make musl-dev ncurses-dev perl tar xz</span></code></pre></div>
-<p>We install GHCup:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a>$ <span class="ex">curl</span> --proto <span class="st">&#39;=https&#39;</span> --tlsv1.2 -sSf https://get-ghcup.haskell.org <span class="kw">|</span> <span class="va">BOOTSTRAP_HASKELL_NONINTERACTIVE=</span>1 <span class="fu">sh</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a><span class="bu">source</span> ~/.ghcup/env</span></code></pre></div>
-<p>Let’s create a dummy app:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a>$ <span class="fu">mkdir</span> test-app</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a>$ <span class="bu">cd</span> test-app</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a>$ <span class="ex">cabal</span> init --non-interactive</span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a>$ <span class="ex">cabal</span> build --enable-executable-static</span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true"></a>$ <span class="fu">mkdir</span> out/</span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true"></a>$ <span class="fu">cp</span> <span class="va">$(</span><span class="ex">cabal</span> -v0 list-bin exe:test-app<span class="va">)</span> out/</span></code></pre></div>
-<p>We use <code>cabal build</code> in combination with <code>cabal list-bin</code>, because some versions of cabal are buggy when combining <code>--enable-executable-static</code> with <code>install</code>: <a href="https://github.com/haskell/cabal/pull/9697">https://github.com/haskell/cabal/pull/9697</a></p>
-<p>It is also possible to pass <code>-ghc-options='-optl-static'</code> instead of <code>--enable-executable-static</code>.</p>
-<p>Now we examine the binary:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a>$ <span class="ex">apk</span> add file</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a>$ <span class="fu">file</span> out/test-app</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a><span class="ex">out</span>/test-app: <span class="ex">ELF</span> 64-bit LSB executable, x86-64, version 1 (SYSV), <span class="ex">statically</span> linked, BuildID[sha1]=ab54deda534ac8065f5e263e84f168fb46eb8227, with debug_info, not stripped</span></code></pre></div>
-<p>That looks good.</p>
-<h2 id="linking-against-system-libraries">Linking against system libraries</h2>
-<p>If your binary depends on system C libraries, you will need to install those packages. E.g. if you link against zlib, you need the <code>-dev</code> and sometimes <code>-static</code> packages:</p>
-<pre><code>apk add zlib-dev zlib-static</code></pre>
-<p>You can search for libraries and installed files at <a href="https://pkgs.alpinelinux.org/packages">https://pkgs.alpinelinux.org/packages</a></p>
-<h2 id="github-ci">Github CI</h2>
-<p>Examples of Github actions using alpine and building static release binaries can be found here:</p>
-<ul>
-<li><a href="https://github.com/haskell/ghcup-hs/blob/master/.github/workflows/release.yaml">https://github.com/haskell/ghcup-hs/blob/master/.github/workflows/release.yaml</a></li>
-<li><a href="https://github.com/hasufell/stack2cabal/blob/master/.github/workflows/release.yaml">https://github.com/hasufell/stack2cabal/blob/master/.github/workflows/release.yaml</a></li>
-<li><a href="https://github.com/stable-haskell/cabal/blob/cabal-install-v3.10.3.0/.github/workflows/release.yaml">https://github.com/stable-haskell/cabal/blob/cabal-install-v3.10.3.0/.github/workflows/release.yaml</a></li>
-</ul>
-<h2 id="conclusion">Conclusion</h2>
-<p>This approach has been used in GHCup since its rewrite in Haskell. It has worked very well.</p>
-<p>The only downside is that you rely on Alpine Linux packaging of system C libraries. If you link to a package that is not in the Alpine repos, you will need more manual work.</p>
-<p>In that case it might be worthwhile to check Void Linux as an alternative.</p>]]></summary>
-</entry>
-<entry>
-    <title>GHCup is not an installer</title>
-    <link href="https://github.com/hasufell/hasufell.github.io/posts/2023-11-14-ghcup-is-not-an-installer.html" />
-    <id>https://github.com/hasufell/hasufell.github.io/posts/2023-11-14-ghcup-is-not-an-installer.html</id>
-    <published>2023-11-14T00:00:00Z</published>
-    <updated>2023-11-14T00:00:00Z</updated>
-    <summary type="html"><![CDATA[<h2 id="misunderstandings">Misunderstandings</h2>
-<p>Over the past few years, there have been recurring questions or misunderstandings about GHCup. E.g.:</p>
-<ul>
-<li>GHCup only installs bindists from upstream (e.g. GHC/Cabal/HLS CI)</li>
-<li>GHCup never applies patches to tools it distributes</li>
-</ul>
-<p>Both those assumptions do not apply, because GHCup is primarily a <strong>distribution channel</strong>, not just an installer. The distribution channel is basically the <a href="https://github.com/haskell/ghcup-metadata/blob/develop/ghcup-0.0.8.yaml"><code>ghcup-0.0.8.yaml</code> metadata file</a>.</p>
-<p>Users who strictly only want upstream bindists (whether they’re broken or not) can use a different distribution channel and opt out of all unofficial things: <a href="https://github.com/haskell/ghcup-metadata/blob/develop/ghcup-vanilla-0.0.8.yaml"><code>ghcup-vanilla-0.0.8.yaml</code></a>. More information in the <a href="https://github.com/haskell/ghcup-metadata#for-end-users">README</a>.</p>
-<h2 id="policies-and-priorities">Policies and priorities</h2>
-<p>GHCup follows similar philosophies and policies like Debian or Fedora. Most of them are outlined <a href="https://www.haskell.org/ghcup/about/#distribution-policies">here</a> in more details. The most important points, simplified, are:</p>
-<ol type="1">
-<li>The end-user experience is our primary concern</li>
-<li>We strive to collaborate with all maintainers of all the tools we support and maintain a good relationship</li>
-<li>We may fix build system or other distribution bugs in upstream bindists</li>
-<li>We may even patch source code of supported tools in very rare cases if that is required to ensure that the end-user experience does not break</li>
-</ol>
-<p>As such, we prioritize the end-user over interests of upstream developers. E.g. it frequently happens that upstream developers want a new release to be ‘recommended’ (that is: installed by default if you run GHCup for the first time). However, experience shows that it’s usually better to wait.</p>
-<p>So far, we have never patched source code. In case that ever happens, it would be communicated to both upstream and the end user via post-install messages.</p>
-<h2 id="affects-on-maintenance">Affects on maintenance</h2>
-<p>Following these priorities, the smallest part of GHCup maintenance sometimes seems to be the codebase. The following tasks have come up repeatedly, until <a href="https://github.com/haskell/ghcup-hs/issues/848">I decreased my workload considerably to avoid a proper burnout</a>:</p>
-<ul>
-<li>building unofficial bindists for missing platforms (e.g. GHC alpine i386, armv7, FreeBSD or stack darwin aarch64)</li>
-<li>patching upstream bindists in case of issues discovered post-release</li>
-<li>tracking releases and bugs of all tools to decide which release is to be ‘recommended’</li>
-<li>being involved in CI code and release issues of most tools</li>
-<li>meetings and communication with HF, GHC HQ, other tooling maintainers and especially HLS</li>
-<li>developing and supporting new ideas (dynamic HLS bindists, GHC nightlies, …)</li>
-<li>advocating and pushing for prioritizing end user experience, e.g. <a href="https://github.com/haskellfoundation/tech-proposals/issues/48">here</a></li>
-<li>supporting users having installation issues via IRC, Discord, email, different issue trackers, …</li>
-</ul>
-<p>Most of this has now stalled, until GHCup gets more support (e.g. <a href="https://discourse.haskell.org/t/haskell-foundation-october-2023-update/8054#ghcup-backup-maintenance-5">from Obsidian</a>, which I’m excited about).</p>
-<h2 id="possible-future">Possible future</h2>
-<p>GHCup being a distribution channel also means that, theoretically, we might completely stop relying on upstream bindists and roll our own. For this idea I already have prepared <a href="https://gist.github.com/hasufell/18cb5438ce7c2ba388160588d751b32d">a document about Midstream bindists</a> that could be submitted as a HF tech proposal. As I don’t have the capacity, I have not submitted it yet and maybe I never will.</p>
-<p>In a perfect world, we want full control over the bindists, decide on the provided configurations, distribution support, platform support, etc.</p>
-<p>This is what Linux distributions do too. They rarely use upstream bindists, except for bootstrapping purposes.</p>
-<h2 id="what-we-want-from-upstream-is-not-bindists">What we want from upstream is not bindists</h2>
-<p>What distributors really want from upstream is not bindists, but something else:</p>
-<ul>
-<li>feasibility to run test suites on the end-users system (that’s where it matters, not just in CI)
-<ul>
-<li>and have processes and mechanisms to get feedback for failing test suites (send report via cli that gets aggregated and analyzed somewhere)</li>
-</ul></li>
-<li>awareness that the build system is not just a dev tool for hackers, but an interface for distributors and end users</li>
-<li>mindfulness about platform support (including less common ones)</li>
-<li>not relying on hermetically built binaries: instead make sure a manually compiled binary works on all platforms and have sufficient mechanisms to detect when it wouldn’t (through bindist configure, runtime checks, test suite, …)</li>
-<li>have prereleases as much as possible, including minor releases</li>
-<li>communicate everything that potentially impacts distributors</li>
-<li>longer patch/security maintenance windows for older versions</li>
-</ul>
-<p>If the build system interface was stable, we could easily use <code>ghcup compile ghc</code> in our own CI, followed by a <code>ghcup test ghc</code> (yes, that exists!) and be done. Then tell end users to utilize <code>ghcup test ghc</code> after installation to make sure it really works with their environment (that’s not a given even with official bindists). However, the test suite is flaky and the test bindists are buggy and not very portable, so this goal is far out.</p>
-<h2 id="conclusion">Conclusion</h2>
-<p>I hope that this clears up some of the confusion and expectations and that end users understand that they have a choice by utilizing different <a href="https://github.com/haskell/ghcup-metadata#metadata-variants-distribution-channels">metadata files</a>.</p>]]></summary>
-</entry>
-<entry>
-    <title>Fixing 'FilePath' in Haskell</title>
-    <link href="https://github.com/hasufell/hasufell.github.io/posts/2022-06-29-fixing-haskell-filepaths.html" />
-    <id>https://github.com/hasufell/hasufell.github.io/posts/2022-06-29-fixing-haskell-filepaths.html</id>
-    <published>2022-06-29T00:00:00Z</published>
-    <updated>2022-06-29T00:00:00Z</updated>
-    <summary type="html"><![CDATA[<p>I’m pleased to announce that the Haskell type <code>type FilePath = String</code> has a successor, which was first discussed many years ago as the <a href="https://gitlab.haskell.org/ghc/ghc/-/wikis/proposal/abstract-file-path">Abstract FilePath proposal (AFPP)</a>.</p>
-<p>The new type shipped with the <a href="https://hackage.haskell.org/package/filepath-1.4.100.0">filepath-1.4.100.0</a> package is:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="co">-- * Path types</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a><span class="co">-- | FilePath for windows.</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a><span class="kw">type</span> <span class="dt">WindowsPath</span> <span class="ot">=</span> <span class="dt">WindowsString</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true"></a></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true"></a><span class="co">-- | FilePath for posix systems.</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true"></a><span class="kw">type</span> <span class="dt">PosixPath</span> <span class="ot">=</span> <span class="dt">PosixString</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true"></a></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true"></a><span class="co">-- | Abstract filepath, depending on current platform.</span></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true"></a><span class="co">-- Matching on the wrong constructor is a compile-time error.</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true"></a><span class="kw">type</span> <span class="dt">OsPath</span> <span class="ot">=</span> <span class="dt">OsString</span></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true"></a></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true"></a></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true"></a><span class="co">-- * String types</span></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true"></a><span class="co">-- Constructors are not public API.</span></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true"></a></span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">WindowsString</span> <span class="ot">=</span> <span class="dt">WindowsString</span> <span class="dt">ShortByteString</span></span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true"></a></span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">PosixString</span> <span class="ot">=</span> <span class="dt">PosixString</span> <span class="dt">ShortByteString</span></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true"></a></span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">OsString</span> <span class="ot">=</span> <span class="dt">OsString</span></span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true"></a><span class="pp">#if defined(mingw32_HOST_OS)</span></span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true"></a>  <span class="dt">WindowsString</span></span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true"></a><span class="pp">#else</span></span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true"></a>  <span class="dt">PosixString</span></span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true"></a><span class="pp">#endif</span></span></code></pre></div>
-<p>The reason we have two sets of types here is simply to maintain the current weak distinction in filepath for functions that deal with not-quite-filepaths, e.g.: <code>splitSearchPath :: String -&gt; [FilePath]</code>. This also allows us to provide slightly different API (e.g. QuasiQuoter for <code>OsString</code> differs from <code>OsPath</code>). OsPath is not a newtype, because it doesn’t provide any additional guarantees over OsString. ‘filepath’ remains a low-level library and does not provide strong guarantees for filepaths (such as validity).</p>
-<p>Libraries with stronger filepath guarantees are listed in the <a href="https://gitlab.haskell.org/haskell/filepath/-/blob/master/README.md#what-is-a-filepath">README</a>.</p>
-<p>Unlike the original proposal, this is <strong>additional API (not part of <code>base</code>) and will not break any existing code</strong>. Core libraries are expected to upgrade their API and provide additional variants that support this new type. Migration strategies are discussed further down. The ecosystem might need some time to migrate. This is also a <a href="#how-to-help">call for help</a>!</p>
-<p>But let’s look at the reasons why <code>String</code> is problematic first.</p>
-<h2 id="toc">TOC</h2>
-<ul>
-<li><a href="#whats-wrong-with-string">What’s wrong with String?</a></li>
-<li><a href="#the-solution">The solution</a></li>
-<li><a href="#how-to-use-the-new-api">How to use the new API</a></li>
-<li><a href="#migration-for-library-authors">Migration for library authors</a>
-<ul>
-<li><a href="#1-drop-string-based-api-and-just-provide-ospath">1. drop String based API and just provide OsPath</a></li>
-<li><a href="#2-provide-a-shim-compatibility-api-for-string">2. provide a shim compatibility API for String</a></li>
-<li><a href="#3-using-cpp-to-export-two-apis">3. using CPP to export two APIs</a></li>
-<li><a href="#accessing-the-raw-bytes-in-a-cross-platform-manner">Accessing the raw bytes in a cross-platform manner</a></li>
-</ul></li>
-<li><a href="#history-of-the-proposal">History of the proposal</a></li>
-<li><a href="#contributors">Contributors</a></li>
-<li><a href="#patch-load">Patch load</a></li>
-<li><a href="#how-to-help">How to help</a></li>
-<li><a href="#faq">FAQ</a></li>
-</ul>
-<h2 id="whats-wrong-with-string">What’s wrong with String?</h2>
-<p>Filepaths are resources on the (users) system. We create, delete, copy them. Any corner case with filepaths can have devastating effects: deleting the wrong file, comparing the wrong files, failing whitelists, security bugs, etc.</p>
-<p>To recap, the definition of String is:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="kw">type</span> <span class="dt">String</span> <span class="ot">=</span> [<span class="dt">Char</span>]</span></code></pre></div>
-<p>So a String is a list of <code>Char</code>. And <code>Char</code> is encoded as UTF-8, right? Unfortunately not, it’s a <em>Unicode code point</em>.</p>
-<p>A unicode code point is an integer in the <em>Unicode codespace</em>. The <a href="https://www.unicode.org/versions/Unicode14.0.0/ch03.pdf#G2212">standard</a> gets a little technical here, but let’s just say UTF-8 is one of many encodings of <code>[Char]</code>.</p>
-<p>That out of the way, let’s look at how filepaths are actually represented on the system level.</p>
-<p>On windows, filepaths are just <a href="https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-dtyp/76f10dd8-699d-45e6-a53c-5aefc586da20"><em>wide character</em> arrays</a> (<code>wchar_t*</code>, so basically <code>[Word16]</code>). On unix, filepaths are <a href="https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap03.html#tag_03_170"><em>character</em> arrays</a> (<code>char[]</code>, so basically <code>[Word8]</code>).</p>
-<p>In both cases, there’s no encoding specified, although on windows we can <em>mostly</em> assume UTF-16LE. So… to go from <code>String</code> to <code>CString</code>/<code>CWString</code> at the outer FFI layer, we need to make a decision.</p>
-<p><code>base</code> currently does the following:</p>
-<ol type="1">
-<li>On unix, it uses <a href="https://hackage.haskell.org/package/base-4.16.1.0/docs/GHC-IO-Encoding.html#v:getFileSystemEncoding"><code>getFileSystemEncoding</code></a> and <a href="https://hackage.haskell.org/package/base-4.16.1.0/docs/GHC-IO-Encoding.html#v:mkTextEncoding"><code>mkTextEncoding</code></a> to pick a round-trippable encoding for filepaths. E.g. if your locale returns <code>en_US.UTF-8</code> you’ll get <code>UTF-8//ROUNDTRIP</code> TextEncoding, which is based on <a href="https://peps.python.org/pep-0383/">PEP 383</a> and invalid bytes get translated to some special representation (lone surrogates) in order to be roundtripped.</li>
-<li>On windows, it uses a <a href="https://gitlab.haskell.org/ghc/ghc/-/blob/0e22f16cda8468256b4c5d04214276be30e23faa/libraries/base/Foreign/C/String.hs#L423-444">private permissive UTF-16 encoding</a> that allows to roundtrip coding errors as well.</li>
-</ol>
-<p>Windows isn’t too problematic here. The encoding is total. However, on unix, the interpretation of filepaths depends on the <em>currently set locale</em>. This is wrong for a number of reasons:</p>
-<ol type="1">
-<li>there’s no guarantee that the currently set locale corresponds to the encoding of a specific filepath (the filepath could be on a USB drive that has a japanese encoding, such as <code>CP932</code>)</li>
-<li>as the documentation of <a href="https://hackage.haskell.org/package/base-4.16.1.0/docs/GHC-IO-Encoding.html#v:mkTextEncoding">mkTextEncoding</a> says, only very specific encodings actually roundtrip properly (<code>CP932</code> does not)</li>
-<li>on conversion to <code>String</code>, you “lose” the underlying encoding and may end up with weirdly escaped Unicode codepoints. Roundtripping can break if a call to <code>setFileSystemEncoding</code> interleaves the conversions.</li>
-<li>it’s hard to get the original bytes back… this may have security implications for e.g. filepath whitelists</li>
-</ol>
-<p>So, how do other languages solve this? Python simply enforces <code>UTF-8</code> (with PEP 383 escaping) on unix. That makes the roundtripping almost sound. But this comes with its own set of problems:</p>
-<ol type="1">
-<li>if the underlying filepath is not UTF-8, the <code>[Char]</code> representation is lossless (from <code>CString</code> to <code>[Char]</code>), but may be somewhat non-sensical for further interpretation, because you might have excessive escaping or your <code>Char</code>s don’t correspond to what the user sees on their system</li>
-<li>this has really bad interoperability, because the roundtrip encoding can in fact produce invalid UTF-8. The unicode consortium itself has <a href="https://unicode.org/L2/L2009/09236-pep383-problems.html">voiced their concerns with this approach</a></li>
-<li>since Haskell <code>Char</code> also includes surrogates, the conversion from <code>String</code> to e.g. UTF-8 <code>CString</code> can in fact fail, so is not total</li>
-</ol>
-<p>I have assembled a <a href="https://gist.github.com/hasufell/c600d318bdbe010a7841cc351c835f92">list of correctness issues</a> with these approaches for in-depth reading.</p>
-<h2 id="the-solution">The solution</h2>
-<p>Just stop converting filepaths!</p>
-<p>We can just keep the original bytes from the system API. Many filepath operations actually don’t need to know the exact underlying encoding. E.g. the filepath separator <code>/</code> on unix is a pre-defined <em>byte</em> (<code>0x2F</code>). You can just scan the byte array for this byte. The position doesn’t matter, the encoding doesn’t matter. File <strong>names</strong> <em>cannot</em> include this byte, period.</p>
-<p>However, since unix and windows are different (<code>[Word8]</code> vs <code>[Word16]</code>), any API that deals with low-level filepaths in a cross-platform manner needs to understand this and write correct code. More on this in the migration strategy section below.</p>
-<p>We decided to use <code>ShortByteString</code> as the internal representation of filepaths, because:</p>
-<ol type="1">
-<li>these are raw, uninterpreted bytes, a wrapper around <code>ByteArray#</code>, which has many efficient primops</li>
-<li>it’s unpinned, so doesn’t contribute to memory fragmentation (<a href="https://github.com/hasufell/filepath-debug/blob/master/result.txt">proof</a>)</li>
-<li>provides convenient API via <code>bytestring</code>, which has been <a href="https://github.com/haskell/bytestring/pull/471">greatly enhanced as part of this proposal</a></li>
-</ol>
-<p>So, in general the idea is to avoid dealing with <code>String</code> at all. There may still be use cases for String though, e.g.:</p>
-<ol type="1">
-<li>dealing with legacy APIs</li>
-<li>reading filepaths from a UTF-8 encoded text file (you probably want <code>Text</code> here, but it’s trivial to convert to String)</li>
-<li>a unified representation across platforms (e.g. to send over the wire or to serialize)</li>
-</ol>
-<h2 id="how-to-use-the-new-api">How to use the new API</h2>
-<p>Many examples are here: <a href="https://github.com/hasufell/filepath-examples">https://github.com/hasufell/filepath-examples</a></p>
-<p>Note that not all libraries have released support for the new API yet, so have a look at this <a href="https://github.com/hasufell/filepath-examples/blob/master/cabal.project">cabal.project</a> if you want to start right away. Generally, you should be able to use these packages already:</p>
-<ul>
-<li><strong>filepath</strong>: provides filepath manipulation and the new <code>OsPath</code> type</li>
-<li><strong>unix</strong>: provides new API variants, e.g. <code>System.Posix.Files.PosixString</code> (as an alternative to <code>System.Posix.Files</code>)</li>
-<li><strong>Win32</strong>: similarly, provides new variants, e.g. <code>System.Win32.WindowsString.File</code></li>
-<li><strong>directory</strong>: provides the new API under <code>System.Directory.OsPath</code></li>
-<li><a href="https://github.com/hasufell/file-io"><strong>file-io</strong></a>: companion package that provides base-like file reading/writing/opening operations</li>
-</ul>
-<p>Most end-users developing applications should be able to convert to the new API with little effort, given that their favorite libraries already support this new type.</p>
-<p><a href="https://hackage.haskell.org/package/filepath-1.4.100.0/docs/System-OsPath.html">System.OsPath</a> exports the same API as <code>System.FilePath</code> with some additional helpers to convert from and to <code>String</code>. Likewise <code>System.OsPath.Posix</code>/<code>System.OsPath.Windows</code> are equivalent to <code>System.FilePath.Posix</code>/<code>System.FilePath.Windows</code>.</p>
-<p>So, you can just:</p>
-<ol type="1">
-<li>update your dependencies lower bounds to the minimum version that supports <code>OsPath</code> (might need <a href="https://github.com/hasufell/filepath-examples/blob/master/cabal.project">source-repository-package</a> stanzas)</li>
-<li>for <code>filepath</code> import <code>System.OsPath</code> instead of <code>System.FilePath</code></li>
-<li>use the specialised API from your dependencies (e.g. for unix <code>System.Posix.Directory.PosixPath</code> instead of <code>System.Posix.Directory</code>)</li>
-<li>to write OsPath literals, use the provided <a href="https://hackage.haskell.org/package/filepath-1.4.100.0/docs/System-OsPath.html#v:osp">QuasiQuoters</a>. There’s no <code>IsString</code> instance, see the <a href="#why-is-there-no-isstring-instance-overloadedstrings">faq</a>.</li>
-<li>if you’re just using an ASCII subset or strict unicode scalar values, you can use <code>fromJust . encodeUtf</code> and <code>fromJust . decodeUtf</code> to pack/unpack literals</li>
-<li>since <code>base</code> doesn’t support this new type, you’ll need the already mentioned companion library <a href="https://github.com/hasufell/file-io">file-io</a> for opening a <code>Handle</code> and writing/reading files</li>
-<li>if you use legacy APIs that still use <code>FilePath</code>, there are <a href="https://github.com/hasufell/filepath-examples/blob/master/examples/Process.hs">examples</a> on how to deal with them (usually <code>System.OsPath.encodeFS</code> and <code>System.OsPath.decodeFS</code>)</li>
-</ol>
-<p>A table for encoding/decoding strategies follows:</p>
-<table>
-<colgroup>
-<col style="width: 17%" />
-<col style="width: 8%" />
-<col style="width: 6%" />
-<col style="width: 27%" />
-<col style="width: 26%" />
-<col style="width: 14%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th>API function</th>
-<th>from</th>
-<th>to</th>
-<th>posix encoding</th>
-<th>windows encoding</th>
-<th>remarks</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><code>encodeUtf</code></td>
-<td>FilePath</td>
-<td>OsPath</td>
-<td>UTF-8 (strict)</td>
-<td>UTF-16 (strict)</td>
-<td>not total</td>
-</tr>
-<tr class="even">
-<td><code>encodeWith</code></td>
-<td>FilePath</td>
-<td>OsPath</td>
-<td>user specified</td>
-<td>user specified</td>
-<td>depends on input</td>
-</tr>
-<tr class="odd">
-<td><code>encodeFS</code></td>
-<td>FilePath</td>
-<td>OsPath</td>
-<td>depends on getFileSystemEncoding</td>
-<td>UTF-16 (escapes coding errors)</td>
-<td>requires IO, used by <code>base</code> for roundtripping</td>
-</tr>
-<tr class="even">
-<td><code>decodeUtf</code></td>
-<td>OsPath</td>
-<td>FilePath</td>
-<td>UTF-8 (strict)</td>
-<td>UTF-16 (strict)</td>
-<td>not total</td>
-</tr>
-<tr class="odd">
-<td><code>decodeWith</code></td>
-<td>OsPath</td>
-<td>FilePath</td>
-<td>user specified</td>
-<td>user specified</td>
-<td>depends on input</td>
-</tr>
-<tr class="even">
-<td><code>decodeFS</code></td>
-<td>OsPath</td>
-<td>FilePath</td>
-<td>depends on getFileSystemEncoding</td>
-<td>UTF-16 (escapes coding errors)</td>
-<td>requires IO, used by <code>base</code> for roundtripping</td>
-</tr>
-</tbody>
-</table>
-<p>These conversions are particularly useful if you’re dealing with legacy API that is still <code>FilePath</code> based. An example on how to do that with the process package is <a href="https://github.com/hasufell/filepath-examples/blob/master/examples/Process.hs">here</a>.</p>
-<h2 id="migration-for-library-authors">Migration for library authors</h2>
-<p>Core libraries or other libraries exporting API that is heavy on filepaths generally have 3 options:</p>
-<h3 id="drop-string-based-api-and-just-provide-ospath">1. drop String based API and just provide OsPath</h3>
-<p>This is feasible, because users can themselves convert via <code>System.OsPath.encodeFS</code> and <code>System.OsPath.decodeFS</code> to and from <code>String</code>.</p>
-<h3 id="provide-a-shim-compatibility-api-for-string">2. provide a shim compatibility API for String</h3>
-<p>This is what this <code>directory</code> PR does: <a href="https://github.com/haskell/directory/pull/136/files">https://github.com/haskell/directory/pull/136/files</a>… see <code>System/Directory.hs</code>.</p>
-<p>The idea is to write the core against <code>OsPath</code> and then create a <code>String</code> based API that wraps the core via <code>System.OsPath.encodeFS</code> and <code>System.OsPath.decodeFS</code> to mimic behavior of <code>base</code>. This usually requires IO, though.</p>
-<h3 id="using-cpp-to-export-two-apis">3. using CPP to export two APIs</h3>
-<p>This is what filepath itself does. It contains an <a href="https://gitlab.haskell.org/haskell/filepath/-/blob/master/System/FilePath/Internal.hs">abstract module</a>, which is then imported while setting specific types and platform information (<a href="https://gitlab.haskell.org/haskell/filepath/-/blob/master/System/OsPath/Posix/Internal.hs">PosixPath</a>, <a href="https://gitlab.haskell.org/haskell/filepath/-/blob/master/System/OsPath/Windows/Internal.hs">WindowsPath</a>, <a href="https://gitlab.haskell.org/haskell/filepath/-/blob/master/System/FilePath/Posix.hs">System.FilePath.Posix</a> and <a href="https://gitlab.haskell.org/haskell/filepath/-/blob/master/System/FilePath/Windows.hs">System.FilePath.Windows</a>).</p>
-<p>The main trick here is to not use any String based API (e.g. no pattern matching or use of <code>:</code>). Instead, we only use <code>uncons</code>/<code>unsnoc</code>, <code>head</code>/<code>last</code> etc, so the intersection of String and ShortByteString APIs… and then adjust the imports based on the type.</p>
-<p>E.g. the following code:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="ot">splitSearchPath ::</span> <span class="dt">String</span> <span class="ot">-&gt;</span> [<span class="dt">FilePath</span>]</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a>splitSearchPath <span class="ot">=</span> f</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a>    <span class="kw">where</span></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true"></a>    f xs <span class="ot">=</span> <span class="kw">case</span> <span class="fu">break</span> isSearchPathSeparator xs <span class="kw">of</span></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true"></a>           (pre, []    ) <span class="ot">-&gt;</span> g pre</span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true"></a>           (pre, _<span class="op">:</span>post) <span class="ot">-&gt;</span> g pre <span class="op">++</span> f post</span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true"></a></span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true"></a>    g <span class="st">&quot;&quot;</span> <span class="ot">=</span> [<span class="st">&quot;.&quot;</span> <span class="op">|</span> isPosix]</span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true"></a>    g (<span class="ch">&#39;\&quot;&#39;</span><span class="op">:</span>x<span class="op">@</span>(_<span class="op">:</span>_)) <span class="op">|</span> isWindows <span class="op">&amp;&amp;</span> <span class="fu">last</span> x <span class="op">==</span> <span class="ch">&#39;\&quot;&#39;</span> <span class="ot">=</span> [<span class="fu">init</span> x]</span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true"></a>    g x <span class="ot">=</span> [x]</span></code></pre></div>
-<p>became:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="ot">splitSearchPath ::</span> <span class="dt">STRING</span> <span class="ot">-&gt;</span> [<span class="dt">FILEPATH</span>]</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a>splitSearchPath <span class="ot">=</span> f</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a>    <span class="kw">where</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a>    f xs <span class="ot">=</span> <span class="kw">let</span> (pre, post) <span class="ot">=</span> <span class="fu">break</span> isSearchPathSeparator xs</span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true"></a>           <span class="kw">in</span> <span class="kw">case</span> uncons post <span class="kw">of</span></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true"></a>             <span class="dt">Nothing</span>     <span class="ot">-&gt;</span> g pre</span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true"></a>             <span class="dt">Just</span> (_, t) <span class="ot">-&gt;</span> g pre <span class="op">++</span> f t</span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true"></a></span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true"></a>    g x <span class="ot">=</span> <span class="kw">case</span> uncons x <span class="kw">of</span></span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true"></a>      <span class="dt">Nothing</span> <span class="ot">-&gt;</span> [singleton _period <span class="op">|</span> isPosix]</span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true"></a>      <span class="dt">Just</span> (h, t)</span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true"></a>        <span class="op">|</span> h <span class="op">==</span> _quotedbl</span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true"></a>        , (<span class="dt">Just</span> _) <span class="ot">&lt;-</span> uncons t <span class="co">-- &gt;= 2</span></span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true"></a>        , isWindows</span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true"></a>        , (<span class="dt">Just</span> (i, l)) <span class="ot">&lt;-</span> unsnoc t</span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true"></a>        , l <span class="op">==</span> _quotedbl <span class="ot">-&gt;</span> [i]</span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true"></a>        <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">-&gt;</span> [x]</span></code></pre></div>
-<p>The windows include site is something like:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="co">-- word16 based bytestring functions</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">System.OsPath.Data.ByteString.Short.Word16</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a><span class="co">-- defining types</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true"></a><span class="pp">#define FILEPATH ShortByteString</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true"></a><span class="pp">#define WINDOWS</span></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true"></a><span class="co">-- include the CPP module</span></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true"></a><span class="pp">#include &quot;Internal.hs&quot;</span></span></code></pre></div>
-<p>Then we can have a <code>WindowsPath</code>/<code>PosixPath</code>/<code>OsPath</code> wrappers:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a><span class="ot">splitPath ::</span> <span class="dt">FILEPATH_NAME</span> <span class="ot">-&gt;</span> [<span class="dt">FILEPATH_NAME</span>]</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a>splitPath (<span class="dt">OSSTRING_NAME</span> bs) <span class="ot">=</span> <span class="dt">OSSTRING_NAME</span> <span class="op">&lt;$&gt;</span> C.splitPath bs</span></code></pre></div>
-<p>And that is included like so:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">System.OsPath.Types</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">System.OsString.Windows</span></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">System.OsPath.Windows.Internal</span> <span class="kw">as</span> <span class="dt">C</span></span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true"></a></span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true"></a><span class="pp">#define FILEPATH_NAME WindowsPath</span></span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true"></a><span class="pp">#define WINDOWS</span></span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true"></a></span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true"></a><span class="pp">#include &quot;PathWrapper.hs&quot;</span></span></code></pre></div>
-<p>Not very pretty, but avoids a lot of repetition and doesn’t require a partial wrapper layer that converts between <code>ShortByteString</code> and <code>String</code>.</p>
-<h3 id="accessing-the-raw-bytes-in-a-cross-platform-manner">Accessing the raw bytes in a cross-platform manner</h3>
-<p>Some libraries might need access to the raw bytes of the filepaths, e.g. because the <code>filepath</code> API is insufficient. It’s important to understand that on unix, we’re basically dealing with <code>[Word8]</code> and on windows with <code>[Word16]</code>, where both lists are represented as a compact <code>ShortByteString</code>.</p>
-<p>E.g. a cross-platform function might look like this:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a><span class="kw">module</span> <span class="dt">MyModule</span> <span class="kw">where</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true"></a></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">System.OsPath.Types</span></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">System.OsString.Internal.Types</span></span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true"></a><span class="pp">#if defined(mingw32_HOST_OS)</span></span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true"></a><span class="co">-- word 16 based windows API</span></span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">System.OsPath.Data.ByteString.Short.Word16</span></span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true"></a>       as <span class="dt">SBS</span></span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">System.OsPath.Windows</span> <span class="kw">as</span> <span class="dt">PFP</span></span>
-<span id="cb8-10"><a href="#cb8-10" aria-hidden="true"></a><span class="pp">#else</span></span>
-<span id="cb8-11"><a href="#cb8-11" aria-hidden="true"></a><span class="co">-- word 8 based posix API</span></span>
-<span id="cb8-12"><a href="#cb8-12" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">System.OsPath.Data.ByteString.Short</span> <span class="kw">as</span> <span class="dt">SBS</span></span>
-<span id="cb8-13"><a href="#cb8-13" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">System.OsPath.Posix</span> <span class="kw">as</span> <span class="dt">PFP</span></span>
-<span id="cb8-14"><a href="#cb8-14" aria-hidden="true"></a><span class="pp">#endif</span></span>
-<span id="cb8-15"><a href="#cb8-15" aria-hidden="true"></a></span>
-<span id="cb8-16"><a href="#cb8-16" aria-hidden="true"></a><span class="ot">crossPlatformFunction ::</span> <span class="dt">OsPath</span> <span class="ot">-&gt;</span> <span class="dt">IO</span> ()</span>
-<span id="cb8-17"><a href="#cb8-17" aria-hidden="true"></a><span class="pp">#if defined(mingw32_HOST_OS)</span></span>
-<span id="cb8-18"><a href="#cb8-18" aria-hidden="true"></a>crossPlatformFunction (<span class="dt">OsString</span> pfp<span class="op">@</span>(<span class="dt">WindowsString</span> ba)) <span class="ot">=</span> <span class="kw">do</span></span>
-<span id="cb8-19"><a href="#cb8-19" aria-hidden="true"></a>    <span class="co">-- use filepath functions for windows specific</span></span>
-<span id="cb8-20"><a href="#cb8-20" aria-hidden="true"></a>    <span class="co">-- operating system strings</span></span>
-<span id="cb8-21"><a href="#cb8-21" aria-hidden="true"></a>    <span class="kw">let</span> ext <span class="ot">=</span> PFP.takeExtension pfp</span>
-<span id="cb8-22"><a href="#cb8-22" aria-hidden="true"></a>    <span class="co">-- operate directly on the underlying bytestring</span></span>
-<span id="cb8-23"><a href="#cb8-23" aria-hidden="true"></a>    <span class="co">-- (which is a wide character bytestring, so uses Word16)</span></span>
-<span id="cb8-24"><a href="#cb8-24" aria-hidden="true"></a>    <span class="kw">let</span> foo <span class="ot">=</span> SBS.takeWhile</span>
-<span id="cb8-25"><a href="#cb8-25" aria-hidden="true"></a>    <span class="op">...</span></span>
-<span id="cb8-26"><a href="#cb8-26" aria-hidden="true"></a><span class="pp">#else</span></span>
-<span id="cb8-27"><a href="#cb8-27" aria-hidden="true"></a>crossPlatformFunction (<span class="dt">OsString</span> pfp<span class="op">@</span>(<span class="dt">PosixString</span> ba)) <span class="ot">=</span> <span class="kw">do</span></span>
-<span id="cb8-28"><a href="#cb8-28" aria-hidden="true"></a>    <span class="co">-- use filepath functions for posix specific</span></span>
-<span id="cb8-29"><a href="#cb8-29" aria-hidden="true"></a>    <span class="co">-- operating system strings</span></span>
-<span id="cb8-30"><a href="#cb8-30" aria-hidden="true"></a>    <span class="kw">let</span> ext <span class="ot">=</span> PFP.takeExtension pfp</span>
-<span id="cb8-31"><a href="#cb8-31" aria-hidden="true"></a>    <span class="co">-- operate directly on the underlying bytestring</span></span>
-<span id="cb8-32"><a href="#cb8-32" aria-hidden="true"></a>    <span class="co">-- (which is just Word8 bytestring)</span></span>
-<span id="cb8-33"><a href="#cb8-33" aria-hidden="true"></a>    <span class="kw">let</span> foo <span class="ot">=</span> SBS.takeWhile</span>
-<span id="cb8-34"><a href="#cb8-34" aria-hidden="true"></a>    <span class="op">...</span></span>
-<span id="cb8-35"><a href="#cb8-35" aria-hidden="true"></a><span class="pp">#endif</span></span></code></pre></div>
-<h2 id="history-of-the-proposal">History of the proposal</h2>
-<ol type="1">
-<li>first wiki proposal: <a href="https://gitlab.haskell.org/ghc/ghc/-/wikis/proposal/abstract-file-path">https://gitlab.haskell.org/ghc/ghc/-/wikis/proposal/abstract-file-path</a></li>
-<li>Revival attempts
-<ul>
-<li><a href="https://discourse.haskell.org/t/reviving-the-abstract-filepath-proposal-afpp-in-user-space/2344">https://discourse.haskell.org/t/reviving-the-abstract-filepath-proposal-afpp-in-user-space/2344</a></li>
-<li><a href="https://mail.haskell.org/pipermail/libraries/2021-August/031427.html">https://mail.haskell.org/pipermail/libraries/2021-August/031427.html</a></li>
-<li><a href="https://groups.google.com/g/haskell-core-libraries/c/WzapcSvvfQM/m/oDhGbf9wCwAJ?pli=1">https://groups.google.com/g/haskell-core-libraries/c/WzapcSvvfQM/m/oDhGbf9wCwAJ?pli=1</a></li>
-</ul></li>
-<li>PRs:
-<ul>
-<li><a href="https://gitlab.haskell.org/haskell/filepath/-/merge_requests/103">https://gitlab.haskell.org/haskell/filepath/-/merge_requests/103</a></li>
-<li><a href="https://github.com/haskell/bytestring/pull/471">https://github.com/haskell/bytestring/pull/471</a></li>
-<li><a href="https://github.com/haskell/win32/pull/198">https://github.com/haskell/win32/pull/198</a></li>
-<li><a href="https://github.com/haskell/unix/pull/202">https://github.com/haskell/unix/pull/202</a></li>
-<li><a href="https://github.com/haskell/directory/pull/136">https://github.com/haskell/directory/pull/136</a></li>
-</ul></li>
-<li>Haskell Foundation thread: <a href="https://github.com/haskellfoundation/tech-proposals/issues/35">https://github.com/haskellfoundation/tech-proposals/issues/35</a></li>
-<li>Reddit discussion: <a href="https://www.reddit.com/r/haskell/comments/vivjdo/abstract_filepath_coming_soon/">https://www.reddit.com/r/haskell/comments/vivjdo/abstract_filepath_coming_soon/</a></li>
-</ol>
-<h2 id="contributors">Contributors</h2>
-<ol type="1">
-<li>Author, filepath maintainer and proposal champion: Julian Ospald (me)</li>
-<li>Bodigrim providing help and support as CLC chair, giving reviews as bytestring maintainer and providing help with questions about encoding</li>
-<li><code>bytestring</code> maintainers providing review for the <code>ShortByteString</code> PR</li>
-<li><code>unix</code> maintainers providing PR review</li>
-<li>Tamar Christina (<code>Win32</code> maintainer) providing PR review and further guidance for the <code>file-io</code> library</li>
-<li><code>directory</code> maintainer providing PR review</li>
-<li>Ericson2314 via various dicussions</li>
-<li>Koz Ross helping with encoding questions</li>
-<li>GHC team helping with getting this into 9.6</li>
-<li>HF encouraging me</li>
-<li>reddit community giving loads of opinions on function names ;)</li>
-<li>various people on IRC discussing alternatives like PEP-383/UTF-8b/WTF-8</li>
-</ol>
-<h2 id="patch-load">Patch load</h2>
-<ul>
-<li>filepath: 11126 insertions(+), 3062 deletions(-)</li>
-<li>bytestring: 1795 insertions(+), 145 deletions(-)</li>
-<li>Win32: 2668 insertions(+), 986 deletions(-)</li>
-<li>unix: 8705 insertions(+), 3 deletions(-)</li>
-<li>directory: 2959 insertions(+), 939 deletions(-)</li>
-<li>file-io: 296 insertions(+)</li>
-</ul>
-<p>Total: 27549 insertions(+), 5135 deletions(-)</p>
-<h2 id="how-to-help">How to help</h2>
-<ul>
-<li>create issues for your favorite libraries to support <code>OsPath</code> linking to this blog</li>
-<li>create PRs for existing issues:
-<ul>
-<li><a href="https://github.com/haskell/process/issues/252">https://github.com/haskell/process/issues/252</a></li>
-</ul></li>
-</ul>
-<h2 id="faq">FAQ</h2>
-<h3 id="why-is-there-no-isstring-instance-overloadedstrings">Why is there no IsString instance (OverloadedStrings)?</h3>
-<p><code>IsString</code> has a broken API: <a href="https://github.com/haskell/bytestring/issues/140">https://github.com/haskell/bytestring/issues/140</a></p>
-<p>It can’t express failure. Conversion to <code>OsPath</code> can fail. Use the provided QuasiQuoters instead.</p>
-<h3 id="why-is-this-not-in-base">Why is this not in base?</h3>
-<p>Nothing is stopping this from eventually getting into base. But the barrier of doing so is much higher. It may happen eventually.</p>
-<h3 id="when-will-filepath-be-dropped">When will ‘FilePath’ be dropped?</h3>
-<p>Probably never. It would break loads of code. We don’t want to do that, for now.</p>
-<h3 id="yet-another-string-type">Yet another String type?</h3>
-<p>Right… I suggest using python if you don’t like types ;)</p>]]></summary>
-</entry>
-<entry>
-    <title>From conduit to streamly</title>
-    <link href="https://github.com/hasufell/hasufell.github.io/posts/2021-10-22-conduit-to-streamly.html" />
-    <id>https://github.com/hasufell/hasufell.github.io/posts/2021-10-22-conduit-to-streamly.html</id>
-    <published>2021-10-22T00:00:00Z</published>
-    <updated>2021-10-22T00:00:00Z</updated>
-    <summary type="html"><![CDATA[<h2 id="motivation">Motivation</h2>
-<p>At GHCup I recently put a lot of effort into <a href="https://gitlab.haskell.org/haskell/ghcup-hs/-/issues/212">reducing the dependency footprint</a> to improve build times. Since <code>conduit</code> was not a direct dependency and only used for yaml parsing and some other things, I replaced those deps with alternatives or re-implemented them (like logging).</p>
-<p><a href="https://hackage.haskell.org/package/yaml">yaml</a>, which uses conduit under the hood, was replaced with <a href="https://hackage.haskell.org/package/HsYAML">HsYAML</a>, but to my despair… that turned out to be <a href="https://gitlab.haskell.org/haskell/ghcup-hs/-/issues/270">10 times slower</a>, which also caused <a href="https://github.com/haskell-hvr/HsYAML/issues/40">issues for pandoc</a>.</p>
-<p><a href="https://hackage.haskell.org/package/conduit">Conduit</a> is an excellent fully featured streaming library, but I didn’t want to go back to it by re-introducing yaml, since GHCup previously depended on <code>streamly</code> and will likely do so in the future. So I simply decided to migrate yaml to streamly: <a href="https://hackage.haskell.org/package/yaml-streamly">https://hackage.haskell.org/package/yaml-streamly</a>.</p>
-<p><a href="https://github.com/composewell/streamly">Streamly</a> is a very general streaming library with a the strong focus on <a href="https://github.com/composewell/streaming-benchmarks#streamly-vs-conduit">performance</a> through inlining and stream fusion optimizations. As such, it may exceed other implementations performance, but also depends quite heavily on GHC behavior, flags, INLINE pragmas etc. It can also be used as an <a href="https://github.com/composewell/streamly/blob/master/docs/streamly-vs-async.md">alternative for async</a>, for reactive programming and much more.</p>
-<p>So in this post, I will shortly explain conduit and streamly and provide a simple migration guide.</p>
-<h2 id="recap-on-conduit">Recap on conduit</h2>
-<p>There are many approaches on streaming. Conduit and streamly diverge quite heavily in terms of paradigm and API.</p>
-<p>Conduit expresses streaming by providing a type that captures <code>i</code>nput, <code>o</code>utput and a possible final <code>r</code>esult, all in one type (and the obligatory effect <code>m</code>):</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">ConduitT</span> i o m r</span></code></pre></div>
-<p>As such, it expresses:</p>
-<ul>
-<li><a href="https://hackage.haskell.org/package/conduit-1.3.4.2/docs/Data-Conduit-Combinators.html#g:1">Producers</a></li>
-<li><a href="https://hackage.haskell.org/package/conduit-1.3.4.2/docs/Data-Conduit-Combinators.html#g:10">Transformers</a></li>
-<li><a href="https://hackage.haskell.org/package/conduit-1.3.4.2/docs/Data-Conduit-Combinators.html#g:6">Consumers</a></li>
-</ul>
-<h3 id="producers">Producers</h3>
-<p>These are generators from a seed value. Conduit defines it generically as such:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="ot">unfold ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> (b <span class="ot">-&gt;</span> <span class="dt">Maybe</span> (a, b)) <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> <span class="dt">ConduitT</span> i a m ()</span></code></pre></div>
-<p>A simple unfold that lets us turn a list into a stream would be:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="co">-- this is also provided by conduit</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a><span class="ot">sourceList ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> <span class="dt">ConduitT</span> i a m ()</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a>sourceList <span class="ot">=</span> unfold gen</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true"></a> <span class="kw">where</span></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true"></a><span class="ot">  gen ::</span> [a] <span class="ot">-&gt;</span> <span class="dt">Maybe</span> (a, [a])</span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true"></a>  gen (x<span class="op">:</span>xs) <span class="ot">=</span> <span class="dt">Just</span> (x,xs)</span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true"></a>  gen _      <span class="ot">=</span> <span class="dt">Nothing</span> <span class="co">-- stream aborts</span></span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true"></a></span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true"></a><span class="co">-- our own stream of &quot;output&quot; chars with no final result</span></span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true"></a><span class="ot">chars ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> <span class="dt">ConduitT</span> i <span class="dt">Char</span> m ()</span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true"></a>chars <span class="ot">=</span> sourceList <span class="st">&quot;abc&quot;</span></span></code></pre></div>
-<p>As can be seen, the <code>o</code> in <code>data ConduitT i o m r</code> gets fixed to <code>Char</code>. A Producer can then be be “piped” into another conduit, e.g. a transformer.</p>
-<p>A producer focuses on the <code>o</code>utput.</p>
-<h3 id="transformer">Transformer</h3>
-<p>A transformer is like <code>map :: (a -&gt; b) -&gt; [a] -&gt; [b]</code>. It transforms the stream and may yield a different type.</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="co">-- provided by conduit, notice how it has only one argument</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a><span class="fu">map</span><span class="ot"> ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> <span class="dt">ConduitT</span> a b m ()</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a><span class="co">-- transforms Char to Int</span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true"></a><span class="ot">charToInt ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> <span class="dt">ConduitT</span> <span class="dt">Char</span> <span class="dt">Int</span> m ()</span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true"></a>charToInt <span class="ot">=</span> <span class="fu">map</span> <span class="fu">ord</span></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true"></a></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true"></a><span class="co">-- applies the transformation to the chars, yielding a Producer</span></span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true"></a><span class="co">-- we&#39;ll explaing &#39;.|&#39; shortly</span></span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true"></a><span class="ot">ints ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> <span class="dt">ConduitM</span> a <span class="dt">Int</span> m ()</span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true"></a>ints <span class="ot">=</span> chars <span class="op">.|</span> charToInt</span></code></pre></div>
-<p>Notable is also that the Functor <code>fmap</code> isn’t a transformation. It would map on the final value, not the produced values. That’s why we need <code>Data.Conduit.List.map</code>. Streamly is very different here.</p>
-<p>A transformer maps the <code>i</code>nput to the <code>o</code>utput.</p>
-<p>To apply a transformation, we use the <code>(.|)</code> pipe operator, which reminds us of shell pipes:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="ot">(.|) ::</span> <span class="dt">Monad</span> m</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a>     <span class="ot">=&gt;</span> <span class="dt">ConduitM</span> a b m () <span class="co">-- ^ producer of values &#39;b&#39;</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a>     <span class="ot">-&gt;</span> <span class="dt">ConduitM</span> b c m r  <span class="co">-- ^ transformer (b -&gt; c), or consumer</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true"></a>     <span class="ot">-&gt;</span> <span class="dt">ConduitM</span> a c m r</span></code></pre></div>
-<p>It takes a little while to see what’s going on. The type variables guide us.</p>
-<h3 id="consumer">Consumer</h3>
-<p>A consumer works on the input stream, much like a transformer, but may also yield a final result. E.g. If we wanted to return all the Int’s we just converted from the Char stream, we’d do:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a><span class="co">-- provided by conduit</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a><span class="fu">foldl</span><span class="ot"> ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">ConduitT</span> b o m a</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true"></a></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true"></a><span class="co">-- &#39;a&#39; (the input) gets folded as a list, so the final result is &#39;[a]&#39;</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true"></a><span class="ot">toList ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> <span class="dt">ConduitT</span> a o m [a]</span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true"></a>toList <span class="ot">=</span> <span class="fu">foldl</span> (\a b <span class="ot">-&gt;</span> b<span class="op">:</span>a) []</span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true"></a></span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true"></a><span class="co">-- applying the fold on the stream of Ints</span></span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true"></a><span class="ot">foldedInts ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> <span class="dt">ConduitM</span> a c m [<span class="dt">Int</span>]</span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true"></a>foldedInts <span class="ot">=</span> ints <span class="op">.|</span> toList</span></code></pre></div>
-<p>The consumer focuses on the <code>i</code>nput to produce a final <code>r</code>esult (however, consumers may also drop elements from the stream).</p>
-<p>As demonstrated, one has to look closely at the type parameters in <code>data ConduitT i o m r</code> to understand a conduit.</p>
-<p>All concepts are unified in one type. Most operations need specific combinators.</p>
-<h3 id="wrapping-up-conduit">Wrapping up conduit</h3>
-<p>Finally, we can get our Ints:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a><span class="ot">ints ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> m [<span class="dt">Int</span>]</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a>ints <span class="ot">=</span> runConduit foldedInts</span></code></pre></div>
-<p>That’s basically conduit. A conduit as such doesn’t really express streams. Instead we’re dealing with stream processors (functions).</p>
-<h2 id="streamly">Streamly</h2>
-<p>Streamly’s approach is very different. It focuses on the simple concept of a <em>stream</em> of elements. It has 4 main types:</p>
-<ul>
-<li><a href="https://hackage.haskell.org/package/streamly-0.8.0/docs/Streamly-Prelude.html#g:50">streams</a>: <code>(Monad m, IsStream t) =&gt; t m a</code></li>
-<li><a href="https://hackage.haskell.org/package/streamly-0.8.0/docs/Streamly-Data-Unfold.html">unfolds</a>: <code>data Unfold m a b</code></li>
-<li><a href="https://hackage.haskell.org/package/streamly-0.8.0/docs/Streamly-Data-Fold.html">folds</a>: <code>data Fold m a b</code></li>
-<li><a href="https://hackage.haskell.org/package/streamly-0.8.0/docs/Streamly-Internal-Data-Parser.html">parsers</a>: <code>newtype Parser m a b</code></li>
-</ul>
-<p>As can be seen, this is nothing like <code>data ConduitT i o m r</code>. I also note that <code>IsStream t</code> is abstract to allow for different types of streams like <code>SerialT</code> or <code>AsyncT</code>, which I won’t go into detail about here.</p>
-<p>We’ll now figure out how these concepts translate to conduit.</p>
-<h3 id="producers-1">Producers</h3>
-<p>Conduits producers are basically <em>Unfolds</em>.</p>
-<p>The simplest function to create an <code>Unfold</code> is:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a><span class="ot">unfoldr ::</span> <span class="dt">Applicative</span> m <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> <span class="dt">Maybe</span> (b, a)) <span class="ot">-&gt;</span> <span class="dt">Unfold</span> m a b</span></code></pre></div>
-<p>…which actually looks a lot like conduit:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true"></a><span class="ot">unfold ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> (b <span class="ot">-&gt;</span> <span class="dt">Maybe</span> (a, b)) <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> <span class="dt">ConduitT</span> i a m ()</span></code></pre></div>
-<p>The difference in streamly is that we provide the initial seed value when we turn the Unfold into a Stream.</p>
-<p>So, let’s do the same procedure as above. We’ll create a list of Chars:</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true"></a><span class="co">-- equivalent to conduits &#39;sourceList&#39;, also provided by streamly</span></span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true"></a><span class="ot">fromList ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> <span class="dt">Unfold</span> m [a] a</span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true"></a>fromList <span class="ot">=</span> unfoldr gen</span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true"></a> <span class="kw">where</span></span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true"></a><span class="ot">  gen ::</span> [a] <span class="ot">-&gt;</span> <span class="dt">Maybe</span> (a, [a])</span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true"></a>  gen (x<span class="op">:</span>xs) <span class="ot">=</span> <span class="dt">Just</span> (x,xs)</span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true"></a>  gen _      <span class="ot">=</span> <span class="dt">Nothing</span> <span class="co">-- stream aborts</span></span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true"></a></span>
-<span id="cb10-9"><a href="#cb10-9" aria-hidden="true"></a><span class="co">-- provided by streamly</span></span>
-<span id="cb10-10"><a href="#cb10-10" aria-hidden="true"></a><span class="co">-- given a seed value, turn an Unfold into a stream</span></span>
-<span id="cb10-11"><a href="#cb10-11" aria-hidden="true"></a><span class="ot">unfold ::</span> (<span class="dt">IsStream</span> t, <span class="dt">Monad</span> m) <span class="ot">=&gt;</span> <span class="dt">Unfold</span> m a b <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> t m b</span>
-<span id="cb10-12"><a href="#cb10-12" aria-hidden="true"></a></span>
-<span id="cb10-13"><a href="#cb10-13" aria-hidden="true"></a><span class="co">-- we turn the unfold into a stream of chars</span></span>
-<span id="cb10-14"><a href="#cb10-14" aria-hidden="true"></a><span class="ot">chars ::</span> (<span class="dt">IsStream</span> t, <span class="dt">Monad</span> m) <span class="ot">=&gt;</span> t m <span class="dt">Char</span></span>
-<span id="cb10-15"><a href="#cb10-15" aria-hidden="true"></a>chars <span class="ot">=</span> Streamly.Prelude.unfold fromList <span class="st">&quot;abc&quot;</span></span></code></pre></div>
-<p>This type <code>t m Char</code> looks a lot simpler. It’s basically a glorified list with possible effects run for every element.</p>
-<h3 id="transformers">Transformers</h3>
-<p>A transformer doesn’t have its own type. It’s in my opinion much simpler than conduit. Here, we can simply reuse the Prelude’s <code>fmap</code>. The main difference is that we have an input and an output stream, so:</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true"></a><span class="co">-- transforms Char to Int</span></span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true"></a><span class="ot">charToInt ::</span> (<span class="dt">IsStream</span> t, <span class="dt">Monad</span> m, <span class="dt">Functor</span> (t m)) <span class="ot">=&gt;</span> t m <span class="dt">Char</span> <span class="ot">-&gt;</span> t m <span class="dt">Int</span></span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true"></a>charToInt inputStream <span class="ot">=</span> <span class="fu">fmap</span> <span class="fu">ord</span> inputStream</span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true"></a></span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true"></a><span class="co">-- applies the transformation to the chars, yielding a stream of Ints</span></span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true"></a><span class="ot">ints ::</span> (<span class="dt">IsStream</span> t, <span class="dt">Monad</span> m, <span class="dt">Functor</span> (t m)) <span class="ot">=&gt;</span> t m <span class="dt">Int</span></span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true"></a>ints <span class="ot">=</span> charToInt chars</span></code></pre></div>
-<p>This feels much more like lists! Compare with <code>fmap ord "abc"</code>. Streams can be passed around and transformed just like lists. If you want to run effects for every item, you just use the Monad interface:</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true"></a><span class="ot">charToInt ::</span> (<span class="dt">IsStream</span> t, <span class="dt">Monad</span> m, <span class="dt">Monad</span> (t m)) <span class="ot">=&gt;</span> t m <span class="dt">Char</span> <span class="ot">-&gt;</span> t m <span class="dt">Int</span></span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true"></a>charToInt inputStream <span class="ot">=</span> inputStream <span class="op">&gt;&gt;=</span> <span class="fu">pure</span> <span class="op">.</span> <span class="fu">ord</span></span></code></pre></div>
-<p>However, this creates a data dependency (as we’re used from Monad). There’s the more general <code>mapM</code> that can run effects in parallel:</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true"></a><span class="fu">mapM</span><span class="ot"> ::</span> (<span class="dt">IsStream</span> t, <span class="dt">MonadAsync</span> m) <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> m b) <span class="ot">-&gt;</span> t m a <span class="ot">-&gt;</span> t m b</span></code></pre></div>
-<p>Excellent. So Functor, Monad etc. follow our intuition.</p>
-<h3 id="consumers">Consumers</h3>
-<p>Simple consumers in streamly terms are usually <strong>Folds</strong>.</p>
-<p>E.g. if we wanted to convert our stream of Ints to an actual list of Ints we would combine our input stream with a Fold.</p>
-<p>Remember the Fold type <code>data Fold m a b</code>, where <code>a</code> are the values of the input stream and <code>b</code> is the final folded value.</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true"></a><span class="co">-- provided by streamly for creating a Fold</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true"></a><span class="ot">foldl&#39; ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> (b <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> <span class="dt">Fold</span> m a b</span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true"></a></span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true"></a><span class="co">-- provided by streamly for executing a fold over a stream</span></span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true"></a><span class="ot">fold ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> <span class="dt">Fold</span> m a b <span class="ot">-&gt;</span> <span class="dt">Stream</span> m a <span class="ot">-&gt;</span> m b</span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true"></a></span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true"></a><span class="co">-- A Fold that turns any input stream into a list</span></span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true"></a><span class="ot">toList ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> <span class="dt">Fold</span> m a [a]</span>
-<span id="cb14-9"><a href="#cb14-9" aria-hidden="true"></a>toList <span class="ot">=</span> foldl&#39; (\a b <span class="ot">-&gt;</span> b<span class="op">:</span>a) []</span>
-<span id="cb14-10"><a href="#cb14-10" aria-hidden="true"></a></span>
-<span id="cb14-11"><a href="#cb14-11" aria-hidden="true"></a><span class="co">-- Applying the Fold to an actual stream already executes it</span></span>
-<span id="cb14-12"><a href="#cb14-12" aria-hidden="true"></a><span class="ot">foldedInts ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> m [<span class="dt">Int</span>]</span>
-<span id="cb14-13"><a href="#cb14-13" aria-hidden="true"></a>foldedInts <span class="ot">=</span> fold toList ints</span></code></pre></div>
-<h3 id="parsers">Parsers</h3>
-<p>Folds don’t have a monadic interface (yet). If we want backtracking and a monadic interface to choose the next step depending on the current element in the stream, we can use a <a href="https://hackage.haskell.org/package/streamly-0.8.0/docs/Streamly-Internal-Data-Parser.html">Parser</a>.</p>
-<p>In conduit, we can use consumers like <a href="https://hackage.haskell.org/package/conduit-1.3.4.2/docs/Data-Conduit-Combinators.html#v:head">head</a> and <a href="https://hackage.haskell.org/package/conduit-1.3.4.2/docs/Data-Conduit-Combinators.html#v:peek">peek</a> and utilize the Monad interface of <code>ConduitT</code> to make our decisions. Theoretically, we could do the same in the Stream type of streamly via <a href="https://hackage.haskell.org/package/streamly-0.8.0/docs/Streamly-Prelude.html#v:uncons">uncons</a>, but the parser feels more idiomatic here.</p>
-<p>I note that there is a parser-like package <a href="https://hackage.haskell.org/package/conduit-parse">conduit-parse</a>, but the <a href="https://github.com/snoyberg/yaml/blob/c4392f3855002ab0bbf9bc16e1e32034254234a7/yaml/src/Data/Yaml/Internal.hs#L286">yaml conduit code</a> doesn’t utilize that and this blog was written while I converted yaml to streamly.</p>
-<p>The streamly parser type is the same as a Fold: <code>newtype Parser m a b</code>.</p>
-<p>It parses a streamed value <code>a</code> into <code>b</code>. Much of the <a href="https://hackage.haskell.org/package/streamly-0.8.0/docs/Streamly-Internal-Data-Parser.html#g:2">API</a> resembles what you’re used to of <code>parsec</code> or <code>attoparsec</code> etc.</p>
-<p>Let’s look at this conduit code (not tested to compile):</p>
-<div class="sourceCode" id="cb15"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Data.Conduit.Combinators</span> <span class="kw">as</span> <span class="dt">C</span></span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true"></a></span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true"></a><span class="ot">chars ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> <span class="dt">ConduitT</span> i <span class="dt">Char</span> m ()</span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true"></a>chars <span class="ot">=</span> sourceList <span class="st">&quot;a1b2c3&quot;</span></span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true"></a></span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true"></a><span class="co">-- We parse &#39;1&#39; from &#39;a1&#39;, &#39;2&#39; from &#39;b2&#39; and so on, no matter</span></span>
-<span id="cb15-7"><a href="#cb15-7" aria-hidden="true"></a><span class="co">-- the order the pairs appear in.</span></span>
-<span id="cb15-8"><a href="#cb15-8" aria-hidden="true"></a><span class="ot">parse&#39; ::</span> <span class="dt">MonadIO</span> m <span class="ot">=&gt;</span> <span class="dt">ConduitT</span> <span class="dt">Char</span> o m [<span class="dt">Int</span>]</span>
-<span id="cb15-9"><a href="#cb15-9" aria-hidden="true"></a>parse&#39; <span class="ot">=</span> <span class="kw">do</span></span>
-<span id="cb15-10"><a href="#cb15-10" aria-hidden="true"></a>  mc <span class="ot">&lt;-</span> C.head</span>
-<span id="cb15-11"><a href="#cb15-11" aria-hidden="true"></a>  <span class="kw">case</span> mc <span class="kw">of</span></span>
-<span id="cb15-12"><a href="#cb15-12" aria-hidden="true"></a>    <span class="dt">Just</span> <span class="ch">&#39;a&#39;</span> <span class="ot">-&gt;</span> <span class="kw">do</span></span>
-<span id="cb15-13"><a href="#cb15-13" aria-hidden="true"></a>       mcn <span class="ot">&lt;-</span> C.head</span>
-<span id="cb15-14"><a href="#cb15-14" aria-hidden="true"></a>       <span class="kw">case</span> mcn <span class="kw">of</span></span>
-<span id="cb15-15"><a href="#cb15-15" aria-hidden="true"></a>         <span class="dt">Just</span> <span class="ch">&#39;1&#39;</span> <span class="ot">-&gt;</span> (<span class="dv">1</span><span class="op">:</span>) <span class="op">&lt;$&gt;</span> parse&#39;</span>
-<span id="cb15-16"><a href="#cb15-16" aria-hidden="true"></a>         <span class="dt">Just</span> cn  <span class="ot">-&gt;</span> liftIO <span class="op">$</span> throwIO <span class="op">$</span> <span class="st">&quot;Unexpected char: &quot;</span> <span class="op">++</span> [cn]</span>
-<span id="cb15-17"><a href="#cb15-17" aria-hidden="true"></a>         <span class="dt">Nothing</span>  <span class="ot">-&gt;</span> <span class="fu">pure</span> []</span>
-<span id="cb15-18"><a href="#cb15-18" aria-hidden="true"></a>    <span class="dt">Just</span> <span class="op">...</span> <span class="co">-- and so on</span></span>
-<span id="cb15-19"><a href="#cb15-19" aria-hidden="true"></a>    <span class="dt">Nothing</span> <span class="ot">-&gt;</span> <span class="fu">pure</span> []</span></code></pre></div>
-<p>To translate this to streamly, we would write:</p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true"></a><span class="ot">chars ::</span> (<span class="dt">IsStream</span> t, <span class="dt">Monad</span> m) <span class="ot">=&gt;</span> t m <span class="dt">Char</span></span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true"></a>chars <span class="ot">=</span> Streamly.Prelude.unfold fromList <span class="st">&quot;a1b2c3&quot;</span></span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true"></a></span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true"></a><span class="co">-- we define a helper that acts like conduits C.head</span></span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true"></a><span class="ot">anyChar ::</span> <span class="dt">MonadCatch</span> m <span class="ot">=&gt;</span> <span class="dt">Parser</span> m <span class="dt">Char</span> (<span class="dt">Maybe</span> <span class="dt">Char</span>)</span>
-<span id="cb16-6"><a href="#cb16-6" aria-hidden="true"></a>anyChar <span class="ot">=</span> (<span class="dt">Just</span> <span class="op">&lt;$&gt;</span> satisfy (<span class="fu">const</span> <span class="dt">True</span>)) <span class="op">&lt;|&gt;</span> <span class="fu">pure</span> <span class="dt">Nothing</span></span>
-<span id="cb16-7"><a href="#cb16-7" aria-hidden="true"></a></span>
-<span id="cb16-8"><a href="#cb16-8" aria-hidden="true"></a><span class="co">-- We parse &#39;1&#39; from &#39;a1&#39;, &#39;2&#39; from &#39;b2&#39; and so on, no matter</span></span>
-<span id="cb16-9"><a href="#cb16-9" aria-hidden="true"></a><span class="co">-- the order the pairs appear in.</span></span>
-<span id="cb16-10"><a href="#cb16-10" aria-hidden="true"></a><span class="ot">parse&#39; ::</span> <span class="dt">MonadIO</span> m <span class="ot">=&gt;</span> <span class="dt">Parser</span> m <span class="dt">Char</span> [<span class="dt">Int</span>]</span>
-<span id="cb16-11"><a href="#cb16-11" aria-hidden="true"></a>parse&#39; <span class="ot">=</span> <span class="kw">do</span></span>
-<span id="cb16-12"><a href="#cb16-12" aria-hidden="true"></a>  mc <span class="ot">&lt;-</span> anyChar</span>
-<span id="cb16-13"><a href="#cb16-13" aria-hidden="true"></a>  <span class="kw">case</span> mc <span class="kw">of</span></span>
-<span id="cb16-14"><a href="#cb16-14" aria-hidden="true"></a>    <span class="dt">Just</span> <span class="ch">&#39;a&#39;</span> <span class="ot">-&gt;</span> <span class="kw">do</span></span>
-<span id="cb16-15"><a href="#cb16-15" aria-hidden="true"></a>       mcn <span class="ot">&lt;-</span> anyChar</span>
-<span id="cb16-16"><a href="#cb16-16" aria-hidden="true"></a>       <span class="kw">case</span> mcn <span class="kw">of</span></span>
-<span id="cb16-17"><a href="#cb16-17" aria-hidden="true"></a>         <span class="dt">Just</span> <span class="ch">&#39;1&#39;</span> <span class="ot">-&gt;</span> (<span class="dv">1</span><span class="op">:</span>) <span class="op">&lt;$&gt;</span> parse&#39;</span>
-<span id="cb16-18"><a href="#cb16-18" aria-hidden="true"></a>         <span class="dt">Just</span> cn  <span class="ot">-&gt;</span> liftIO <span class="op">$</span> throwIO <span class="op">$</span> <span class="st">&quot;Unexpected char: &quot;</span> <span class="op">++</span> [cn]</span>
-<span id="cb16-19"><a href="#cb16-19" aria-hidden="true"></a>         <span class="dt">Nothing</span>  <span class="ot">-&gt;</span> <span class="fu">pure</span> []</span>
-<span id="cb16-20"><a href="#cb16-20" aria-hidden="true"></a>    <span class="dt">Just</span> <span class="op">...</span> <span class="co">-- and so on</span></span>
-<span id="cb16-21"><a href="#cb16-21" aria-hidden="true"></a>    <span class="dt">Nothing</span> <span class="ot">-&gt;</span> <span class="fu">pure</span> []</span></code></pre></div>
-<p>This looks <em>exactly</em> like the conduit code, except we replaced <code>head</code> with <code>anyChar</code>. Although we could likely reduce it further instead of pattern matching on the chars.</p>
-<p>Running a parser is like running a fold. We need an input stream:</p>
-<div class="sourceCode" id="cb17"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true"></a><span class="ot">parse ::</span> <span class="dt">MonadThrow</span> m <span class="ot">=&gt;</span> <span class="dt">Parser</span> m a b <span class="ot">-&gt;</span> <span class="dt">SerialT</span> m a <span class="ot">-&gt;</span> m b</span></code></pre></div>
-<h3 id="wrapping-up-streamly">Wrapping up streamly</h3>
-<p>Running a stream is usually done by applying a <code>Fold</code>, as we’ve done above. We can also turn a stream into a list directly:</p>
-<div class="sourceCode" id="cb18"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true"></a><span class="ot">toList ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> <span class="dt">SerialT</span> m a <span class="ot">-&gt;</span> m [a]</span></code></pre></div>
-<p>Or just evaluate the stream and discard the values:</p>
-<div class="sourceCode" id="cb19"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true"></a><span class="ot">drain ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> <span class="dt">SerialT</span> m a <span class="ot">-&gt;</span> m ()</span></code></pre></div>
-<p>All these functions also exist as Folds, so these are just convenience wrappers.</p>
-<p>As can be seen, streamly isn’t based on stream processors like conduit. Instead it composes stream data directly and behaves pretty much like lists. Usually we don’t need special operators. Functor, Monad etc. follow our intuition from lists.</p>
-<p>We’ve also seen that there’s an abstract <code>IsStream</code> class and specific streaming types like <code>SerialT</code> (for serially processed streams), <code>AsyncT</code> (for concurrent streams) and so on. These are explained in more detail in the streamly documentation.</p>
-<h2 id="back-to-yaml">Back to yaml</h2>
-<p>So how does this translate to yaml parsing? Well, the <code>yaml</code> package uses the <a href="https://github.com/yaml/libyaml">libyaml C library</a> for parsing, which is an event driven parser. So we get a <a href="https://github.com/snoyberg/yaml/blob/c4392f3855002ab0bbf9bc16e1e32034254234a7/libyaml/src/Text/Libyaml.hs#L577">stream of events</a> and then <a href="https://github.com/snoyberg/yaml/blob/c4392f3855002ab0bbf9bc16e1e32034254234a7/yaml/src/Data/Yaml/Internal.hs#L187">turn that into a single JSON value</a> and then let <code>aeson</code> do its magic.</p>
-<p>Finally, for reference, here’s the migration patch: <a href="https://github.com/hasufell/streamly-yaml/commit/bfd1da498588af906cbc5d3bb519f1ccdf7ad63e">https://github.com/hasufell/streamly-yaml/commit/bfd1da498588af906cbc5d3bb519f1ccdf7ad63e</a></p>
-<p>In fact, it didn’t require a rewrite at all. Simply applying the concepts from above was enough. Figuring out that we need a Parser type etc. took a while (I tried with Fold first). Thanks to the helpful streamly developers for providing guidance. There were some rough edges here and there, since much of the streamly API is still marked as <strong>Internal</strong>.</p>
-<h3 id="performance">Performance</h3>
-<p>Did it actually improve performance?</p>
-<p>On my first attempt, I used the wrong inefficient internal <a href="https://hackage.haskell.org/package/streamly-0.8.0/docs/Streamly-Internal-Data-Parser-ParserD.html#t:Parser">ParserD</a> type, which seemed to cause exponential allocations. After fixing that, I was still slower than conduit. Since streamly heavily relies on GHCs inliner, this wasn’t a surprise. It required <a href="https://github.com/hasufell/streamly-yaml/commit/640596f344675cc21970a66335b5f1ca2ae4c3c9">some effort</a>, but finally the performance was on-par with conduit (tested informally via the <code>yaml2json</code> executable on a 100mb YAML file).</p>
-<p>Streamly also provides <a href="https://github.com/composewell/streamly/blob/master/docs/optimizing.md">some</a> <a href="https://github.com/composewell/streamly/blob/master/docs/building.md#compilation-options">guidance</a> for optimization.</p>
-<p>I guess since the actual parsing is done by the C code and the <code>event-&gt;json</code> conversion is really a slow element-by-element monadic parsing transformation, there’s not much space to improve performance anyway.</p>
-<p>If you find ideas about how to improve it further, please let me know.</p>
-<h3 id="dependency-footprint">Dependency footprint</h3>
-<p>Did this actually reduce dependency footprint?</p>
-<p>Well, no. But the point was to only depend on a single streaming framework. I also note that streamly is <a href="https://github.com/composewell/streamly/issues/533">planning to split up the <code>streamly</code> package</a> into <code>streamly-core</code> (only depends on boot packages) and separate out further feature-packages.</p>
-<h2 id="conclusion">Conclusion</h2>
-<ol type="1">
-<li>migrating conduit code to streamly is easier than I thought</li>
-<li>performance optimization in streamly requires some time and effort</li>
-<li>you definitely want performance regression tests with streamly to ensure new GHC versions or refactorings don’t cause regressions</li>
-</ol>
-<h2 id="whats-next">What’s next?</h2>
-<p>Writing a streamly yaml parser in pure Haskell?</p>
-<h2 id="discussion">Discussion</h2>
-<ul>
-<li><a href="https://discourse.haskell.org/t/blog-from-conduit-to-streamly/3492/4">Discourse</a></li>
-<li><a href="https://www.reddit.com/r/haskell/comments/qe72nv/from_conduit_to_streamly/">Reddit</a></li>
-</ul>]]></summary>
-</entry>
+</div>
 
-</feed>
+
+<div class="related">
+  <h2>Related posts</h2>
+  <ul class="related-posts">
+      
+      <li>
+        <h3>
+          <a href="../posts/2024-04-21-static-linking.html">
+            Getting your Haskell executable statically linked without Nix
+            <small>April 21, 2024</small>
+          </a>
+        </h3>
+      </li>
+    
+      <li>
+        <h3>
+          <a href="../posts/2023-11-14-ghcup-is-not-an-installer.html">
+            GHCup is not an installer
+            <small>November 14, 2023</small>
+          </a>
+        </h3>
+      </li>
+    
+      <li>
+        <h3>
+          <a href="../posts/2022-06-29-fixing-haskell-filepaths.html">
+            Fixing 'FilePath' in Haskell
+            <small>June 29, 2022</small>
+          </a>
+        </h3>
+      </li>
+    
+  </ul>
+</div>
+
+
+<div class="related">
+  <h2>Comments</h2>
+<script src="https://utteranc.es/client.js" repo="hasufell/hasufell.github.io" issue-term="pathname" theme="github-light" crossorigin="anonymous" async>
+</script>
+</div>
+
+      </div>
+    </div>
+
+    <label for="sidebar-checkbox" class="sidebar-toggle"></label>
+
+    <script src="https://hasufell.github.io/public/js/script.js"></script>
+
+  </body>
+
+</html>

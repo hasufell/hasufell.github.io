@@ -1,4 +1,9 @@
-# GHCup is not an installer
+---
+title: GHCup is not an installer
+subtitle: Or how to use ghcup-metadata channels
+author: Julian Ospald
+tags: haskell, GHCup, installer
+---
 
 ## Misunderstandings
 

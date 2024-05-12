@@ -1,4 +1,9 @@
-# Getting your Haskell executable statically linked without Nix
+---
+title: Getting your Haskell executable statically linked without Nix
+subtitle: Or how to simply avoid Nix
+author: Julian Ospald
+tags: haskell, GHCup, Alpine, static-linking
+---
 
 ## Motivation
 
