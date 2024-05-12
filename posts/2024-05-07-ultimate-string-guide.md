@@ -13,30 +13,28 @@ for deciding which string type to use in a given situation.
 
 * [Motivation](#motivation)
 * [String in Prelude](#string-in-prelude)
-   * [Char](#char)
 * [Unicode](#unicode)
-   * [Unicode Codepoint](#unicode-codepoint)
+   * [Unicode Code Point](#unicode-code-point)
    * [UTF-32](#utf-32)
    * [UTF-16](#utf-16)
    * [Unicode Scalar Values](#unicode-scalar-values)
    * [UTF-8](#utf-8)
    * [Unicode summary](#unicode-summary)
 * [Back to Haskell String type](#back-to-haskell-string-type)
-* [String Types overview](#string-types-overview)
-* [Which String type to pick](#which-string-type-to-pick)
+* [String types](#string-types)
    * [Text](#text)
-      * [Text summary](#text-summary)
+   * [ShortText](#shorttext)
    * [ByteString](#bytestring)
-      * [ByteString summary](#bytestring-summary)
    * [ShortByteString](#shortbytestring)
-      * [ShortByteString summary](#shortbytestring-summary)
+   * [Bytes](#bytes)
    * [OsString, PosixString and WindowsString](#osstring-posixstring-and-windowsstring)
-      * [OsString, PosixString and WindowsString summary](#osstring-posixstring-and-windowsstring-summary)
    * [CString and CStringLen](#cstring-and-cstringlen)
    * [FilePath](#filepath)
    * [OsPath, PosixPath and WindowsPath](#ospath-posixpath-and-windowspath)
-   * [Lazy vs Strict](#lazy-vs-strict)
-   * [String Types Cheat Sheet](#string-types-cheat-sheet)
+* [Lazy vs Strict](#lazy-vs-strict)
+* [Slicable vs non-slicable](#slicable-vs-non-slicable)
+* [Pinned vs unpinned](#pinned-vs-unpinned)
+* [String Types Cheat Sheet](#string-types-cheat-sheet)
 * [Construction](#construction)
    * [String literals](#string-literals)
    * [String Classes](#string-classes)
@@ -51,16 +49,13 @@ for deciding which string type to use in a given situation.
    * [To JSON](#to-json)
 * [A word on lazy IO](#a-word-on-lazy-io)
 * [Streaming](#streaming)
-   * [Via Streamly](#via-streamly)
 * [A note on FilePaths](#a-note-on-filepaths)
 * [Reflection](#reflection)
    * [What we should know](#what-we-should-know)
    * [Too many Strings](#too-many-strings)
    * [What are we missing](#what-are-we-missing)
 * [Special thanks to](#special-thanks-to)
-* [Related blog posts](#related-blog-posts)
-   * [String type posts](#string-type-posts)
-   * [Others](#others)
+* [Links and relevant stuff](#links-and-relevant-stuff)
 
 ## Motivation
 
@@ -316,9 +311,10 @@ ghci> "쟬"
 
 Show is for debugging, so that seems fine. However this behavior has been challenged before: [Proposal: `showLitChar` (and `show @Char`) shouldn't escape readable Unicode characters](https://github.com/haskell/core-libraries-committee/issues/26).
 
-## String Types overview
+## String types
 
-Luckily, we have many more String types:
+In this section, we will examine each string like type and what its properties and use cases are.
+`String` was already discussed and we don't recommend it, so it's omitted here.
 
 - proper Unicode text
     - [Text](https://hackage.haskell.org/package/text-2.1.1/docs/Data-Text.html#t:Text) (strict and lazy)
@@ -328,7 +324,7 @@ Luckily, we have many more String types:
     - [ShortByteString](https://hackage.haskell.org/package/bytestring-0.12.1.0/docs/Data-ByteString-Short.html#t:ShortByteString)
     - [Bytes](https://hackage.haskell.org/package/byteslice-0.2.13.2/docs/Data-Bytes.html#t:Bytes)
     - [Chunks](https://hackage.haskell.org/package/byteslice-0.2.13.2/docs/Data-Bytes-Chunks.html#t:Chunks)
-- bytes sequences dealing with platform API differences
+- byte sequences dealing with platform API differences
     - [OsString](https://hackage.haskell.org/package/os-string-2.0.2.1/docs/System-OsString.html#t:OsString)
     - [PosixString](https://hackage.haskell.org/package/os-string-2.0.2.1/docs/System-OsString-Posix.html#t:PosixString)
     - [WindowsString](https://hackage.haskell.org/package/os-string-2.0.2.1/docs/System-OsString-Windows.html#t:WindowsString)
@@ -342,11 +338,6 @@ Luckily, we have many more String types:
     - [WindowsPath](https://hackage.haskell.org/package/filepath-1.5.2.0/docs/System-OsPath-Windows.html#t:WindowsPath)
 
 If we delve more into filepaths, there are actually even more, e.g. strongly typed filepaths. But those are out of scope.
-
-## Which String type to pick
-
-In this section, we will examine each string like type and what its properties and use cases are.
-`String` was already discussed and we don't recommend it, so it's omitted here.
 
 ### Text
 
@@ -367,26 +358,11 @@ data Text = Text
     {-# UNPACK #-} !Int     -- ^ length in bytes (not in Char!), pointing to an end of UTF-8 sequence
 ```
 
-#### Intermezzo on Slicing
-
 As we can see here, this type allows efficient slicing to avoid unnecessary `memcpy` for many operations.
 E.g. `init` and `tail` are *O(1)* time and space. `splitAt` is *O(1)* space, but *O(n)* time, because UTF-8 complicates
 the offset computation (remember, a Unicode Code Point encoding can be anywhere between 1 and 4 bytes in UTF-8).
 
-As an example, `init` just manipulates the "length" field, but keeps the original byte array.
-
-This means that slicing comes at two minor costs. First, if you split the Text in half, the GC
-cannot clean up anything and the whole byte array is still in memory, as long as you use one of the halves.
-This can be alleviated by using the [Data.Text.copy](https://hackage.haskell.org/package/text-2.1.1/docs/Data-Text.html#v:copy)
-operation, but has to be done manually.
-
-Second, we carry two unboxed `Int`s around for the "offset" and "length" fields, which is 2 words "overhead".
-For more information on boxed and unboxed types, see the GHC user guide:
-
-- [Unboxed types and primitive operations](https://downloads.haskell.org/ghc/9.6.5/docs/users_guide/exts/primitives.html)
-- [`UNPACK` pragma](https://downloads.haskell.org/ghc/9.6.5/docs/users_guide/exts/pragmas.html#unpack-pragma)
-
-#### Back to Text
+We explain more about this later in [Slicable vs non-slicable](#slicable-vs-non-slicable).
 
 The lazy Text variant is as follows:
 
@@ -415,7 +391,7 @@ Invariants:
 
 - is always Unicode
 - never encodes surrogates (uses replacement char `U+FFFD`)
-- unpinned memory (can be moved by the GC at any time)
+- unpinned memory (can be moved by the GC at any time, see the [Pinned vs unpinned](#pinned-vs-unpinned) section)
 - strict and lazy variants
 
 Useful for:
@@ -473,7 +449,7 @@ Not so useful for:
 
 This is a low level type from the [bytestring](https://hackage.haskell.org/package/bytestring) package, shipped with GHC.
 It is just a sequence of bytes and carries no encoding information. It uses
-**pinned memory**, so it cannot be moved by the GC (see this [Well-Typed blog post](https://well-typed.com/blog/2020/08/memory-fragmentation/#pinned-data) for more information). As such, it doesn't require
+**pinned memory** (see [Pinned vs unpinned](#pinned-vs-unpinned) section). As such, it doesn't require
 copying when dealing with the FFI. It is also often more desirable when interacting with FFI, see the GHC
 user guide:
 
@@ -557,7 +533,7 @@ This makes it suitable for things like Unix filepaths. But we will explore bette
 The name is maybe a little bit misleading. It can very well be used for large data as well, if you
 don't mind its strictness (the whole content is always in memory). **However, this type does not allow slicing**,
 unlike `Text` and `ByteString`, and so a lot of operations cause `memcpy`. This however has the advantage that we save
-3 words compared to e.g. `Text`, because we don't need an offset or length field.
+at least 2 words compared to e.g. `Text`, because we don't need an offset or length field.
 
 If you want a similar type, but with slicing capability, use [Bytes](#bytes).
 
@@ -796,7 +772,7 @@ type OsPath = OsString
 Use them whenever you can with the new filepath API. Refer to the
 [Fixing Haskell filepaths](https://hasufell.github.io/posts/2022-06-29-fixing-haskell-filepaths.html) blog post for more details.
 
-### Lazy vs Strict
+## Lazy vs Strict
 
 The properties of lazy vs strict variants for `Text` and `ByteString` might already
 be obvious for many Haskellers:
@@ -813,12 +789,72 @@ be obvious for many Haskellers:
   * is always forced into memory
   * has less overhead than lazy types
 
-### String Types Cheat Sheet
+A lot of time, people use lazy types in conjunction with lazy IO. However, another use case is to use
+**Builders**. These exist for both Text and ByteString:
+
+- [Data.ByteString.Builder](https://hackage.haskell.org/package/bytestring-0.12.1.0/docs/Data-ByteString-Builder.html)
+- [Data.Text.Lazy.Builder](https://hackage.haskell.org/package/text-2.1.1/docs/Data-Text-Lazy-Builder.html)
+
+## Slicable vs non-slicable
+
+All strings are slicable, but some strings can slice without copying data. E.g. compare `Text` and `ShortText`:
+
+```hs
+data Text = Text
+    {-# UNPACK #-} !A.Array -- ^ bytearray encoded as UTF-8
+    {-# UNPACK #-} !Int     -- ^ offset in bytes (not in Char!), pointing to a start of UTF-8 sequence
+    {-# UNPACK #-} !Int     -- ^ length in bytes (not in Char!), pointing to an end of UTF-8 sequence
+
+newtype ShortText = ShortText ShortByteString
+```
+
+E.g. when we call `splitAt` on a `Text` value, we get back two new `Text` values that just differ in the "offset" and
+"length" fields, but can point at the same byte array. If we slice a lot, this can
+save a lot of `memcpy`, especially on large data.
+
+This means that slicing comes at two costs. First, if we split a text in half, the memory of the original byte array can't
+be cleaned up by the GC. We just changed the offset and length fields, nothing else.
+This can be alleviated by using explicit copy operations when you don't need the whole data anymore, e.g. via
+[Data.Text.copy](https://hackage.haskell.org/package/text-2.1.1/docs/Data-Text.html#v:copy).
+
+Second, we carry two unboxed `Int`s around for the "offset" and "length" fields, which is 2 words "overhead".
+For more information on boxed and unboxed types, see the GHC user guide:
+
+- [Unboxed types and primitive operations](https://downloads.haskell.org/ghc/9.6.5/docs/users_guide/exts/primitives.html)
+- [`UNPACK` pragma](https://downloads.haskell.org/ghc/9.6.5/docs/users_guide/exts/pragmas.html#unpack-pragma)
+
+`ShortText` in contrast, on e.g. `splitAt`, will create two new byte arrays and copy the data.
+Here we're not only saving two words memory overhead (no offset and length field),
+but also have a bit less indirection at runtime and a bit less memory pressure (which might be useful to
+fit into CPU cache) as explained in [this comment](https://github.com/hasufell/hasufell.github.io/pull/7#issuecomment-2105160701).
+
+As such, as the name of the types suggest, a simplified criteria could be:
+
+- slicable type: if you have large strings or need a lot of slicing
+- non-slicable type: if you have relatively short strings or don't need a lot of slicing
+
+In the end, only profiling can really tell which one is better.
+
+## Pinned vs unpinned
+
+Pinned memory means it can't be moved by the GC. This is useful if we want to move the data directly to foreign code (FFI),
+without first copying the entire unpinned data to a pinned memory region at the FFI boundary.
+But it also means that we get memory fragmentation, exactly because the GC cannot move stuff around. If you have
+lots of small pieces of data with pinned memory, that can severely fragment the heap.
+
+This and the problems it can cause is explained in more detail in the Well-Typed blog
+[Understanding Memory Fragmentation](https://well-typed.com/blog/2020/08/memory-fragmentation/#pinned-data).
+
+The problem of memory fragmentation was also one of the things that motivated the original
+[Abstract FilePath proposal](https://gitlab.haskell.org/ghc/ghc/-/wikis/proposal/abstract-file-path)
+and later the new `OsPath` type.
+
+## String Types Cheat Sheet
 
 A few notes on the below table:
 
 - Unicode aware means whether we have access to text processing functions (e.g. split by Unicode Code Point etc.)
-- memory overhead compares the whole data type to the raw data (e.g. additional length/offset fields or pointer indirection)
+- memory overhead means: total words required modulo the payload
 - the overhead for lazy types is multiplied by the number of chunks
 - some types are unpinned by default (e.g. `ShortByteString`) but can manually be constructed as pinned via internal API
 
@@ -828,15 +864,15 @@ The memory overhead measurements are best effort and explained in more detail in
 | Type                | purpose                                      | Unicode aware | internal representation             | memory overhead             | pinned | slicing | FFI suitable | streaming |
 |---------------------|----------------------------------------------|---------------|-------------------------------------|-----------------------------|--------|---------|--------------|-----------|
 | **String**          | simplicity                                   | yes           | List of Unicode Code Points         | 4 words per char + 1 word   | no     | \-\-    | \-\-         | yes       |
-| **Text**            | human readable text                          | yes           | UTF-8 byte array                    | 6 words                     | no     | +       | -            | no        |
-| **Lazy Text**       | human readable text                          | yes           | List of chunks of UTF-8 byte arrays | 8 words per chunk + 1 word  | no     | +       | -            | yes       |
-| **ShortText**       | short human readable texts                   | yes           | UTF-8 byte array                    | 3 words                     | yes    | -       | -            | no        |
-| **ByteString**      | large byte sequences                         | no            | Word8 byte array (pointer)          | 9 words                     | yes    | ++      | ++           | no        |
-| **Lazy ByteString** | large byte sequences                         | no            | List of chunks of Word8 byte arrays | 11 words per chunk + 1 word | yes    | ++      | ++           | yes       |
-| **ShortByteString** | short byte sequences                         | no            | Word8 byte array                    | 3 words                     | no     | -       | +            | no        |
-| **Bytes**           | slicable ShortByteString / pinned ByteString | no            | Word8 byte array                    | 6 words                     | both   | ++      | +            | no        |
-| **Chunks**          | Like "Bytes", but for incremental building   | no            | List of chunks of Word8 byte arrays | 8 words per chunk + 1 word  | both   | ++      | +            | no        |
-| **OsString**        | interfacing with OS API                      | no            | Word8 or Word16 byte array          | 3 words                     | no     | -       | +            | no        |
+| **Text**            | human readable text                          | yes           | UTF-8 byte array                    | 7 words                     | no     | +       | -            | no        |
+| **Lazy Text**       | human readable text                          | yes           | List of chunks of UTF-8 byte arrays | 9 words per chunk + 1 word  | no     | +       | -            | yes       |
+| **ShortText**       | short human readable texts                   | yes           | UTF-8 byte array                    | 4 words                     | yes    | -       | -            | no        |
+| **ByteString**      | large byte sequences                         | no            | Word8 byte array (pointer)          | 10 words                    | yes    | ++      | ++           | no        |
+| **Lazy ByteString** | large byte sequences                         | no            | List of chunks of Word8 byte arrays | 12 words per chunk + 1 word | yes    | ++      | ++           | yes       |
+| **ShortByteString** | short byte sequences                         | no            | Word8 byte array                    | 4 words                     | no     | -       | +            | no        |
+| **Bytes**           | slicable ShortByteString / pinned ByteString | no            | Word8 byte array                    | 7 words                     | both   | ++      | +            | no        |
+| **Chunks**          | Like "Bytes", but for incremental building   | no            | List of chunks of Word8 byte arrays | 9 words per chunk + 1 word  | both   | ++      | +            | no        |
+| **OsString**        | interfacing with OS API                      | no            | Word8 or Word16 byte array          | 4 words                     | no     | -       | +            | no        |
 
 ## Construction
 
@@ -1353,14 +1389,34 @@ for less types. However, it is clear that not everyone thinks so:
 I am still unable to see the bigger picture, other than more unification of
 *internal representations*, but less so of public APIs.
 
-E.g. `Text` could be a newytpe over `Bytes`. But that won't save us any type. We would need
-at least a newtype to write an API that maintains the "valid unicode" invariant, which `Bytes`
+E.g. if we compare the following 3 types, we see a pattern:
+
+```hs
+data Text = Text
+    {-# UNPACK #-} !A.Array -- ^ bytearray encoded as UTF-8
+    {-# UNPACK #-} !Int     -- ^ offset in bytes (not in Char!), pointing to a start of UTF-8 sequence
+    {-# UNPACK #-} !Int     -- ^ length in bytes (not in Char!), pointing to an end of UTF-8 sequence
+
+data Vector a = Vector {-# UNPACK #-} !Int
+                       {-# UNPACK #-} !Int
+                       {-# UNPACK #-} !(Array a)
+
+data Bytes = Bytes
+  { array :: {-# UNPACK #-} !ByteArray
+  , offset :: {-# UNPACK #-} !Int
+  , length :: {-# UNPACK #-} !Int
+  }
+```
+
+A unification of internal representations would e.g. allow 0-cost conversions, unless
+an invariant needs to be checked (like valid unicode).
+
+`Text` could maybe be a newytpe over `Bytes`. But that won't actually save us a type. We still need
+the newtype to write an API that maintains the "valid unicode" invariant, which `Bytes`
 does not guarantee.
 
-It is also hard to argue for the removal of the "short" types `ShortText` and `ShortByteString`.
-We're not only saving two words memory overhead, but also have a bit less indirection at
-runtime and a bit less memory pressure (which might be useful to fit into CPU cache)
-as explained in [this comment](https://github.com/hasufell/hasufell.github.io/pull/7#issuecomment-2105160701).
+It is also hard to argue for the removal of the "short" types `ShortText` and `ShortByteString`
+as described in the section [Slicable vs non-slicable](#slicable-vs-non-slicable).
 
 Writing a new string type from scratch can be really hard. But with the rich APIs of `ByteString`,
 `ShortByteString` and `Bytes`, coming up with newtypes might not be that difficult.
@@ -1405,6 +1461,7 @@ My next project is likely going to be strongly typed filepaths, which
 - [Eat Haskell String Types for Breakfast, by Ziyang Liu](https://free.cofree.io/2020/05/06/string-types/)
 - [Untangling Haskell's Strings](https://mmhaskell.com/blog/2017/5/15/untangling-haskells-strings)
 - [Haskell Strings, by Chris Warburton](http://www.chriswarbo.net/blog/2020-06-08-haskell_strings.html)
+- [vector: Efficient Packed-Memory Data Representations, by FPComplete](https://www.fpcomplete.com/haskell/library/vector/)
 
 ### Other blog posts
 
@@ -1422,6 +1479,7 @@ My next project is likely going to be strongly typed filepaths, which
 ### String types not discussed here
 
 - [monoid-subclasses](https://hackage.haskell.org/package/monoid-subclasses)
+- [Data.Vector](https://hackage.haskell.org/package/vector-0.13.1.0/docs/Data-Vector.html)
 - [Data.ByteString.Builder](https://hackage.haskell.org/package/bytestring-0.12.1.0/docs/Data-ByteString-Builder.html)
 - [GHC.Data.FastString](https://hackage.haskell.org/package/ghc-9.8.2/docs/GHC-Data-FastString.html)
 - [Data.JSString](https://hackage.haskell.org/package/jsaddle-0.9.9.0/docs/Data-JSString.html)
