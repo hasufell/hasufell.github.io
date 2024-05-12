@@ -1,4 +1,9 @@
-# Fixing 'FilePath' in Haskell
+---
+title: Fixing 'FilePath' in Haskell
+subtitle: A user-space implementation of the AFPP
+author: Julian Ospald
+tags: haskell, filepath, AFPP
+---
 
 I'm pleased to announce that the Haskell type `type FilePath = String`
 has a successor, which was first discussed many years ago as the [Abstract FilePath proposal (AFPP)](https://gitlab.haskell.org/ghc/ghc/-/wikis/proposal/abstract-file-path).
