@@ -28,9 +28,9 @@ for deciding which string type to use in a given situation.
    * [ShortByteString](#shortbytestring)
    * [Bytes](#bytes)
    * [OsString, PosixString and WindowsString](#osstring-posixstring-and-windowsstring)
+   * [OsPath, PosixPath and WindowsPath](#ospath-posixpath-and-windowspath)
    * [CString and CStringLen](#cstring-and-cstringlen)
    * [FilePath](#filepath)
-   * [OsPath, PosixPath and WindowsPath](#ospath-posixpath-and-windowspath)
 * [Lazy vs Strict](#lazy-vs-strict)
 * [Slicable vs non-slicable](#slicable-vs-non-slicable)
 * [Pinned vs unpinned](#pinned-vs-unpinned)
@@ -705,6 +705,27 @@ Not so useful for:
 - data that is not platform specific or doesn't originate from operating system API
 - efficient slicing
 
+### OsPath, PosixPath and WindowsPath
+
+These are equivalent to `OsString`, `PosixString` and `WindowsString` and are part of the
+[filepath](https://hackage.haskell.org/package/filepath) package as of
+[1.4.100.0](https://hackage.haskell.org/package/filepath-1.4.100.0). They are just type synonyms:
+
+```hs
+-- | FilePath for Windows.
+type WindowsPath = WindowsString
+
+-- | FilePath for posix systems.
+type PosixPath = PosixString
+
+-- | Abstract filepath, depending on current platform.
+-- Matching on the wrong constructor is a compile-time error.
+type OsPath = OsString
+```
+
+Use them whenever you can with the new filepath API. Refer to the
+[Fixing Haskell filepaths](https://hasufell.github.io/posts/2022-06-29-fixing-haskell-filepaths.html) blog post for more details.
+
 ### CString and CStringLen
 
 These are part of `base` and low-level FFI types.
@@ -751,26 +772,7 @@ The definition is:
 type FilePath = String
 ```
 
-This is not a very good choice for filepaths. Use the new `OsPath` instead.
-
-### OsPath, PosixPath and WindowsPath
-
-These are equivalent to `OsString`, `PosixString` and `WindowsString`. They are just type synonyms:
-
-```hs
--- | FilePath for Windows.
-type WindowsPath = WindowsString
-
--- | FilePath for posix systems.
-type PosixPath = PosixString
-
--- | Abstract filepath, depending on current platform.
--- Matching on the wrong constructor is a compile-time error.
-type OsPath = OsString
-```
-
-Use them whenever you can with the new filepath API. Refer to the
-[Fixing Haskell filepaths](https://hasufell.github.io/posts/2022-06-29-fixing-haskell-filepaths.html) blog post for more details.
+This is not a very good choice for filepaths. Use the new [OsPath](#ospath-posixpath-and-windowspath) instead.
 
 ## Lazy vs Strict
 
@@ -866,7 +868,7 @@ The memory overhead measurements are best effort and explained in more detail in
 | **String**          | simplicity                                   | yes           | List of Unicode Code Points         | 4 words per char + 1 word   | no     | \-\-    | \-\-         | yes       |
 | **Text**            | human readable text                          | yes           | UTF-8 byte array                    | 7 words                     | no     | +       | -            | no        |
 | **Lazy Text**       | human readable text                          | yes           | List of chunks of UTF-8 byte arrays | 9 words per chunk + 1 word  | no     | +       | -            | yes       |
-| **ShortText**       | short human readable texts                   | yes           | UTF-8 byte array                    | 4 words                     | yes    | -       | -            | no        |
+| **ShortText**       | short human readable texts                   | yes           | UTF-8 byte array                    | 4 words                     | no     | -       | -            | no        |
 | **ByteString**      | large byte sequences                         | no            | Word8 byte array (pointer)          | 10 words                    | yes    | ++      | ++           | no        |
 | **Lazy ByteString** | large byte sequences                         | no            | List of chunks of Word8 byte arrays | 12 words per chunk + 1 word | yes    | ++      | ++           | yes       |
 | **ShortByteString** | short byte sequences                         | no            | Word8 byte array                    | 4 words                     | no     | -       | +            | no        |
