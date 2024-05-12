@@ -146,9 +146,9 @@
 <li><a href="#shortbytestring">ShortByteString</a></li>
 <li><a href="#bytes">Bytes</a></li>
 <li><a href="#osstring-posixstring-and-windowsstring">OsString, PosixString and WindowsString</a></li>
+<li><a href="#ospath-posixpath-and-windowspath">OsPath, PosixPath and WindowsPath</a></li>
 <li><a href="#cstring-and-cstringlen">CString and CStringLen</a></li>
 <li><a href="#filepath">FilePath</a></li>
-<li><a href="#ospath-posixpath-and-windowspath">OsPath, PosixPath and WindowsPath</a></li>
 </ul></li>
 <li><a href="#lazy-vs-strict">Lazy vs Strict</a></li>
 <li><a href="#slicable-vs-non-slicable">Slicable vs non-slicable</a></li>
@@ -712,42 +712,42 @@ ghci&gt; &quot;쟬&quot;
 <li>data that is not platform specific or doesn’t originate from operating system API</li>
 <li>efficient slicing</li>
 </ul>
+<h3 id="ospath-posixpath-and-windowspath">OsPath, PosixPath and WindowsPath</h3>
+<p>These are equivalent to <code>OsString</code>, <code>PosixString</code> and <code>WindowsString</code> and are part of the <a href="https://hackage.haskell.org/package/filepath">filepath</a> package as of <a href="https://hackage.haskell.org/package/filepath-1.4.100.0">1.4.100.0</a>. They are just type synonyms:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true"></a><span class="co">-- | FilePath for Windows.</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true"></a><span class="kw">type</span> <span class="dt">WindowsPath</span> <span class="ot">=</span> <span class="dt">WindowsString</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true"></a></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true"></a><span class="co">-- | FilePath for posix systems.</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true"></a><span class="kw">type</span> <span class="dt">PosixPath</span> <span class="ot">=</span> <span class="dt">PosixString</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true"></a></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true"></a><span class="co">-- | Abstract filepath, depending on current platform.</span></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true"></a><span class="co">-- Matching on the wrong constructor is a compile-time error.</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true"></a><span class="kw">type</span> <span class="dt">OsPath</span> <span class="ot">=</span> <span class="dt">OsString</span></span></code></pre></div>
+<p>Use them whenever you can with the new filepath API. Refer to the <a href="https://hasufell.github.io/posts/2022-06-29-fixing-haskell-filepaths.html">Fixing Haskell filepaths</a> blog post for more details.</p>
 <h3 id="cstring-and-cstringlen">CString and CStringLen</h3>
 <p>These are part of <code>base</code> and low-level FFI types.</p>
 <p>The definitions are very straight forward:</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true"></a><span class="co">-- | A C string is a reference to an array of C characters terminated by NUL.</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true"></a><span class="kw">type</span> <span class="dt">CString</span>    <span class="ot">=</span> <span class="dt">Ptr</span> <span class="dt">CChar</span></span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true"></a></span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true"></a><span class="co">-- | A string with explicit length information in bytes instead of a</span></span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true"></a><span class="co">-- terminating NUL (allowing NUL characters in the middle of the string).</span></span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true"></a><span class="kw">type</span> <span class="dt">CStringLen</span> <span class="ot">=</span> (<span class="dt">Ptr</span> <span class="dt">CChar</span>, <span class="dt">Int</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb15"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true"></a><span class="co">-- | A C string is a reference to an array of C characters terminated by NUL.</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true"></a><span class="kw">type</span> <span class="dt">CString</span>    <span class="ot">=</span> <span class="dt">Ptr</span> <span class="dt">CChar</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true"></a></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true"></a><span class="co">-- | A string with explicit length information in bytes instead of a</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true"></a><span class="co">-- terminating NUL (allowing NUL characters in the middle of the string).</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true"></a><span class="kw">type</span> <span class="dt">CStringLen</span> <span class="ot">=</span> (<span class="dt">Ptr</span> <span class="dt">CChar</span>, <span class="dt">Int</span>)</span></code></pre></div>
 <p>The haddock also explains the expected properties.</p>
 <p>As an interesting edge case: if you’re converting from <code>ByteString</code> to <code>CString</code> and happen to have a NUL byte in your ByteString, then <code>useAsCString</code> will over-allocate bytes:</p>
-<div class="sourceCode" id="cb15"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true"></a><span class="ot">useAsCString ::</span> <span class="dt">ByteString</span> <span class="ot">-&gt;</span> (<span class="dt">CString</span> <span class="ot">-&gt;</span> <span class="dt">IO</span> a) <span class="ot">-&gt;</span> <span class="dt">IO</span> a</span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true"></a>useAsCString (<span class="dt">BS</span> fp l) action <span class="ot">=</span></span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true"></a>  allocaBytes (l<span class="op">+</span><span class="dv">1</span>) <span class="op">$</span> \buf <span class="ot">-&gt;</span> <span class="kw">do</span></span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true"></a>    unsafeWithForeignPtr fp <span class="op">$</span> \p <span class="ot">-&gt;</span> copyBytes buf p l</span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true"></a>    pokeByteOff buf l (<span class="dv">0</span><span class="ot">::</span><span class="dt">Word8</span>)</span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true"></a>    action (castPtr buf)</span></code></pre></div>
+<div class="sourceCode" id="cb16"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true"></a><span class="ot">useAsCString ::</span> <span class="dt">ByteString</span> <span class="ot">-&gt;</span> (<span class="dt">CString</span> <span class="ot">-&gt;</span> <span class="dt">IO</span> a) <span class="ot">-&gt;</span> <span class="dt">IO</span> a</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true"></a>useAsCString (<span class="dt">BS</span> fp l) action <span class="ot">=</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true"></a>  allocaBytes (l<span class="op">+</span><span class="dv">1</span>) <span class="op">$</span> \buf <span class="ot">-&gt;</span> <span class="kw">do</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true"></a>    unsafeWithForeignPtr fp <span class="op">$</span> \p <span class="ot">-&gt;</span> copyBytes buf p l</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true"></a>    pokeByteOff buf l (<span class="dv">0</span><span class="ot">::</span><span class="dt">Word8</span>)</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true"></a>    action (castPtr buf)</span></code></pre></div>
 <p>So it can make sense, in some cases, to check your ByteString for NUL bytes.</p>
 <p>We won’t dive into the Haskell C FFI, but this is literally the only proper use case. Refer to the <a href="https://en.wikibooks.org/wiki/Haskell/FFI">wikibook article on Haskell FFI</a>.</p>
 <h3 id="filepath">FilePath</h3>
 <p>This type is a <strong>legacy</strong> filepath type, but is still the most widespread across the ecosystem at the time of writing. It is part of the <a href="https://hackage.haskell.org/package/filepath">filepath</a> package, which is also shipped with GHC.</p>
 <p>The definition is:</p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true"></a><span class="kw">type</span> <span class="dt">FilePath</span> <span class="ot">=</span> <span class="dt">String</span></span></code></pre></div>
-<p>This is not a very good choice for filepaths. Use the new <code>OsPath</code> instead.</p>
-<h3 id="ospath-posixpath-and-windowspath">OsPath, PosixPath and WindowsPath</h3>
-<p>These are equivalent to <code>OsString</code>, <code>PosixString</code> and <code>WindowsString</code>. They are just type synonyms:</p>
-<div class="sourceCode" id="cb17"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true"></a><span class="co">-- | FilePath for Windows.</span></span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true"></a><span class="kw">type</span> <span class="dt">WindowsPath</span> <span class="ot">=</span> <span class="dt">WindowsString</span></span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true"></a></span>
-<span id="cb17-4"><a href="#cb17-4" aria-hidden="true"></a><span class="co">-- | FilePath for posix systems.</span></span>
-<span id="cb17-5"><a href="#cb17-5" aria-hidden="true"></a><span class="kw">type</span> <span class="dt">PosixPath</span> <span class="ot">=</span> <span class="dt">PosixString</span></span>
-<span id="cb17-6"><a href="#cb17-6" aria-hidden="true"></a></span>
-<span id="cb17-7"><a href="#cb17-7" aria-hidden="true"></a><span class="co">-- | Abstract filepath, depending on current platform.</span></span>
-<span id="cb17-8"><a href="#cb17-8" aria-hidden="true"></a><span class="co">-- Matching on the wrong constructor is a compile-time error.</span></span>
-<span id="cb17-9"><a href="#cb17-9" aria-hidden="true"></a><span class="kw">type</span> <span class="dt">OsPath</span> <span class="ot">=</span> <span class="dt">OsString</span></span></code></pre></div>
-<p>Use them whenever you can with the new filepath API. Refer to the <a href="https://hasufell.github.io/posts/2022-06-29-fixing-haskell-filepaths.html">Fixing Haskell filepaths</a> blog post for more details.</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true"></a><span class="kw">type</span> <span class="dt">FilePath</span> <span class="ot">=</span> <span class="dt">String</span></span></code></pre></div>
+<p>This is not a very good choice for filepaths. Use the new <a href="#ospath-posixpath-and-windowspath">OsPath</a> instead.</p>
 <h2 id="lazy-vs-strict">Lazy vs Strict</h2>
 <p>The properties of lazy vs strict variants for <code>Text</code> and <code>ByteString</code> might already be obvious for many Haskellers:</p>
 <ul>
@@ -871,7 +871,7 @@ ghci&gt; &quot;쟬&quot;
 <td>yes</td>
 <td>UTF-8 byte array</td>
 <td>4 words</td>
-<td>yes</td>
+<td>no</td>
 <td>-</td>
 <td>-</td>
 <td>no</td>
