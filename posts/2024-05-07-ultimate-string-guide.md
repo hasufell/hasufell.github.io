@@ -559,6 +559,8 @@ don't mind its strictness (the whole content is always in memory). **However, th
 unlike `Text` and `ByteString`, and so a lot of operations cause `memcpy`. This however has the advantage that we save
 3 words compared to e.g. `Text`, because we don't need an offset or length field.
 
+If you want a similar type, but with slicing capability, use [Bytes](#bytes).
+
 Interfacing with C FFI triggers memory copy as well, because we need pinned memory.
 
 There is no lazy variant.
@@ -1355,7 +1357,12 @@ E.g. `Text` could be a newytpe over `Bytes`. But that won't save us any type. We
 at least a newtype to write an API that maintains the "valid unicode" invariant, which `Bytes`
 does not guarantee.
 
-Writing a new string type can be really hard. But with the rich APIs of `ByteString`,
+It is also hard to argue for the removal of the "short" types `ShortText` and `ShortByteString`.
+We're not only saving two words memory overhead, but also have a bit less indirection at
+runtime and a bit less memory pressure (which might be useful to fit into CPU cache)
+as explained in [this comment](https://github.com/hasufell/hasufell.github.io/pull/7#issuecomment-2105160701).
+
+Writing a new string type from scratch can be really hard. But with the rich APIs of `ByteString`,
 `ShortByteString` and `Bytes`, coming up with newtypes might not be that difficult.
 
 ### What are we missing
@@ -1389,7 +1396,7 @@ My next project is likely going to be strongly typed filepaths, which
 - all the text, bytestring, byteslice, short-text etc. maintainers
 - Other people I pinged about this topic
 
-## References
+## Links and relevant stuff
 
 ### String type blog posts
 
