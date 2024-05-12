@@ -415,7 +415,8 @@ Invariants:
 
 - is always Unicode
 - never encodes surrogates (uses replacement char `U+FFFD`)
-- unpinned memory
+- unpinned memory (can be moved by the GC at any time)
+- strict and lazy variants
 
 Useful for:
 
@@ -433,11 +434,46 @@ Not so useful for:
 
 Lazy variants are useful for streaming and incremental processing, as the strict variant requires the whole content to be in memory.
 
+### ShortText
+
+This is an alternative Unicode text type that is meant for lots of small text sequences. It is part of the
+[text-short](https://hackage.haskell.org/package/text-short) package. The definition is as follows:
+
+```hs
+newtype ShortText = ShortText ShortByteString
+```
+
+So there is no length or offset field.
+This means it has all the same properties as an unpinned `ShortByteString`, except that the data is guaranteed
+to be valid UTF-8.
+
+#### ShortText summary
+
+Invariants:
+
+- is always Unicode
+- never encodes surrogates (uses replacement char `U+FFFD`)
+- unpinned memory (can be moved by the GC at any time)
+- strict
+
+Useful for:
+
+- anything that fits ASCII or Unicode
+- lots of small text sequences
+
+Not so useful for:
+
+- using with `text-icu` package, which expects `Text`
+- efficient slicing
+- dealing with C FFI
+- trying to store or deal with non-Unicode encodings
+- dealing with filepaths
+
 ### ByteString
 
 This is a low level type from the [bytestring](https://hackage.haskell.org/package/bytestring) package, shipped with GHC.
 It is just a sequence of bytes and carries no encoding information. It uses
-**pinned memory**, so it cannot be moved by the GC. As such, it doesn't require
+**pinned memory**, so it cannot be moved by the GC (see this [Well-Typed blog post](https://well-typed.com/blog/2020/08/memory-fragmentation/#pinned-data) for more information). As such, it doesn't require
 copying when dealing with the FFI. It is also often more desirable when interacting with FFI, see the GHC
 user guide:
 
@@ -479,6 +515,7 @@ An alternative type is `ShortByteString`, which will be discussed next.
 Invariants:
 
 - pinned memory
+- strict and lazy variants
 
 Useful for:
 
@@ -528,6 +565,7 @@ Interfacing with C FFI triggers memory copy as well, because we need pinned memo
 Invariants:
 
 - unpinned memory (when using the default API)
+- always strict
 
 Useful for:
 
@@ -540,6 +578,65 @@ Not so useful for:
 
 - dealing with Unicode or human readable text
 - fast parsers, because no lazy variant and no efficient slicing
+
+### Bytes
+
+This type is from the `byteslice` package and lives under
+[Data.Bytes](https://hackage.haskell.org/package/byteslice-0.2.13.2/docs/Data-Bytes.html). It is
+not shipped by GHC.
+
+It is a essentially a `ShortByteString` with 0-copy slicing (`init`, `splitAt` etc.).
+It can be constructed as a pinned or unpinned byte sequence.
+
+The definition as of [0.2.13.2](https://hackage.haskell.org/package/byteslice-0.2.13.2) is:
+
+```hs
+data Bytes = Bytes
+  { array :: {-# UNPACK #-} !ByteArray
+  , offset :: {-# UNPACK #-} !Int
+  , length :: {-# UNPACK #-} !Int
+  }
+```
+
+This is exactly the same definition as the `Text` type. But it does not maintain UTF-8. It uses `ByteArray` like `ShortByteString` does.
+Compared to `ShortByteString` however, we have three words more memory overhead.
+
+The API allows to convert to `ByteString` and `ShortByteString`. Depending on whether it was pinned or unpinned, sliced
+or unsliced, those may be 0-copy operations as well.
+
+There's another variant called `Chunks` in
+[Data.Bytes.Chunks](https://hackage.haskell.org/package/byteslice-0.2.13.2/docs/Data-Bytes-Chunks.html):
+
+```hs
+data Chunks
+  = ChunksCons {-# UNPACK #-} !Bytes !Chunks
+  | ChunksNil
+```
+
+Although This is quite similar to how lazy `Text` is defined, this type is not lazy at all.
+It has [bang patterns](https://downloads.haskell.org/ghc/9.6.5/docs/users_guide/exts/strict.html)
+on both the value and the recursion, so it is spine-strict.
+
+The only real use case the `Chunk` type has is when you want to avoid the overhead of constant appending
+of `ByteArray`s, because you're e.g. reading a file incrementally.
+
+#### Bytes summary
+
+Invariants:
+
+- can be both pinned or unpinned
+- is always strict
+
+Useful for:
+
+- when you want an unpinned strict ByteString...
+- or a slicable ShortByteString
+- dealing with C FFI
+- parsers, if we don't mind strictness
+
+Not so useful for:
+
+- dealing with Unicode or human readable text
 
 ### OsString, PosixString and WindowsString
 
@@ -719,13 +816,18 @@ A few notes on the below table:
 - the overhead for lazy types is multiplied by the number of chunks
 - some types are unpinned by default (e.g. `ShortByteString`) but can manually be constructed as pinned via internal API
 
-| Type            | purpose                 | Unicode aware | internal representation     | memory overhead   | pinned | slicing | FFI suitable |
-|-----------------|-------------------------|---------------|-----------------------------|-------------------|--------|---------|--------------|
-| String          | simplicity              | yes           | List of Unicode Code Points | 4 words per char, +1 word in total  | no     | \-\-    | \-\-         |
-| Text            | human readable text     | yes           | UTF-8 byte array            | 2 words           | no     | +       | -            |
-| ByteString      | large byte sequences    | no            | Word8 byte array (pointer)  | 1 word            | yes    | ++      | ++           |
-| ShortByteString | short byte sequences    | no            | Word8 byte array            | none              | no     | -       | +            |
-| OsString        | interfacing with OS API | no            | Word8 or Word16 byte array  | none              | no     | -       | +            |
+| Type                | purpose                                      | Unicode aware | internal representation             | memory overhead             | pinned | slicing | FFI suitable | streaming |
+|---------------------|----------------------------------------------|---------------|-------------------------------------|-----------------------------|--------|---------|--------------|-----------|
+| **String**          | simplicity                                   | yes           | List of Unicode Code Points         | 4 words per char + 1 word   | no     | \-\-    | \-\-         | yes       |
+| **Text**            | human readable text                          | yes           | UTF-8 byte array                    | 6 words                     | no     | +       | -            | no        |
+| **Lazy Text**       | human readable text                          | yes           | List of chunks of UTF-8 byte arrays | 8 words per chunk + 1 word  | no     | +       | -            | yes       |
+| **ShortText**       | short human readable texts                   | yes           | UTF-8 byte array                    | 3 words                     | yes    | -       | -            | no        |
+| **ByteString**      | large byte sequences                         | no            | Word8 byte array (pointer)          | 9 words                     | yes    | ++      | ++           | no        |
+| **Lazy ByteString** | large byte sequences                         | no            | List of chunks of Word8 byte arrays | 11 words per chunk + 1 word | yes    | ++      | ++           | yes       |
+| **ShortByteString** | short byte sequences                         | no            | Word8 byte array                    | 3 words                     | no     | -       | +            | no        |
+| **Bytes**           | slicable ShortByteString / pinned ByteString | no            | Word8 byte array                    | 6 words                     | both   | ++      | +            | no        |
+| **Chunks**          | Like "Bytes", but for incremental building   | no            | List of chunks of Word8 byte arrays | 8 words per chunk + 1 word  | both   | ++      | +            | no        |
+| **OsString**        | interfacing with OS API                      | no            | Word8 or Word16 byte array          | 3 words                     | no     | -       | +            | no        |
 
 ## Construction
 
@@ -840,6 +942,10 @@ package, which is not shipped with GHC. There are other similar packages like
 [utf8-string](https://hackage.haskell.org/package/utf8-string).
 
 Other than that, we only need the packages that provide the types we're dealing with.
+
+We're omitting `ShortText`, because conversions are similar to `Text`. `Bytes` can
+be converted to `ByteString` or `ShortByteString` depending on the pinned/unpinned
+nature and from there we can follow the below strategies.
 
 ### From String to...
 
@@ -1204,8 +1310,9 @@ sometimes returns.
 
 We have seen a summary of the different string types:
 
-- Text for Unicode
+- Text/ShortText for Unicode
 - ByteString/ShortByteString for binary data
+- The very flexible Bytes type
 - OsString for operating systems API
 - String for the bin
 
@@ -1224,7 +1331,7 @@ e.g. on [Hacker News](https://news.ycombinator.com/item?id=14567755).
 If we take another look at the [String Types Cheat Sheet](#string-types-cheat-sheet),
 we don't really see any type that could be replaced by another. They all have
 different properties and trade-offs. `ByteString` vs `ShortByteString` may be
-a bit less intuitive, but `Text` is clearly alone in that list. `OsPath`
+a bit less intuitive, but e.g. `Text` is clearly different. `OsPath`
 is a specialized type that exists in Rust too. Maybe people dislike the Strict/Lazy
 variants, but they do have (again) different properties.
 
@@ -1237,8 +1344,12 @@ for less types. However, it is clear that not everyone thinks so:
 I am still unable to see the bigger picture, other than more unification of
 *internal representations*, but less so of public APIs.
 
-Writing a new string type can be really hard. But with the rich APIs of `ByteString`
-and `ShortByteString`, coming up with newtypes might not be that difficult.
+E.g. `Text` could be a newytpe over `Bytes`. But that won't save us any type. We would need
+at least a newtype to write an API that maintains the "valid unicode" invariant, which `Bytes`
+does not guarantee.
+
+Writing a new string type can be really hard. But with the rich APIs of `ByteString`,
+`ShortByteString` and `Bytes`, coming up with newtypes might not be that difficult.
 
 ### What are we missing
 
@@ -1265,17 +1376,15 @@ My next project is likely going to be strongly typed filepaths, which
 
 - Andrew Lelechenko
 - Jonathan Knowles
-- Mike Pilgrim
+- Mike Pilgrem
 - John Ericson
-- Tom Ellis
-- Ἑκάτη
-- Ben Gamari
 - streamly maintainers for their cutting edge API
+- all the text, bytestring, byteslice, short-text etc. maintainers
 - Other people I pinged about this topic
 
-## Related blog posts
+## References
 
-### String type posts
+### String type blog posts
 
 - [Fixing Haskell filepaths, by Julian Ospald](https://hasufell.github.io/posts/2022-06-29-fixing-haskell-filepaths.html)
 - [String types, by FPComplete](https://www.fpcomplete.com/haskell/tutorial/string-types/)
@@ -1283,7 +1392,7 @@ My next project is likely going to be strongly typed filepaths, which
 - [Untangling Haskell's Strings](https://mmhaskell.com/blog/2017/5/15/untangling-haskells-strings)
 - [Haskell Strings, by Chris Warburton](http://www.chriswarbo.net/blog/2020-06-08-haskell_strings.html)
 
-### Others
+### Other blog posts
 
 - [From conduit to streamly](https://hasufell.github.io/posts/2021-10-22-conduit-to-streamly.html)
 - [Fast Haskell: Competing with C at parsing XML](https://chrisdone.com/posts/fast-haskell-c-parsing-xml/)
@@ -1291,3 +1400,14 @@ My next project is likely going to be strongly typed filepaths, which
 - [Haskell base proposal: unifying vector-like types](https://www.snoyman.com/blog/2021/03/haskell-base-proposal/)
 - [Haskell base proposal, part 2: unifying vector-like types](https://www.snoyman.com/blog/2021/03/haskell-base-proposal-2/)
 - [The text package: finally with UTF-8, by Andrew Lelechenko](https://github.com/Bodigrim/my-talks/blob/master/zurihac2022/slides.pdf)
+
+### Interesting issues
+
+- [Quit using ForeignPtr in favor of ByteArray#](https://github.com/haskell/bytestring/issues/193)
+
+### String types not discussed here
+
+- [monoid-subclasses](https://hackage.haskell.org/package/monoid-subclasses)
+- [Data.ByteString.Builder](https://hackage.haskell.org/package/bytestring-0.12.1.0/docs/Data-ByteString-Builder.html)
+- [GHC.Data.FastString](https://hackage.haskell.org/package/ghc-9.8.2/docs/GHC-Data-FastString.html)
+- [Data.JSString](https://hackage.haskell.org/package/jsaddle-0.9.9.0/docs/Data-JSString.html)
