@@ -676,7 +676,7 @@ And at the same time, we are able to write safe, platform agnostic code utilizin
 - [System.File.OsPath](https://hackage.haskell.org/package/file-io-0.1.1/docs/System-File-OsPath.html)
 
 This strategy has been used for filepaths, where `unix` package uses `PosixString`, `Win32` package uses `WindowsString`
-and the platform agnostic `directory` and `filo-io` packages use `OsString`, combining the APIs of Unix and Windows. More
+and the platform agnostic `directory` and `file-io` packages use `OsString`, combining the APIs of Unix and Windows. More
 information on this with examples and API explanation can be found
 [here](https://hasufell.github.io/posts/2022-06-29-fixing-haskell-filepaths.html).
 
