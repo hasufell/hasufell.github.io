@@ -690,7 +690,7 @@ ghci&gt; &quot;쟬&quot;
 <ul>
 <li><a href="https://hackage.haskell.org/package/file-io-0.1.1/docs/System-File-OsPath.html">System.File.OsPath</a></li>
 </ul>
-<p>This strategy has been used for filepaths, where <code>unix</code> package uses <code>PosixString</code>, <code>Win32</code> package uses <code>WindowsString</code> and the platform agnostic <code>directory</code> and <code>filo-io</code> packages use <code>OsString</code>, combining the APIs of Unix and Windows. More information on this with examples and API explanation can be found <a href="https://hasufell.github.io/posts/2022-06-29-fixing-haskell-filepaths.html">here</a>.</p>
+<p>This strategy has been used for filepaths, where <code>unix</code> package uses <code>PosixString</code>, <code>Win32</code> package uses <code>WindowsString</code> and the platform agnostic <code>directory</code> and <code>file-io</code> packages use <code>OsString</code>, combining the APIs of Unix and Windows. More information on this with examples and API explanation can be found <a href="https://hasufell.github.io/posts/2022-06-29-fixing-haskell-filepaths.html">here</a>.</p>
 <p>It is not restricted to filepaths, but may be extended to dealing with environment variables, program arguments and other bits of operating system API. It is always safer than <code>String</code> and more type safe than <code>ByteString</code>.</p>
 <h4 id="osstring-posixstring-and-windowsstring-summary">OsString, PosixString and WindowsString summary</h4>
 <p>Invariants:</p>
@@ -774,6 +774,7 @@ ghci&gt; &quot;쟬&quot;
 <li><a href="https://hackage.haskell.org/package/bytestring-0.12.1.0/docs/Data-ByteString-Builder.html">Data.ByteString.Builder</a></li>
 <li><a href="https://hackage.haskell.org/package/text-2.1.1/docs/Data-Text-Lazy-Builder.html">Data.Text.Lazy.Builder</a></li>
 </ul>
+<p>In general, streaming libraries can be a more elegant and performant alternative to lazy Text/ByteString. We talk about that later in the chapter <a href="#streaming">Streaming</a>. But since much of the ecosystem uses lazy types, these are still relevant for practical purposes.</p>
 <h2 id="slicable-vs-non-slicable">Slicable vs non-slicable</h2>
 <p>All strings are slicable, but some strings can slice without copying data. E.g. compare <code>Text</code> and <code>ShortText</code>:</p>
 <div class="sourceCode" id="cb18"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Text</span> <span class="ot">=</span> <span class="dt">Text</span></span>
@@ -1288,7 +1289,7 @@ ghci&gt; &quot;쟬&quot;
 </blockquote>
 <p>Lazy IO makes it hard to reason about resources, order of execution etc. It is better to use a proper streaming library.</p>
 <h2 id="streaming">Streaming</h2>
-<p>Streaming can not only solve the lazy IO problem, but may also solve some of the inefficiency of the <code>[Char]</code> type, while keeping a similarly simple API.</p>
+<p>Streaming can not only solve the lazy IO problem, but may also solve some of the inefficiency of the <code>[Char]</code> type and can be more perfomant than lazy Text/ByteString, while keeping a similarly simple API.</p>
 <p>There are many popular streaming libraries. A few of them are:</p>
 <ul>
 <li><a href="https://hackage.haskell.org/package/conduit">conduit</a></li>
@@ -1327,7 +1328,7 @@ ghci&gt; &quot;쟬&quot;
 <p>If you want to compare the performance of string vs text vs streamly, you can check out the code here in my <a href="https://github.com/hasufell/streamly-string">example repository</a>. My results on a 189MB file are:</p>
 <ul>
 <li>string: 1,152s</li>
-<li>text: 0,654s</li>
+<li>lazy text: 0,654s</li>
 <li>streamly: 0,222s</li>
 </ul>
 <h2 id="a-note-on-filepaths">A note on FilePaths</h2>
@@ -1376,8 +1377,9 @@ ghci&gt; &quot;쟬&quot;
 <p>We know the dangers of lazy IO and how to utilize streaming libraries instead.</p>
 <h3 id="too-many-strings">Too many Strings</h3>
 <p>After all these topics, I want to address the opinion that gets thrown around on the internet a lot: “Haskell has too many String types”, e.g. on <a href="https://news.ycombinator.com/item?id=14567755">Hacker News</a>.</p>
-<p>If we take another look at the <a href="#string-types-cheat-sheet">String Types Cheat Sheet</a>, we don’t really see any type that could be replaced by another. They all have different properties and trade-offs. <code>ByteString</code> vs <code>ShortByteString</code> may be a bit less intuitive, but e.g. <code>Text</code> is clearly different. <code>OsPath</code> is a specialized type that exists in Rust too. Maybe people dislike the Strict/Lazy variants, but they do have (again) different properties.</p>
-<p>Once these properties are well understood, I find it hard to make an argument for less types. However, it is clear that not everyone thinks so:</p>
+<p>If we take another look at the <a href="#string-types-cheat-sheet">String Types Cheat Sheet</a>, we don’t really see any type that could be replaced by another. They all have different properties and trade-offs. <code>ByteString</code> vs <code>ShortByteString</code> may be a bit less intuitive, but e.g. <code>Text</code> is clearly different. <code>OsPath</code> is a specialized type that exists in Rust too.</p>
+<p>Maybe people dislike the Lazy variants and prefer proper streaming libraries, which is a fair point. But even if the community decides to shift, now you have another type (it’s just a streaming type), have to learn streaming library API and decide which of those 5+ libraries to use. So while we could technically do away with them, they’re a useful low-entry barrier alternative and are still widely used.</p>
+<p>In the end, once all these properties are well understood, I find it hard to make an argument for less types. However, it is clear that not everyone thinks so:</p>
 <ul>
 <li><a href="https://www.snoyman.com/blog/2021/03/haskell-base-proposal/">Haskell base proposal: unifying vector-like types</a></li>
 <li><a href="https://discourse.haskell.org/t/base-proposal-around-vector-like-types/2112">Discourse thread on vector proposal</a></li>
@@ -1448,7 +1450,7 @@ ghci&gt; &quot;쟬&quot;
 <ul>
 <li><a href="https://hackage.haskell.org/package/monoid-subclasses">monoid-subclasses</a></li>
 <li><a href="https://hackage.haskell.org/package/vector-0.13.1.0/docs/Data-Vector.html">Data.Vector</a></li>
-<li><a href="https://hackage.haskell.org/package/bytestring-0.12.1.0/docs/Data-ByteString-Builder.html">Data.ByteString.Builder</a></li>
+<li><a href="https://hackage.haskell.org/package/bytestring-0.12.1.0/docs/Data-ByteString-Builder.html">Data.ByteString.Builder</a> (not really a string type)</li>
 <li><a href="https://hackage.haskell.org/package/ghc-9.8.2/docs/GHC-Data-FastString.html">GHC.Data.FastString</a></li>
 <li><a href="https://hackage.haskell.org/package/jsaddle-0.9.9.0/docs/Data-JSString.html">Data.JSString</a></li>
 </ul>
