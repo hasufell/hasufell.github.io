@@ -1219,7 +1219,7 @@ via JSON. We will examine this via the popular [aeson](https://hackage.haskell.o
 library.
 
 Both `Text` and `String` already have `ToJSON` [instances](https://hackage.haskell.org/package/aeson-2.2.1.0/docs/Data-Aeson.html#t:ToJSON).
-These are easy, because they are Unicode and JSON demands UTF-8.
+These are easy, because they are Unicode and [JSON demands UTF-8](https://www.rfc-editor.org/rfc/rfc8259#section-8.1).
 
 For `ByteString`, `ShortByteString` and `OsString` this gets a bit more
 complicated. It depends on the exact use case. What is the byte sequence
