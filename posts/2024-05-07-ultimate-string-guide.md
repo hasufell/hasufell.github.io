@@ -797,6 +797,10 @@ A lot of time, people use lazy types in conjunction with lazy IO. However, anoth
 - [Data.ByteString.Builder](https://hackage.haskell.org/package/bytestring-0.12.1.0/docs/Data-ByteString-Builder.html)
 - [Data.Text.Lazy.Builder](https://hackage.haskell.org/package/text-2.1.1/docs/Data-Text-Lazy-Builder.html)
 
+In general, streaming libraries can be a more elegant and performant alternative to lazy Text/ByteString.
+We talk about that later in the chapter [Streaming](#streaming). But since much of the ecosystem uses
+lazy types, these are still relevant for practical purposes.
+
 ## Slicable vs non-slicable
 
 All strings are slicable, but some strings can slice without copying data. E.g. compare `Text` and `ShortText`:
@@ -1258,8 +1262,8 @@ It is better to use a proper streaming library.
 ## Streaming
 
 Streaming can not only solve the lazy IO problem, but may also
-solve some of the inefficiency of the `[Char]` type, while keeping a similarly
-simple API.
+solve some of the inefficiency of the `[Char]` type and can be more perfomant than lazy Text/ByteString,
+while keeping a similarly simple API.
 
 There are many popular streaming libraries. A few of them are:
 
@@ -1319,7 +1323,7 @@ you can check out the code here in my [example repository](https://github.com/ha
 My results on a 189MB file are:
 
 - string: 1,152s
-- text: 0,654s
+- lazy text: 0,654s
 - streamly: 0,222s
 
 ## A note on FilePaths
@@ -1379,10 +1383,16 @@ If we take another look at the [String Types Cheat Sheet](#string-types-cheat-sh
 we don't really see any type that could be replaced by another. They all have
 different properties and trade-offs. `ByteString` vs `ShortByteString` may be
 a bit less intuitive, but e.g. `Text` is clearly different. `OsPath`
-is a specialized type that exists in Rust too. Maybe people dislike the Strict/Lazy
-variants, but they do have (again) different properties.
+is a specialized type that exists in Rust too.
 
-Once these properties are well understood, I find it hard to make an argument
+Maybe people dislike the Lazy variants and prefer proper streaming libraries,
+which is a fair point. But even if the community decides to shift, now you have
+another type (it's just a streaming type), have to learn streaming library API
+and decide which of those 5+ libraries to use. So while we could technically do
+away with them, they're a useful low-entry barrier alternative and are still
+widely used.
+
+In the end, once all these properties are well understood, I find it hard to make an argument
 for less types. However, it is clear that not everyone thinks so:
 
 - [Haskell base proposal: unifying vector-like types](https://www.snoyman.com/blog/2021/03/haskell-base-proposal/)
@@ -1482,6 +1492,7 @@ My next project is likely going to be strongly typed filepaths, which
 
 - [monoid-subclasses](https://hackage.haskell.org/package/monoid-subclasses)
 - [Data.Vector](https://hackage.haskell.org/package/vector-0.13.1.0/docs/Data-Vector.html)
-- [Data.ByteString.Builder](https://hackage.haskell.org/package/bytestring-0.12.1.0/docs/Data-ByteString-Builder.html)
+- [Data.ByteString.Builder](https://hackage.haskell.org/package/bytestring-0.12.1.0/docs/Data-ByteString-Builder.html) (not really a string type)
 - [GHC.Data.FastString](https://hackage.haskell.org/package/ghc-9.8.2/docs/GHC-Data-FastString.html)
 - [Data.JSString](https://hackage.haskell.org/package/jsaddle-0.9.9.0/docs/Data-JSString.html)
+
