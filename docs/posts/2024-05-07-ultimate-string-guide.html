@@ -1262,7 +1262,7 @@ ghci&gt; &quot;쟬&quot;
 </ul>
 <h3 id="to-json">To JSON</h3>
 <p>A lot of times we want to send our strings over the wire, possibly via JSON. We will examine this via the popular <a href="https://hackage.haskell.org/package/aeson">aeson</a> library.</p>
-<p>Both <code>Text</code> and <code>String</code> already have <code>ToJSON</code> <a href="https://hackage.haskell.org/package/aeson-2.2.1.0/docs/Data-Aeson.html#t:ToJSON">instances</a>. These are easy, because they are Unicode and JSON demands UTF-8.</p>
+<p>Both <code>Text</code> and <code>String</code> already have <code>ToJSON</code> <a href="https://hackage.haskell.org/package/aeson-2.2.1.0/docs/Data-Aeson.html#t:ToJSON">instances</a>. These are easy, because they are Unicode and <a href="https://www.rfc-editor.org/rfc/rfc8259#section-8.1">JSON demands UTF-8</a>.</p>
 <p>For <code>ByteString</code>, <code>ShortByteString</code> and <code>OsString</code> this gets a bit more complicated. It depends on the exact use case. What is the byte sequence used for on the machine receiving the JSON? Also see the discussion <a href="https://github.com/haskell/aeson/issues/187">Add saner ByteString instances</a> on the aeson issue tracker.</p>
 <p>From my perspective, there are 3 possibilities:</p>
 <ol type="1">
