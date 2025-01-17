@@ -1,6 +1,6 @@
----
+============
 title: About
----
+============
 Hi, I'm Julian, a tech enthusiast and open source collaborator.
 
 Check out my `Github Profile <https://github.com/hasufell>`_
@@ -8,11 +8,14 @@ or my `CV <https://raw.githubusercontent.com/hasufell/hasufell/master/cv.pdf>`_.
 
 I like coding in Haskell, Rust, sometimes python and bash.
 
-Some of my projects and code:
+Project overview
+----------------
 
 * https://www.haskell.org/ghcup/about/
-* https://github.com/hasufell/abstract-filepath
-* https://github.com/hasufell/hsfm
-* https://github.com/hasufell/hpath
-* https://gogs.hasufell.de/hasufell/hasufell-repository
+* https://github.com/hasufell/
 * https://hackage.haskell.org/user/maerwald
+
+Talks
+-----
+
+* `Friday Hacks #263 Lessons learned from 2 decades of open source <https://www.youtube.com/watch?v=TrCuRUaJVek>`_
