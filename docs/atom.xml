@@ -8,8 +8,153 @@
         <name>Julian Ospald</name>
         <email>hasufell@posteo.de</email>
     </author>
-    <updated>2024-05-07T00:00:00Z</updated>
+    <updated>2025-04-01T00:00:00Z</updated>
     <entry>
+    <title>GHCup discontinued (or why you should use Nix)</title>
+    <link href="https://github.com/hasufell/hasufell.github.io/posts/2025-04-01-use-nix.html" />
+    <id>https://github.com/hasufell/hasufell.github.io/posts/2025-04-01-use-nix.html</id>
+    <published>2025-04-01T00:00:00Z</published>
+    <updated>2025-04-01T00:00:00Z</updated>
+    <summary type="html"><![CDATA[<p>After working on GHCup for 6 years, I’ve realized that it’s obsolete. Everyone should just use <a href="https://nixos.org/">nix</a>.</p>
+<p>Nix is a purely functional package manager with declarative configuration, reproducible builds and high quality packages. In fact, it is so simple that you just have to understand:</p>
+<ul>
+<li>the nix package manager: <a href="https://nix.dev/manual/nix/2.26/store/">https://nix.dev/manual/nix/2.26/store/</a></li>
+<li>the nix language: <a href="https://nix.dev/tutorials/nix-language.html">https://nix.dev/tutorials/nix-language.html</a></li>
+<li>how nixpkgs work: <a href="https://nixos.org/manual/nixpkgs/stable/">https://nixos.org/manual/nixpkgs/stable/</a>
+<ul>
+<li>the straight forward contribution guide: <a href="https://github.com/NixOS/nixpkgs/blob/master/CONTRIBUTING.md">https://github.com/NixOS/nixpkgs/blob/master/CONTRIBUTING.md</a></li>
+</ul></li>
+<li>nix-shell: <a href="https://nix.dev/manual/nix/2.24/command-ref/nix-shell">https://nix.dev/manual/nix/2.24/command-ref/nix-shell</a></li>
+<li>nix flakes
+<ul>
+<li><a href="https://www.tweag.io/blog/2020-05-25-flakes/">https://www.tweag.io/blog/2020-05-25-flakes/</a></li>
+<li><a href="https://www.tweag.io/blog/2020-06-25-eval-cache/">https://www.tweag.io/blog/2020-06-25-eval-cache/</a></li>
+<li><a href="https://www.tweag.io/blog/2020-07-31-nixos-flakes/">https://www.tweag.io/blog/2020-07-31-nixos-flakes/</a></li>
+<li><a href="https://serokell.io/blog/practical-nix-flakes">https://serokell.io/blog/practical-nix-flakes</a></li>
+</ul></li>
+<li>or an easier alternative to nixpkgs, haskell.nix: <a href="https://input-output-hk.github.io/haskell.nix/tutorials/getting-started">https://input-output-hk.github.io/haskell.nix/tutorials/getting-started</a></li>
+<li>you can also start purchasing templates: <a href="https://template.cs-syd.eu/">https://template.cs-syd.eu/</a></li>
+</ul>
+<p>Here’s an <a href="https://github.com/MangoIV/cabal-audit/blob/main/flake.nix">example</a> of a nix flake:</p>
+<pre><code>{
+  nixConfig.allow-import-from-derivation = true;
+  description = &quot;cabal-audit&#39;s flake&quot;;
+  inputs = {
+    # flake inputs
+    nixpkgs.url = &quot;github:nixos/nixpkgs/nixpkgs-unstable&quot;;
+
+    # flake parts
+    parts.url = &quot;github:hercules-ci/flake-parts&quot;;
+    pre-commit-hooks.url = &quot;github:cachix/git-hooks.nix&quot;;
+    devshell.url = &quot;github:numtide/devshell&quot;;
+    # end flake parts
+    # end flake inputs
+  };
+  outputs = inputs:
+    inputs.parts.lib.mkFlake {inherit inputs;} {
+      systems = [&quot;x86_64-linux&quot; &quot;aarch64-linux&quot; &quot;x86_64-darwin&quot; &quot;aarch64-darwin&quot;];
+      imports = [inputs.pre-commit-hooks.flakeModule inputs.devshell.flakeModule];
+
+      perSystem = {
+        config,
+        pkgs,
+        lib,
+        ...
+      }: let
+        hlib = pkgs.haskell.lib.compose;
+        hspkgs = pkgs.haskell.packages.ghc98.override {
+          overrides = import ./nix/haskell-overlay.nix {inherit hlib;};
+        };
+      in {
+        # this flake module adds two things
+        # 1. the pre-commit script which is automatically run when committing
+        #    which checks formatting and lints of both Haskell and nix files
+        #    the automatically run check can be bypassed with -n or --no-verify
+        # 2. an attribute in the checks.&lt;system&gt; attrset which can be run with
+        #    nix flake check which checks the same lints as the pre-commit hook
+        pre-commit = {
+          check.enable = true;
+          settings.hooks = {
+            cabal-fmt.enable = true;
+            fourmolu.enable = true;
+            hlint.enable = true;
+
+            alejandra.enable = true;
+            statix.enable = true;
+            deadnix.enable = true;
+          };
+        };
+
+        devShells.plain-haskell = hspkgs.callPackage ./nix/haskell-shell.nix {
+          inherit (pkgs.haskell.packages.ghc98) haskell-language-server fourmolu;
+        };
+
+        # https://flake.parts/options/devshell for more information; one of the advantages is
+        # the beautiful menu this provides where one can add commands that are offered and loaded
+        # as part of the devShell
+        devshells.default = {
+          commands = [
+            {
+              name = &quot;lint&quot;;
+              help = &quot;run formatting and linting of haskell and nix files in the entire repository&quot;;
+              command = &quot;pre-commit run --all&quot;;
+            }
+            {
+              name = &quot;regen-nix&quot;;
+              help = &quot;regenerate nix derivations for haskell packages&quot;;
+              command =
+                builtins.readFile (lib.getExe config.packages.regen-nix);
+            }
+          ];
+          devshell = {
+            name = &quot;cabal-audit&quot;;
+            packagesFrom = [config.devShells.plain-haskell];
+            packages = [pkgs.cabal2nix pkgs.alejandra];
+            startup.pre-commit.text = config.pre-commit.installationScript;
+          };
+        };
+
+        packages = {
+          inherit (hspkgs) cabal-audit;
+          inherit (pkgs) groff;
+          default = config.packages.cabal-audit;
+          cabal-audit-static = pkgs.pkgsStatic.callPackage ./nix/static.nix {};
+          regen-nix = pkgs.writeShellApplication {
+            name = &quot;regen-cabal-audit-nix&quot;;
+            runtimeInputs = [pkgs.cabal2nix pkgs.alejandra];
+            text = let
+              v = &quot;ef73a3748f31d8df1557546b26d2d587cdacf459&quot;;
+              cmd = pkg: &#39;&#39;
+                cabal2nix https://github.com/haskell/security-advisories.git \
+                  --revision ${v} \
+                  --subpath code/${pkg}/ &gt; ./${pkg}.nix
+              &#39;&#39;;
+            in &#39;&#39;
+              pushd &quot;$PRJ_ROOT&quot;/nix
+              ${lib.concatStrings (map cmd [&quot;osv&quot; &quot;cvss&quot; &quot;hsec-core&quot; &quot;hsec-tools&quot;])}
+              cabal2nix ../. &gt; ./cabal-audit.nix
+              alejandra ./.
+              popd
+            &#39;&#39;;
+          };
+        };
+      };
+    };
+}</code></pre>
+<p>I’m sure you’ll get it after going through the documentation above.</p>
+<p>To summarize, the benefits are:</p>
+<ul>
+<li>concise documentation</li>
+<li>easy to understand concepts</li>
+<li>ecosystem always moves in one direction</li>
+<li>space efficient</li>
+<li>great error messages and ways to debug</li>
+<li>follows KISS</li>
+<li>follows unix (do one thing and do it well)</li>
+</ul>
+<p>As such, GHCup will now be on life support for at least 6 months before we pull the plug. Adjust your CI accordingly.</p>]]></summary>
+</entry>
+<entry>
     <title>The ultimate guide to Haskell Strings</title>
     <link href="https://github.com/hasufell/hasufell.github.io/posts/2024-05-07-ultimate-string-guide.html" />
     <id>https://github.com/hasufell/hasufell.github.io/posts/2024-05-07-ultimate-string-guide.html</id>

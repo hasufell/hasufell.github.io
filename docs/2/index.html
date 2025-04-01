@@ -116,6 +116,72 @@
   
   <div class="post">
     <h1 class="post-title">
+      <a href="../posts/2023-11-14-ghcup-is-not-an-installer.html">
+        GHCup is not an installer
+      </a>
+    </h1>
+    <span class="post-date">November 14, 2023,
+      
+         Posted by Julian Ospald
+      
+    </span>
+
+    <h2 id="misunderstandings">Misunderstandings</h2>
+<p>Over the past few years, there have been recurring questions or misunderstandings about GHCup. E.g.:</p>
+<ul>
+<li>GHCup only installs bindists from upstream (e.g. GHC/Cabal/HLS CI)</li>
+<li>GHCup never applies patches to tools it distributes</li>
+</ul>
+<p>Both those assumptions do not apply, because GHCup is primarily a <strong>distribution channel</strong>, not just an installer. The distribution channel is basically the <a href="https://github.com/haskell/ghcup-metadata/blob/develop/ghcup-0.0.8.yaml"><code>ghcup-0.0.8.yaml</code> metadata file</a>.</p>
+<p>Users who strictly only want upstream bindists (whether they’re broken or not) can use a different distribution channel and opt out of all unofficial things: <a href="https://github.com/haskell/ghcup-metadata/blob/develop/ghcup-vanilla-0.0.8.yaml"><code>ghcup-vanilla-0.0.8.yaml</code></a>. More information in the <a href="https://github.com/haskell/ghcup-metadata#for-end-users">README</a>.</p>
+<h2 id="policies-and-priorities">Policies and priorities</h2>
+<p>GHCup follows similar philosophies and policies like Debian or Fedora. Most of them are outlined <a href="https://www.haskell.org/ghcup/about/#distribution-policies">here</a> in more details. The most important points, simplified, are:</p>
+<ol type="1">
+<li>The end-user experience is our primary concern</li>
+<li>We strive to collaborate with all maintainers of all the tools we support and maintain a good relationship</li>
+<li>We may fix build system or other distribution bugs in upstream bindists</li>
+<li>We may even patch source code of supported tools in very rare cases if that is required to ensure that the end-user experience does not break</li>
+</ol>
+<p>As such, we prioritize the end-user over interests of upstream developers. E.g. it frequently happens that upstream developers want a new release to be ‘recommended’ (that is: installed by default if you run GHCup for the first time). However, experience shows that it’s usually better to wait.</p>
+<p>So far, we have never patched source code. In case that ever happens, it would be communicated to both upstream and the end user via post-install messages.</p>
+<h2 id="affects-on-maintenance">Affects on maintenance</h2>
+<p>Following these priorities, the smallest part of GHCup maintenance sometimes seems to be the codebase. The following tasks have come up repeatedly, until <a href="https://github.com/haskell/ghcup-hs/issues/848">I decreased my workload considerably to avoid a proper burnout</a>:</p>
+<ul>
+<li>building unofficial bindists for missing platforms (e.g. GHC alpine i386, armv7, FreeBSD or stack darwin aarch64)</li>
+<li>patching upstream bindists in case of issues discovered post-release</li>
+<li>tracking releases and bugs of all tools to decide which release is to be ‘recommended’</li>
+<li>being involved in CI code and release issues of most tools</li>
+<li>meetings and communication with HF, GHC HQ, other tooling maintainers and especially HLS</li>
+<li>developing and supporting new ideas (dynamic HLS bindists, GHC nightlies, …)</li>
+<li>advocating and pushing for prioritizing end user experience, e.g. <a href="https://github.com/haskellfoundation/tech-proposals/issues/48">here</a></li>
+<li>supporting users having installation issues via IRC, Discord, email, different issue trackers, …</li>
+</ul>
+<p>Most of this has now stalled, until GHCup gets more support (e.g. <a href="https://discourse.haskell.org/t/haskell-foundation-october-2023-update/8054#ghcup-backup-maintenance-5">from Obsidian</a>, which I’m excited about).</p>
+<h2 id="possible-future">Possible future</h2>
+<p>GHCup being a distribution channel also means that, theoretically, we might completely stop relying on upstream bindists and roll our own. For this idea I already have prepared <a href="https://gist.github.com/hasufell/18cb5438ce7c2ba388160588d751b32d">a document about Midstream bindists</a> that could be submitted as a HF tech proposal. As I don’t have the capacity, I have not submitted it yet and maybe I never will.</p>
+<p>In a perfect world, we want full control over the bindists, decide on the provided configurations, distribution support, platform support, etc.</p>
+<p>This is what Linux distributions do too. They rarely use upstream bindists, except for bootstrapping purposes.</p>
+<h2 id="what-we-want-from-upstream-is-not-bindists">What we want from upstream is not bindists</h2>
+<p>What distributors really want from upstream is not bindists, but something else:</p>
+<ul>
+<li>feasibility to run test suites on the end-users system (that’s where it matters, not just in CI)
+<ul>
+<li>and have processes and mechanisms to get feedback for failing test suites (send report via cli that gets aggregated and analyzed somewhere)</li>
+</ul></li>
+<li>awareness that the build system is not just a dev tool for hackers, but an interface for distributors and end users</li>
+<li>mindfulness about platform support (including less common ones)</li>
+<li>not relying on hermetically built binaries: instead make sure a manually compiled binary works on all platforms and have sufficient mechanisms to detect when it wouldn’t (through bindist configure, runtime checks, test suite, …)</li>
+<li>have prereleases as much as possible, including minor releases</li>
+<li>communicate everything that potentially impacts distributors</li>
+<li>longer patch/security maintenance windows for older versions</li>
+</ul>
+<p>If the build system interface was stable, we could easily use <code>ghcup compile ghc</code> in our own CI, followed by a <code>ghcup test ghc</code> (yes, that exists!) and be done. Then tell end users to utilize <code>ghcup test ghc</code> after installation to make sure it really works with their environment (that’s not a given even with official bindists). However, the test suite is flaky and the test bindists are buggy and not very portable, so this goal is far out.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>I hope that this clears up some of the confusion and expectations and that end users understand that they have a choice by utilizing different <a href="https://github.com/haskell/ghcup-metadata#metadata-variants-distribution-channels">metadata files</a>.</p>
+  </div>
+  
+  <div class="post">
+    <h1 class="post-title">
       <a href="../posts/2022-06-29-fixing-haskell-filepaths.html">
         Fixing 'FilePath' in Haskell
       </a>
