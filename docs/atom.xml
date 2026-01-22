@@ -8,8 +8,247 @@
         <name>Julian Ospald</name>
         <email>hasufell@posteo.de</email>
     </author>
-    <updated>2025-04-01T00:00:00Z</updated>
+    <updated>2026-01-22T00:00:00Z</updated>
     <entry>
+    <title>Dynamic GHC matrix in GitHub CI</title>
+    <link href="https://github.com/hasufell/hasufell.github.io/posts/2026-01-22-dynamic-ghcup-action.html" />
+    <id>https://github.com/hasufell/hasufell.github.io/posts/2026-01-22-dynamic-ghcup-action.html</id>
+    <published>2026-01-22T00:00:00Z</published>
+    <updated>2026-01-22T00:00:00Z</updated>
+    <summary type="html"><![CDATA[<h2 id="toc">TOC</h2>
+<ul>
+<li><a href="#how-to">How to</a></li>
+<li><a href="#reacting-to-failures">Reacting to failures</a></li>
+<li><a href="#all-put-together">All put together</a></li>
+<li><a href="#a-few-notes">A few notes</a></li>
+<li><a href="#prior-art">Prior Art</a></li>
+</ul>
+<h2 id="how-to">How to</h2>
+<p>When new GHC versions are released, I often have to go through all my library CI systems and update the ghc version matrix in my github action. You could argue a CI generation system like <a href="https://github.com/haskell-CI/haskell-ci">haskell-CI</a> makes this somewhat simpler, but I’m a strong opponent of generating CI configurations, because:</p>
+<ul>
+<li>it makes debugging harder (where does the line in my 800 LOC config come from?)</li>
+<li>it requires frequent manual updates (e.g. when new GHC versions are released)</li>
+<li>it requires to learn the generation script/format and keep up with updates</li>
+<li>the output is often awful to read, verbose and lacks commentary</li>
+</ul>
+<p>Instead, you can dynamically get the latest, say, 5 major GHC versions in GHCup via:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="ex">ghcup</span> -s GHCupURL list -r -t ghc -c available <span class="kw">|</span> <span class="fu">awk</span> <span class="st">&#39;{ print $2 }&#39;</span> <span class="kw">|</span> <span class="fu">awk</span> -F <span class="st">&#39;.&#39;</span> <span class="st">&#39;{ print $1 &quot;.&quot; $2}&#39;</span> <span class="kw">|</span> <span class="fu">sort</span> -Vu <span class="kw">|</span> <span class="fu">tail</span> -5</span></code></pre></div>
+<p>That’s nice… we could just be done now, but I also want to make sure GHCup’s <code>recommended</code> and <code>latest</code> versions are always tested. That requires us to resolve the major versions (X.Y) back to the latest full version (X.Y.Z) and also avoid duplicates due to adding <code>recommended</code> and <code>latest</code>.</p>
+<p>Here’s the full code:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="co"># store all available ghc versions</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a><span class="va">all=</span><span class="st">&quot;</span><span class="va">$(</span><span class="ex">ghcup</span> -s GHCupURL list -r -t ghc -c available<span class="va">)</span><span class="st">&quot;</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a><span class="co"># get the recommended version</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a><span class="va">rec=$(</span><span class="bu">echo</span> <span class="st">&quot;</span><span class="va">${all}</span><span class="st">&quot;</span>         <span class="kw">|</span> <span class="fu">grep</span> recommended <span class="kw">|</span> <span class="fu">awk</span> <span class="st">&#39;{ print $2 }&#39;</span><span class="va">)</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true"></a><span class="co"># get the latest version</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true"></a><span class="va">latest=$(</span><span class="bu">echo</span> <span class="st">&quot;</span><span class="va">${all}</span><span class="st">&quot;</span>      <span class="kw">|</span> <span class="fu">grep</span> latest      <span class="kw">|</span> <span class="fu">awk</span> <span class="st">&#39;{ print $2 }&#39;</span><span class="va">)</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true"></a><span class="co"># get the last 5 major versions</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true"></a><span class="va">other_major=$(</span><span class="bu">echo</span> <span class="st">&quot;</span><span class="va">${all}</span><span class="st">&quot;</span>                    <span class="kw">|</span> <span class="fu">awk</span> <span class="st">&#39;{ print $2 }&#39;</span> <span class="kw">|</span> <span class="fu">awk</span> -F <span class="st">&#39;.&#39;</span> <span class="st">&#39;{ print $1 &quot;.&quot; $2}&#39;</span> <span class="kw">|</span> <span class="fu">sort</span> -Vu <span class="kw">|</span> <span class="fu">tail</span> -5<span class="va">)</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true"></a><span class="co"># resolve the major versions back to their respective latest version (e.g. 9.6 -&gt; 9.6.7)</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true"></a><span class="va">other=$(</span><span class="kw">for</span> <span class="ex">v</span> in <span class="va">$other_major</span> <span class="kw">;</span> <span class="kw">do</span> <span class="va">point_releases=$(</span><span class="bu">echo</span> <span class="st">&quot;</span><span class="va">$all</span><span class="st">&quot;</span> <span class="kw">|</span> <span class="fu">awk</span> <span class="st">&#39;{ print $2 }&#39;</span> <span class="kw">|</span> <span class="fu">grep</span> --color=never <span class="st">&quot;^</span><span class="va">$v</span><span class="st">.&quot;</span><span class="va">)</span> ; <span class="bu">echo</span> <span class="st">&quot;</span><span class="va">${point_releases}</span><span class="st">&quot;</span> <span class="kw">|</span> <span class="fu">tail</span> -n1  <span class="kw">;</span> <span class="kw">done</span><span class="va">)</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true"></a><span class="co"># sort and deduplicate</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true"></a><span class="va">selected=$(</span><span class="bu">echo</span> -n <span class="va">${rec}</span> <span class="va">${latest}</span> <span class="va">${other}</span> <span class="kw">|</span> <span class="fu">tr</span> <span class="st">&quot; &quot;</span> <span class="st">&quot;\n&quot;</span>  <span class="kw">|</span> <span class="fu">sort</span> -Vu<span class="va">)</span></span></code></pre></div>
+<p>At the time of writing, we’ll get:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a>$ <span class="bu">echo</span> <span class="st">&quot;</span><span class="va">$selected</span><span class="st">&quot;</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a><span class="ex">9.6.7</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a><span class="ex">9.8.4</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true"></a><span class="ex">9.10.3</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true"></a><span class="ex">9.12.2</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true"></a><span class="ex">9.14.1</span></span></code></pre></div>
+<p>This looks fine. Now the remaining question is how to make this work with GitHub CI matrix. We can easily utilize the <code>GITHUB_OUTPUT</code> feature like so:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="fu">jobs</span><span class="kw">:</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a><span class="at">  </span><span class="fu">tool-output</span><span class="kw">:</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a><span class="at">    </span><span class="fu">runs-on</span><span class="kw">:</span><span class="at"> ubuntu-latest</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a><span class="at">    </span><span class="fu">outputs</span><span class="kw">:</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true"></a><span class="at">      </span><span class="fu">ghc_versions</span><span class="kw">:</span><span class="at"> ${{ steps.gen_output.outputs.ghc_versions }}</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true"></a></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true"></a><span class="at">    </span><span class="fu">steps</span><span class="kw">:</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true"></a></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> haskell/ghcup-setup@v1</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true"></a></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Generate output</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true"></a><span class="at">      </span><span class="fu">id</span><span class="kw">:</span><span class="at"> gen_output</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true"></a><span class="fu">      run</span><span class="kw">: </span><span class="ch">|</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true"></a>        all=&quot;$(ghcup -s GHCupURL list -r -t ghc -c available)&quot;</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true"></a>        rec=$(echo &quot;${all}&quot;         | grep recommended | awk &#39;{ print $2 }&#39;)</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true"></a>        latest=$(echo &quot;${all}&quot;      | grep latest      | awk &#39;{ print $2 }&#39;)</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true"></a></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true"></a>        other_major=$(echo &quot;${all}&quot; | awk &#39;{ print $2 }&#39; | awk -F &#39;.&#39; &#39;{ print $1 &quot;.&quot; $2}&#39; | sort -Vu | tail -5)</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true"></a>        other=$(for v in $other_major ; do point_releases=$(echo &quot;$all&quot; | awk &#39;{ print $2 }&#39; | grep --color=never &quot;^$v.&quot;) ; echo &quot;${point_releases}&quot; | tail -n1  ; done)</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true"></a></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true"></a>        selected=$(echo -n ${rec} ${latest} ${other} | tr &quot; &quot; &quot;\n&quot;  | sort -Vu)</span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true"></a>        selected_json=$(echo -n $selected | jq -c -r -R &#39;split(&quot; &quot;) | [ .[] | if length &gt; 0 then . else empty end ]&#39;)</span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true"></a></span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true"></a>        echo &quot;${selected}&quot;</span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true"></a>        echo &quot;${selected_json}&quot;</span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true"></a></span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true"></a>        echo ghc_versions=&quot;${selected_json}&quot; &gt;&gt; &quot;$GITHUB_OUTPUT&quot;</span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true"></a></span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true"></a><span class="at">  </span><span class="fu">build</span><span class="kw">:</span></span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true"></a><span class="at">    </span><span class="fu">runs-on</span><span class="kw">:</span><span class="at"> ${{ matrix.os }}</span></span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true"></a><span class="at">    </span><span class="fu">needs</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="st">&quot;tool-output&quot;</span><span class="kw">]</span></span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true"></a><span class="at">    </span><span class="fu">strategy</span><span class="kw">:</span></span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true"></a><span class="at">      </span><span class="fu">fail-fast</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true"></a><span class="at">      </span><span class="fu">matrix</span><span class="kw">:</span></span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true"></a><span class="at">        </span><span class="fu">os</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="at">ubuntu-latest</span><span class="kw">,</span><span class="at"> ubuntu-24.04-arm</span><span class="kw">,</span><span class="at"> macOS-15-intel</span><span class="kw">,</span><span class="at"> macOS-latest</span><span class="kw">,</span><span class="at"> windows-latest</span><span class="kw">]</span></span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true"></a><span class="at">        </span><span class="fu">ghc</span><span class="kw">:</span><span class="at"> ${{ fromJSON(needs.tool-output.outputs.ghc_versions) }}</span></span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true"></a><span class="at">    </span><span class="fu">steps</span><span class="kw">:</span></span>
+<span id="cb4-38"><a href="#cb4-38" aria-hidden="true"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> actions/checkout@v4</span></span>
+<span id="cb4-39"><a href="#cb4-39" aria-hidden="true"></a></span>
+<span id="cb4-40"><a href="#cb4-40" aria-hidden="true"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Install dependencies (Ubuntu)</span></span>
+<span id="cb4-41"><a href="#cb4-41" aria-hidden="true"></a><span class="at">      </span><span class="fu">if</span><span class="kw">:</span><span class="at"> runner.os == &#39;Linux&#39;</span></span>
+<span id="cb4-42"><a href="#cb4-42" aria-hidden="true"></a><span class="fu">      run</span><span class="kw">: </span><span class="ch">|</span></span>
+<span id="cb4-43"><a href="#cb4-43" aria-hidden="true"></a>        sudo apt-get -y update</span>
+<span id="cb4-44"><a href="#cb4-44" aria-hidden="true"></a>        sudo apt-get -y install build-essential curl libffi-dev libgmp-dev libncurses-dev pkg-config</span>
+<span id="cb4-45"><a href="#cb4-45" aria-hidden="true"></a></span>
+<span id="cb4-46"><a href="#cb4-46" aria-hidden="true"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> haskell/ghcup-setup@v1</span></span>
+<span id="cb4-47"><a href="#cb4-47" aria-hidden="true"></a><span class="at">      </span><span class="fu">with</span><span class="kw">:</span></span>
+<span id="cb4-48"><a href="#cb4-48" aria-hidden="true"></a><span class="at">        </span><span class="fu">ghc</span><span class="kw">:</span><span class="at"> ${{ matrix.ghc }}</span></span>
+<span id="cb4-49"><a href="#cb4-49" aria-hidden="true"></a><span class="at">        </span><span class="fu">cabal</span><span class="kw">:</span><span class="at"> latest</span></span>
+<span id="cb4-50"><a href="#cb4-50" aria-hidden="true"></a></span>
+<span id="cb4-51"><a href="#cb4-51" aria-hidden="true"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Build</span></span>
+<span id="cb4-52"><a href="#cb4-52" aria-hidden="true"></a><span class="fu">      run</span><span class="kw">: </span><span class="ch">|</span></span>
+<span id="cb4-53"><a href="#cb4-53" aria-hidden="true"></a>        cabal update</span>
+<span id="cb4-54"><a href="#cb4-54" aria-hidden="true"></a>        cabal test --test-show-details=direct all</span></code></pre></div>
+<p>Done, now we never have to update our CI manually, just because a new GHC version arrived.</p>
+<p>We can also make use of <a href="https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-variables">repository variables</a> to change the number of GHC versions tested on the fly without changing CI configuration, e.g.:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Generate output</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a><span class="at">      </span><span class="fu">id</span><span class="kw">:</span><span class="at"> gen_output</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a><span class="fu">      run</span><span class="kw">: </span><span class="ch">|</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true"></a>        # ... snip ...</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true"></a></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true"></a>        other_major=$(echo &quot;${all}&quot; | awk &#39;{ print $2 }&#39; | awk -F &#39;.&#39; &#39;{ print $1 &quot;.&quot; $2}&#39; | sort -Vu | tail -${GHC_TEST_NUM:=5})</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true"></a></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true"></a>        # ... snip ...</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true"></a><span class="at">      </span><span class="fu">env</span><span class="kw">:</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true"></a><span class="at">        </span><span class="fu">GHC_TEST_NUM</span><span class="kw">:</span><span class="at"> ${{ vars.GHC_TEST_NUM }}</span></span></code></pre></div>
+<h2 id="reacting-to-failures">Reacting to failures</h2>
+<p>So what does this mean for a regular project? Your CI will likely suddenly fail some day, because a new GHC release dropped. But that’s exactly what we want. It requires our attention.</p>
+<p>To make this even more immediate, it’s good to also have your CI run every night, like so:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a><span class="fu">on</span><span class="kw">:</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a><span class="at">  </span><span class="fu">push</span><span class="kw">:</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true"></a><span class="at">    </span><span class="fu">branches</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="at"> master </span><span class="kw">]</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true"></a><span class="at">  </span><span class="fu">pull_request</span><span class="kw">:</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true"></a><span class="at">    </span><span class="fu">branches</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="at"> master </span><span class="kw">]</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true"></a><span class="at">  </span><span class="fu">schedule</span><span class="kw">:</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">cron</span><span class="kw">:</span><span class="at"> </span><span class="st">&#39;0 0 * * *&#39;</span></span></code></pre></div>
+<p>But we might not want to constantly have CI failures when we’re waiting for some of our dear hackage colleagues to update our dependencies, until our package starts working again. So we want some sort of exclusion list. We can do this dynamically too via <a href="https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-variables">repository variables</a> again. We’ll end up with something like:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Generate output</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a><span class="at">      </span><span class="fu">id</span><span class="kw">:</span><span class="at"> gen_output</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true"></a><span class="fu">      run</span><span class="kw">: </span><span class="ch">|</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true"></a>        all=&quot;$(ghcup -s GHCupURL list -r -t ghc -c available)&quot;</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true"></a>        rec=$(echo &quot;${all}&quot;         | grep recommended | awk &#39;{ print $2 }&#39;)</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true"></a>        latest=$(echo &quot;${all}&quot;      | grep latest      | awk &#39;{ print $2 }&#39;)</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true"></a></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true"></a>        other_major=$(echo &quot;${all}&quot; | awk &#39;{ print $2 }&#39; | awk -F &#39;.&#39; &#39;{ print $1 &quot;.&quot; $2}&#39; | sort -Vu | tail -${GHC_TEST_NUM:=5})</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true"></a>        other=$(for v in $other_major ; do point_releases=$(echo &quot;$all&quot; | awk &#39;{ print $2 }&#39; | grep --color=never &quot;^$v.&quot;) ; echo &quot;${point_releases}&quot; | tail -n1  ; done)</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true"></a></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true"></a>        selected=$(echo -n ${rec} ${latest} ${other} | tr &quot; &quot; &quot;\n&quot;  | sort -Vu)</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true"></a>        ghc_exclude=( $GHC_EXCLUDE )</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true"></a>        selected_filtered=()</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true"></a>        for ghc in $selected ; do</span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true"></a>          printf &#39;%s\0&#39; &quot;${ghc_exclude[@]}&quot; | grep --quiet --color=never -F -x -z -- $ghc || selected_filtered+=( $ghc )</span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true"></a>        done</span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true"></a>        unset ghc</span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true"></a>        selected_json=$(echo -n ${selected_filtered[@]} | jq -c -r -R &#39;split(&quot; &quot;) | [ .[] | if length &gt; 0 then . else empty end ]&#39;)</span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true"></a></span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true"></a>        echo &quot;${selected}&quot;</span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true"></a>        echo &quot;${selected_filtered}&quot;</span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true"></a>        echo &quot;${selected_json}&quot;</span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true"></a></span>
+<span id="cb7-24"><a href="#cb7-24" aria-hidden="true"></a>        echo ghc_versions=&quot;${selected_json}&quot; &gt;&gt; &quot;$GITHUB_OUTPUT&quot;</span>
+<span id="cb7-25"><a href="#cb7-25" aria-hidden="true"></a><span class="at">      </span><span class="fu">shell</span><span class="kw">:</span><span class="at"> bash</span></span>
+<span id="cb7-26"><a href="#cb7-26" aria-hidden="true"></a><span class="at">      </span><span class="fu">env</span><span class="kw">:</span></span>
+<span id="cb7-27"><a href="#cb7-27" aria-hidden="true"></a><span class="at">        </span><span class="fu">GHC_TEST_NUM</span><span class="kw">:</span><span class="at"> ${{ vars.GHC_TEST_NUM }}</span></span>
+<span id="cb7-28"><a href="#cb7-28" aria-hidden="true"></a><span class="at">        </span><span class="fu">GHC_EXCLUDE</span><span class="kw">:</span><span class="at"> ${{ vars.GHC_EXCLUDE }}</span></span></code></pre></div>
+<h2 id="all-put-together">All put together</h2>
+<p>At last, all put together, we get:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a><span class="fu">name</span><span class="kw">:</span><span class="at"> Haskell CI</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true"></a></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true"></a><span class="fu">on</span><span class="kw">:</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true"></a><span class="at">  </span><span class="fu">push</span><span class="kw">:</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true"></a><span class="at">    </span><span class="fu">branches</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="at"> master </span><span class="kw">]</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true"></a><span class="at">  </span><span class="fu">pull_request</span><span class="kw">:</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true"></a><span class="at">    </span><span class="fu">branches</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="at"> master </span><span class="kw">]</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true"></a><span class="at">  </span><span class="fu">schedule</span><span class="kw">:</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">cron</span><span class="kw">:</span><span class="at"> </span><span class="st">&#39;0 0 * * *&#39;</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true"></a></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true"></a><span class="fu">jobs</span><span class="kw">:</span></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true"></a><span class="at">  </span><span class="fu">tool-output</span><span class="kw">:</span></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true"></a><span class="at">    </span><span class="fu">runs-on</span><span class="kw">:</span><span class="at"> ubuntu-latest</span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true"></a><span class="at">    </span><span class="fu">outputs</span><span class="kw">:</span></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true"></a><span class="at">      </span><span class="fu">ghc_versions</span><span class="kw">:</span><span class="at"> ${{ steps.gen_output.outputs.ghc_versions }}</span></span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true"></a></span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true"></a><span class="at">    </span><span class="fu">steps</span><span class="kw">:</span></span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true"></a></span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> haskell/ghcup-setup@v1</span></span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true"></a></span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Generate output</span></span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true"></a><span class="at">      </span><span class="fu">id</span><span class="kw">:</span><span class="at"> gen_output</span></span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true"></a><span class="fu">      run</span><span class="kw">: </span><span class="ch">|</span></span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true"></a>        all=&quot;$(ghcup -s GHCupURL list -r -t ghc -c available)&quot;</span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true"></a>        rec=$(echo &quot;${all}&quot;         | grep recommended | awk &#39;{ print $2 }&#39;)</span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true"></a>        latest=$(echo &quot;${all}&quot;      | grep latest      | awk &#39;{ print $2 }&#39;)</span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true"></a></span>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true"></a>        other_major=$(echo &quot;${all}&quot; | awk &#39;{ print $2 }&#39; | awk -F &#39;.&#39; &#39;{ print $1 &quot;.&quot; $2}&#39; | sort -Vu | tail -${GHC_TEST_NUM:=5})</span>
+<span id="cb8-29"><a href="#cb8-29" aria-hidden="true"></a>        other=$(for v in $other_major ; do point_releases=$(echo &quot;$all&quot; | awk &#39;{ print $2 }&#39; | grep --color=never &quot;^$v.&quot;) ; echo &quot;${point_releases}&quot; | tail -n1  ; done)</span>
+<span id="cb8-30"><a href="#cb8-30" aria-hidden="true"></a></span>
+<span id="cb8-31"><a href="#cb8-31" aria-hidden="true"></a>        selected=$(echo -n ${rec} ${latest} ${other} | tr &quot; &quot; &quot;\n&quot;  | sort -Vu)</span>
+<span id="cb8-32"><a href="#cb8-32" aria-hidden="true"></a>        ghc_exclude=( $GHC_EXCLUDE )</span>
+<span id="cb8-33"><a href="#cb8-33" aria-hidden="true"></a>        selected_filtered=()</span>
+<span id="cb8-34"><a href="#cb8-34" aria-hidden="true"></a>        for ghc in $selected ; do</span>
+<span id="cb8-35"><a href="#cb8-35" aria-hidden="true"></a>          printf &#39;%s\0&#39; &quot;${ghc_exclude[@]}&quot; | grep --quiet --color=never -F -x -z -- $ghc || selected_filtered+=( $ghc )</span>
+<span id="cb8-36"><a href="#cb8-36" aria-hidden="true"></a>        done</span>
+<span id="cb8-37"><a href="#cb8-37" aria-hidden="true"></a>        unset ghc</span>
+<span id="cb8-38"><a href="#cb8-38" aria-hidden="true"></a>        selected_json=$(echo -n ${selected_filtered[@]} | jq -c -r -R &#39;split(&quot; &quot;) | [ .[] | if length &gt; 0 then . else empty end ]&#39;)</span>
+<span id="cb8-39"><a href="#cb8-39" aria-hidden="true"></a></span>
+<span id="cb8-40"><a href="#cb8-40" aria-hidden="true"></a>        echo &quot;${selected}&quot;</span>
+<span id="cb8-41"><a href="#cb8-41" aria-hidden="true"></a>        echo &quot;${selected_filtered}&quot;</span>
+<span id="cb8-42"><a href="#cb8-42" aria-hidden="true"></a>        echo &quot;${selected_json}&quot;</span>
+<span id="cb8-43"><a href="#cb8-43" aria-hidden="true"></a></span>
+<span id="cb8-44"><a href="#cb8-44" aria-hidden="true"></a>        echo ghc_versions=&quot;${selected_json}&quot; &gt;&gt; &quot;$GITHUB_OUTPUT&quot;</span>
+<span id="cb8-45"><a href="#cb8-45" aria-hidden="true"></a><span class="at">      </span><span class="fu">shell</span><span class="kw">:</span><span class="at"> bash</span></span>
+<span id="cb8-46"><a href="#cb8-46" aria-hidden="true"></a><span class="at">      </span><span class="fu">env</span><span class="kw">:</span></span>
+<span id="cb8-47"><a href="#cb8-47" aria-hidden="true"></a><span class="at">        </span><span class="fu">GHC_TEST_NUM</span><span class="kw">:</span><span class="at"> ${{ vars.GHC_TEST_NUM }}</span></span>
+<span id="cb8-48"><a href="#cb8-48" aria-hidden="true"></a><span class="at">        </span><span class="fu">GHC_EXCLUDE</span><span class="kw">:</span><span class="at"> ${{ vars.GHC_EXCLUDE }}</span></span>
+<span id="cb8-49"><a href="#cb8-49" aria-hidden="true"></a></span>
+<span id="cb8-50"><a href="#cb8-50" aria-hidden="true"></a><span class="at">  </span><span class="fu">build</span><span class="kw">:</span></span>
+<span id="cb8-51"><a href="#cb8-51" aria-hidden="true"></a></span>
+<span id="cb8-52"><a href="#cb8-52" aria-hidden="true"></a><span class="at">    </span><span class="fu">runs-on</span><span class="kw">:</span><span class="at"> ${{ matrix.os }}</span></span>
+<span id="cb8-53"><a href="#cb8-53" aria-hidden="true"></a><span class="at">    </span><span class="fu">needs</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="st">&quot;tool-output&quot;</span><span class="kw">]</span></span>
+<span id="cb8-54"><a href="#cb8-54" aria-hidden="true"></a><span class="at">    </span><span class="fu">strategy</span><span class="kw">:</span></span>
+<span id="cb8-55"><a href="#cb8-55" aria-hidden="true"></a><span class="at">      </span><span class="fu">fail-fast</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb8-56"><a href="#cb8-56" aria-hidden="true"></a><span class="at">      </span><span class="fu">matrix</span><span class="kw">:</span></span>
+<span id="cb8-57"><a href="#cb8-57" aria-hidden="true"></a><span class="at">        </span><span class="fu">os</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="at">ubuntu-latest</span><span class="kw">,</span><span class="at"> ubuntu-24.04-arm</span><span class="kw">,</span><span class="at"> macOS-15-intel</span><span class="kw">,</span><span class="at"> macOS-latest</span><span class="kw">,</span><span class="at"> windows-latest</span><span class="kw">]</span></span>
+<span id="cb8-58"><a href="#cb8-58" aria-hidden="true"></a><span class="at">        </span><span class="fu">ghc</span><span class="kw">:</span><span class="at"> ${{ fromJSON(needs.tool-output.outputs.ghc_versions) }}</span></span>
+<span id="cb8-59"><a href="#cb8-59" aria-hidden="true"></a><span class="at">    </span><span class="fu">steps</span><span class="kw">:</span></span>
+<span id="cb8-60"><a href="#cb8-60" aria-hidden="true"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> actions/checkout@v4</span></span>
+<span id="cb8-61"><a href="#cb8-61" aria-hidden="true"></a></span>
+<span id="cb8-62"><a href="#cb8-62" aria-hidden="true"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Install dependencies (Ubuntu)</span></span>
+<span id="cb8-63"><a href="#cb8-63" aria-hidden="true"></a><span class="at">      </span><span class="fu">if</span><span class="kw">:</span><span class="at"> runner.os == &#39;Linux&#39;</span></span>
+<span id="cb8-64"><a href="#cb8-64" aria-hidden="true"></a><span class="fu">      run</span><span class="kw">: </span><span class="ch">|</span></span>
+<span id="cb8-65"><a href="#cb8-65" aria-hidden="true"></a>        sudo apt-get -y update</span>
+<span id="cb8-66"><a href="#cb8-66" aria-hidden="true"></a>        sudo apt-get -y install build-essential curl libffi-dev libffi8 libgmp-dev libgmp10 libncurses-dev pkg-config libtinfo6 libncurses6</span>
+<span id="cb8-67"><a href="#cb8-67" aria-hidden="true"></a></span>
+<span id="cb8-68"><a href="#cb8-68" aria-hidden="true"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> haskell/ghcup-setup@v1</span></span>
+<span id="cb8-69"><a href="#cb8-69" aria-hidden="true"></a><span class="at">      </span><span class="fu">with</span><span class="kw">:</span></span>
+<span id="cb8-70"><a href="#cb8-70" aria-hidden="true"></a><span class="at">        </span><span class="fu">ghc</span><span class="kw">:</span><span class="at"> ${{ matrix.ghc }}</span></span>
+<span id="cb8-71"><a href="#cb8-71" aria-hidden="true"></a><span class="at">        </span><span class="fu">cabal</span><span class="kw">:</span><span class="at"> latest</span></span>
+<span id="cb8-72"><a href="#cb8-72" aria-hidden="true"></a></span>
+<span id="cb8-73"><a href="#cb8-73" aria-hidden="true"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Build</span></span>
+<span id="cb8-74"><a href="#cb8-74" aria-hidden="true"></a><span class="fu">      run</span><span class="kw">: </span><span class="ch">|</span></span>
+<span id="cb8-75"><a href="#cb8-75" aria-hidden="true"></a>        cabal update</span>
+<span id="cb8-76"><a href="#cb8-76" aria-hidden="true"></a>        cabal test --test-show-details=direct all</span></code></pre></div>
+<p>You can see these dynamic GHC matrices in action here:</p>
+<ul>
+<li><a href="https://github.com/haskell/filepath/blob/master/.github/workflows/test.yaml">workflow file</a></li>
+<li><a href="https://github.com/haskell/filepath/actions/runs/21240352923">CI run</a></li>
+</ul>
+<h2 id="a-few-notes">A few notes</h2>
+<p>You may also notice that we don’t use <a href="https://github.com/haskell-actions/setup">haskell-actions/setup</a> here, but the <a href="https://github.com/haskell/ghcup-setup">ghcup-setup</a> one, which is simpler, more predictable and maintained by GHCup developers.</p>
+<h2 id="prior-art">Prior Art</h2>
+<p>GitHub runner-images <a href="https://github.com/actions/runner-images/blob/5668be8c2f48215b30abe1f6cc5dd6a827ff411d/images/ubuntu/scripts/build/install-haskell.sh#L26">do something similar</a> when preinstalling GHCup.</p>]]></summary>
+</entry>
+<entry>
     <title>GHCup discontinued (or why you should use Nix)</title>
     <link href="https://github.com/hasufell/hasufell.github.io/posts/2025-04-01-use-nix.html" />
     <id>https://github.com/hasufell/hasufell.github.io/posts/2025-04-01-use-nix.html</id>
