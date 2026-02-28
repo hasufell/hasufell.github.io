@@ -116,6 +116,369 @@
   
   <div class="post">
     <h1 class="post-title">
+      <a href="../posts/2022-06-29-fixing-haskell-filepaths.html">
+        Fixing 'FilePath' in Haskell
+      </a>
+    </h1>
+    <span class="post-date">June 29, 2022,
+      
+         Posted by Julian Ospald
+      
+    </span>
+
+    <p>I’m pleased to announce that the Haskell type <code>type FilePath = String</code> has a successor, which was first discussed many years ago as the <a href="https://gitlab.haskell.org/ghc/ghc/-/wikis/proposal/abstract-file-path">Abstract FilePath proposal (AFPP)</a>.</p>
+<p>The new type shipped with the <a href="https://hackage.haskell.org/package/filepath-1.4.100.0">filepath-1.4.100.0</a> package is:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="co">-- * Path types</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a><span class="co">-- | FilePath for windows.</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a><span class="kw">type</span> <span class="dt">WindowsPath</span> <span class="ot">=</span> <span class="dt">WindowsString</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true"></a><span class="co">-- | FilePath for posix systems.</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true"></a><span class="kw">type</span> <span class="dt">PosixPath</span> <span class="ot">=</span> <span class="dt">PosixString</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true"></a><span class="co">-- | Abstract filepath, depending on current platform.</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true"></a><span class="co">-- Matching on the wrong constructor is a compile-time error.</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true"></a><span class="kw">type</span> <span class="dt">OsPath</span> <span class="ot">=</span> <span class="dt">OsString</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true"></a></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true"></a></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true"></a><span class="co">-- * String types</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true"></a><span class="co">-- Constructors are not public API.</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true"></a></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">WindowsString</span> <span class="ot">=</span> <span class="dt">WindowsString</span> <span class="dt">ShortByteString</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true"></a></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">PosixString</span> <span class="ot">=</span> <span class="dt">PosixString</span> <span class="dt">ShortByteString</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true"></a></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">OsString</span> <span class="ot">=</span> <span class="dt">OsString</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true"></a><span class="pp">#if defined(mingw32_HOST_OS)</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true"></a>  <span class="dt">WindowsString</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true"></a><span class="pp">#else</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true"></a>  <span class="dt">PosixString</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true"></a><span class="pp">#endif</span></span></code></pre></div>
+<p>The reason we have two sets of types here is simply to maintain the current weak distinction in filepath for functions that deal with not-quite-filepaths, e.g.: <code>splitSearchPath :: String -&gt; [FilePath]</code>. This also allows us to provide slightly different API (e.g. QuasiQuoter for <code>OsString</code> differs from <code>OsPath</code>). OsPath is not a newtype, because it doesn’t provide any additional guarantees over OsString. ‘filepath’ remains a low-level library and does not provide strong guarantees for filepaths (such as validity).</p>
+<p>Libraries with stronger filepath guarantees are listed in the <a href="https://gitlab.haskell.org/haskell/filepath/-/blob/master/README.md#what-is-a-filepath">README</a>.</p>
+<p>Unlike the original proposal, this is <strong>additional API (not part of <code>base</code>) and will not break any existing code</strong>. Core libraries are expected to upgrade their API and provide additional variants that support this new type. Migration strategies are discussed further down. The ecosystem might need some time to migrate. This is also a <a href="#how-to-help">call for help</a>!</p>
+<p>But let’s look at the reasons why <code>String</code> is problematic first.</p>
+<h2 id="toc">TOC</h2>
+<ul>
+<li><a href="#whats-wrong-with-string">What’s wrong with String?</a></li>
+<li><a href="#the-solution">The solution</a></li>
+<li><a href="#how-to-use-the-new-api">How to use the new API</a></li>
+<li><a href="#migration-for-library-authors">Migration for library authors</a>
+<ul>
+<li><a href="#1-drop-string-based-api-and-just-provide-ospath">1. drop String based API and just provide OsPath</a></li>
+<li><a href="#2-provide-a-shim-compatibility-api-for-string">2. provide a shim compatibility API for String</a></li>
+<li><a href="#3-using-cpp-to-export-two-apis">3. using CPP to export two APIs</a></li>
+<li><a href="#accessing-the-raw-bytes-in-a-cross-platform-manner">Accessing the raw bytes in a cross-platform manner</a></li>
+</ul></li>
+<li><a href="#history-of-the-proposal">History of the proposal</a></li>
+<li><a href="#contributors">Contributors</a></li>
+<li><a href="#patch-load">Patch load</a></li>
+<li><a href="#how-to-help">How to help</a></li>
+<li><a href="#faq">FAQ</a></li>
+</ul>
+<h2 id="whats-wrong-with-string">What’s wrong with String?</h2>
+<p>Filepaths are resources on the (users) system. We create, delete, copy them. Any corner case with filepaths can have devastating effects: deleting the wrong file, comparing the wrong files, failing whitelists, security bugs, etc.</p>
+<p>To recap, the definition of String is:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="kw">type</span> <span class="dt">String</span> <span class="ot">=</span> [<span class="dt">Char</span>]</span></code></pre></div>
+<p>So a String is a list of <code>Char</code>. And <code>Char</code> is encoded as UTF-8, right? Unfortunately not, it’s a <em>Unicode code point</em>.</p>
+<p>A unicode code point is an integer in the <em>Unicode codespace</em>. The <a href="https://www.unicode.org/versions/Unicode14.0.0/ch03.pdf#G2212">standard</a> gets a little technical here, but let’s just say UTF-8 is one of many encodings of <code>[Char]</code>.</p>
+<p>That out of the way, let’s look at how filepaths are actually represented on the system level.</p>
+<p>On windows, filepaths are just <a href="https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-dtyp/76f10dd8-699d-45e6-a53c-5aefc586da20"><em>wide character</em> arrays</a> (<code>wchar_t*</code>, so basically <code>[Word16]</code>). On unix, filepaths are <a href="https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap03.html#tag_03_170"><em>character</em> arrays</a> (<code>char[]</code>, so basically <code>[Word8]</code>).</p>
+<p>In both cases, there’s no encoding specified, although on windows we can <em>mostly</em> assume UTF-16LE. So… to go from <code>String</code> to <code>CString</code>/<code>CWString</code> at the outer FFI layer, we need to make a decision.</p>
+<p><code>base</code> currently does the following:</p>
+<ol type="1">
+<li>On unix, it uses <a href="https://hackage.haskell.org/package/base-4.16.1.0/docs/GHC-IO-Encoding.html#v:getFileSystemEncoding"><code>getFileSystemEncoding</code></a> and <a href="https://hackage.haskell.org/package/base-4.16.1.0/docs/GHC-IO-Encoding.html#v:mkTextEncoding"><code>mkTextEncoding</code></a> to pick a round-trippable encoding for filepaths. E.g. if your locale returns <code>en_US.UTF-8</code> you’ll get <code>UTF-8//ROUNDTRIP</code> TextEncoding, which is based on <a href="https://peps.python.org/pep-0383/">PEP 383</a> and invalid bytes get translated to some special representation (lone surrogates) in order to be roundtripped.</li>
+<li>On windows, it uses a <a href="https://gitlab.haskell.org/ghc/ghc/-/blob/0e22f16cda8468256b4c5d04214276be30e23faa/libraries/base/Foreign/C/String.hs#L423-444">private permissive UTF-16 encoding</a> that allows to roundtrip coding errors as well.</li>
+</ol>
+<p>Windows isn’t too problematic here. The encoding is total. However, on unix, the interpretation of filepaths depends on the <em>currently set locale</em>. This is wrong for a number of reasons:</p>
+<ol type="1">
+<li>there’s no guarantee that the currently set locale corresponds to the encoding of a specific filepath (the filepath could be on a USB drive that has a japanese encoding, such as <code>CP932</code>)</li>
+<li>as the documentation of <a href="https://hackage.haskell.org/package/base-4.16.1.0/docs/GHC-IO-Encoding.html#v:mkTextEncoding">mkTextEncoding</a> says, only very specific encodings actually roundtrip properly (<code>CP932</code> does not)</li>
+<li>on conversion to <code>String</code>, you “lose” the underlying encoding and may end up with weirdly escaped Unicode codepoints. Roundtripping can break if a call to <code>setFileSystemEncoding</code> interleaves the conversions.</li>
+<li>it’s hard to get the original bytes back… this may have security implications for e.g. filepath whitelists</li>
+</ol>
+<p>So, how do other languages solve this? Python simply enforces <code>UTF-8</code> (with PEP 383 escaping) on unix. That makes the roundtripping almost sound. But this comes with its own set of problems:</p>
+<ol type="1">
+<li>if the underlying filepath is not UTF-8, the <code>[Char]</code> representation is lossless (from <code>CString</code> to <code>[Char]</code>), but may be somewhat non-sensical for further interpretation, because you might have excessive escaping or your <code>Char</code>s don’t correspond to what the user sees on their system</li>
+<li>this has really bad interoperability, because the roundtrip encoding can in fact produce invalid UTF-8. The unicode consortium itself has <a href="https://unicode.org/L2/L2009/09236-pep383-problems.html">voiced their concerns with this approach</a></li>
+<li>since Haskell <code>Char</code> also includes surrogates, the conversion from <code>String</code> to e.g. UTF-8 <code>CString</code> can in fact fail, so is not total</li>
+</ol>
+<p>I have assembled a <a href="https://gist.github.com/hasufell/c600d318bdbe010a7841cc351c835f92">list of correctness issues</a> with these approaches for in-depth reading.</p>
+<h2 id="the-solution">The solution</h2>
+<p>Just stop converting filepaths!</p>
+<p>We can just keep the original bytes from the system API. Many filepath operations actually don’t need to know the exact underlying encoding. E.g. the filepath separator <code>/</code> on unix is a pre-defined <em>byte</em> (<code>0x2F</code>). You can just scan the byte array for this byte. The position doesn’t matter, the encoding doesn’t matter. File <strong>names</strong> <em>cannot</em> include this byte, period.</p>
+<p>However, since unix and windows are different (<code>[Word8]</code> vs <code>[Word16]</code>), any API that deals with low-level filepaths in a cross-platform manner needs to understand this and write correct code. More on this in the migration strategy section below.</p>
+<p>We decided to use <code>ShortByteString</code> as the internal representation of filepaths, because:</p>
+<ol type="1">
+<li>these are raw, uninterpreted bytes, a wrapper around <code>ByteArray#</code>, which has many efficient primops</li>
+<li>it’s unpinned, so doesn’t contribute to memory fragmentation (<a href="https://github.com/hasufell/filepath-debug/blob/master/result.txt">proof</a>)</li>
+<li>provides convenient API via <code>bytestring</code>, which has been <a href="https://github.com/haskell/bytestring/pull/471">greatly enhanced as part of this proposal</a></li>
+</ol>
+<p>So, in general the idea is to avoid dealing with <code>String</code> at all. There may still be use cases for String though, e.g.:</p>
+<ol type="1">
+<li>dealing with legacy APIs</li>
+<li>reading filepaths from a UTF-8 encoded text file (you probably want <code>Text</code> here, but it’s trivial to convert to String)</li>
+<li>a unified representation across platforms (e.g. to send over the wire or to serialize)</li>
+</ol>
+<h2 id="how-to-use-the-new-api">How to use the new API</h2>
+<p>Many examples are here: <a href="https://github.com/hasufell/filepath-examples">https://github.com/hasufell/filepath-examples</a></p>
+<p>Note that not all libraries have released support for the new API yet, so have a look at this <a href="https://github.com/hasufell/filepath-examples/blob/master/cabal.project">cabal.project</a> if you want to start right away. Generally, you should be able to use these packages already:</p>
+<ul>
+<li><strong>filepath</strong>: provides filepath manipulation and the new <code>OsPath</code> type</li>
+<li><strong>unix</strong>: provides new API variants, e.g. <code>System.Posix.Files.PosixString</code> (as an alternative to <code>System.Posix.Files</code>)</li>
+<li><strong>Win32</strong>: similarly, provides new variants, e.g. <code>System.Win32.WindowsString.File</code></li>
+<li><strong>directory</strong>: provides the new API under <code>System.Directory.OsPath</code></li>
+<li><a href="https://github.com/hasufell/file-io"><strong>file-io</strong></a>: companion package that provides base-like file reading/writing/opening operations</li>
+</ul>
+<p>Most end-users developing applications should be able to convert to the new API with little effort, given that their favorite libraries already support this new type.</p>
+<p><a href="https://hackage.haskell.org/package/filepath-1.4.100.0/docs/System-OsPath.html">System.OsPath</a> exports the same API as <code>System.FilePath</code> with some additional helpers to convert from and to <code>String</code>. Likewise <code>System.OsPath.Posix</code>/<code>System.OsPath.Windows</code> are equivalent to <code>System.FilePath.Posix</code>/<code>System.FilePath.Windows</code>.</p>
+<p>So, you can just:</p>
+<ol type="1">
+<li>update your dependencies lower bounds to the minimum version that supports <code>OsPath</code> (might need <a href="https://github.com/hasufell/filepath-examples/blob/master/cabal.project">source-repository-package</a> stanzas)</li>
+<li>for <code>filepath</code> import <code>System.OsPath</code> instead of <code>System.FilePath</code></li>
+<li>use the specialised API from your dependencies (e.g. for unix <code>System.Posix.Directory.PosixPath</code> instead of <code>System.Posix.Directory</code>)</li>
+<li>to write OsPath literals, use the provided <a href="https://hackage.haskell.org/package/filepath-1.4.100.0/docs/System-OsPath.html#v:osp">QuasiQuoters</a>. There’s no <code>IsString</code> instance, see the <a href="#why-is-there-no-isstring-instance-overloadedstrings">faq</a>.</li>
+<li>if you’re just using an ASCII subset or strict unicode scalar values, you can use <code>fromJust . encodeUtf</code> and <code>fromJust . decodeUtf</code> to pack/unpack literals</li>
+<li>since <code>base</code> doesn’t support this new type, you’ll need the already mentioned companion library <a href="https://github.com/hasufell/file-io">file-io</a> for opening a <code>Handle</code> and writing/reading files</li>
+<li>if you use legacy APIs that still use <code>FilePath</code>, there are <a href="https://github.com/hasufell/filepath-examples/blob/master/examples/Process.hs">examples</a> on how to deal with them (usually <code>System.OsPath.encodeFS</code> and <code>System.OsPath.decodeFS</code>)</li>
+</ol>
+<p>A table for encoding/decoding strategies follows:</p>
+<table>
+<colgroup>
+<col style="width: 17%" />
+<col style="width: 8%" />
+<col style="width: 6%" />
+<col style="width: 27%" />
+<col style="width: 26%" />
+<col style="width: 14%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>API function</th>
+<th>from</th>
+<th>to</th>
+<th>posix encoding</th>
+<th>windows encoding</th>
+<th>remarks</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>encodeUtf</code></td>
+<td>FilePath</td>
+<td>OsPath</td>
+<td>UTF-8 (strict)</td>
+<td>UTF-16 (strict)</td>
+<td>not total</td>
+</tr>
+<tr class="even">
+<td><code>encodeWith</code></td>
+<td>FilePath</td>
+<td>OsPath</td>
+<td>user specified</td>
+<td>user specified</td>
+<td>depends on input</td>
+</tr>
+<tr class="odd">
+<td><code>encodeFS</code></td>
+<td>FilePath</td>
+<td>OsPath</td>
+<td>depends on getFileSystemEncoding</td>
+<td>UTF-16 (escapes coding errors)</td>
+<td>requires IO, used by <code>base</code> for roundtripping</td>
+</tr>
+<tr class="even">
+<td><code>decodeUtf</code></td>
+<td>OsPath</td>
+<td>FilePath</td>
+<td>UTF-8 (strict)</td>
+<td>UTF-16 (strict)</td>
+<td>not total</td>
+</tr>
+<tr class="odd">
+<td><code>decodeWith</code></td>
+<td>OsPath</td>
+<td>FilePath</td>
+<td>user specified</td>
+<td>user specified</td>
+<td>depends on input</td>
+</tr>
+<tr class="even">
+<td><code>decodeFS</code></td>
+<td>OsPath</td>
+<td>FilePath</td>
+<td>depends on getFileSystemEncoding</td>
+<td>UTF-16 (escapes coding errors)</td>
+<td>requires IO, used by <code>base</code> for roundtripping</td>
+</tr>
+</tbody>
+</table>
+<p>These conversions are particularly useful if you’re dealing with legacy API that is still <code>FilePath</code> based. An example on how to do that with the process package is <a href="https://github.com/hasufell/filepath-examples/blob/master/examples/Process.hs">here</a>.</p>
+<h2 id="migration-for-library-authors">Migration for library authors</h2>
+<p>Core libraries or other libraries exporting API that is heavy on filepaths generally have 3 options:</p>
+<h3 id="drop-string-based-api-and-just-provide-ospath">1. drop String based API and just provide OsPath</h3>
+<p>This is feasible, because users can themselves convert via <code>System.OsPath.encodeFS</code> and <code>System.OsPath.decodeFS</code> to and from <code>String</code>.</p>
+<h3 id="provide-a-shim-compatibility-api-for-string">2. provide a shim compatibility API for String</h3>
+<p>This is what this <code>directory</code> PR does: <a href="https://github.com/haskell/directory/pull/136/files">https://github.com/haskell/directory/pull/136/files</a>… see <code>System/Directory.hs</code>.</p>
+<p>The idea is to write the core against <code>OsPath</code> and then create a <code>String</code> based API that wraps the core via <code>System.OsPath.encodeFS</code> and <code>System.OsPath.decodeFS</code> to mimic behavior of <code>base</code>. This usually requires IO, though.</p>
+<h3 id="using-cpp-to-export-two-apis">3. using CPP to export two APIs</h3>
+<p>This is what filepath itself does. It contains an <a href="https://gitlab.haskell.org/haskell/filepath/-/blob/master/System/FilePath/Internal.hs">abstract module</a>, which is then imported while setting specific types and platform information (<a href="https://gitlab.haskell.org/haskell/filepath/-/blob/master/System/OsPath/Posix/Internal.hs">PosixPath</a>, <a href="https://gitlab.haskell.org/haskell/filepath/-/blob/master/System/OsPath/Windows/Internal.hs">WindowsPath</a>, <a href="https://gitlab.haskell.org/haskell/filepath/-/blob/master/System/FilePath/Posix.hs">System.FilePath.Posix</a> and <a href="https://gitlab.haskell.org/haskell/filepath/-/blob/master/System/FilePath/Windows.hs">System.FilePath.Windows</a>).</p>
+<p>The main trick here is to not use any String based API (e.g. no pattern matching or use of <code>:</code>). Instead, we only use <code>uncons</code>/<code>unsnoc</code>, <code>head</code>/<code>last</code> etc, so the intersection of String and ShortByteString APIs… and then adjust the imports based on the type.</p>
+<p>E.g. the following code:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="ot">splitSearchPath ::</span> <span class="dt">String</span> <span class="ot">-&gt;</span> [<span class="dt">FilePath</span>]</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a>splitSearchPath <span class="ot">=</span> f</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a>    <span class="kw">where</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true"></a>    f xs <span class="ot">=</span> <span class="kw">case</span> <span class="fu">break</span> isSearchPathSeparator xs <span class="kw">of</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true"></a>           (pre, []    ) <span class="ot">-&gt;</span> g pre</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true"></a>           (pre, _<span class="op">:</span>post) <span class="ot">-&gt;</span> g pre <span class="op">++</span> f post</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true"></a></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true"></a>    g <span class="st">&quot;&quot;</span> <span class="ot">=</span> [<span class="st">&quot;.&quot;</span> <span class="op">|</span> isPosix]</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true"></a>    g (<span class="ch">'\&quot;'</span><span class="op">:</span>x<span class="op">@</span>(_<span class="op">:</span>_)) <span class="op">|</span> isWindows <span class="op">&amp;&amp;</span> <span class="fu">last</span> x <span class="op">==</span> <span class="ch">'\&quot;'</span> <span class="ot">=</span> [<span class="fu">init</span> x]</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true"></a>    g x <span class="ot">=</span> [x]</span></code></pre></div>
+<p>became:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="ot">splitSearchPath ::</span> <span class="dt">STRING</span> <span class="ot">-&gt;</span> [<span class="dt">FILEPATH</span>]</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a>splitSearchPath <span class="ot">=</span> f</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a>    <span class="kw">where</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a>    f xs <span class="ot">=</span> <span class="kw">let</span> (pre, post) <span class="ot">=</span> <span class="fu">break</span> isSearchPathSeparator xs</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true"></a>           <span class="kw">in</span> <span class="kw">case</span> uncons post <span class="kw">of</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true"></a>             <span class="dt">Nothing</span>     <span class="ot">-&gt;</span> g pre</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true"></a>             <span class="dt">Just</span> (_, t) <span class="ot">-&gt;</span> g pre <span class="op">++</span> f t</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true"></a></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true"></a>    g x <span class="ot">=</span> <span class="kw">case</span> uncons x <span class="kw">of</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true"></a>      <span class="dt">Nothing</span> <span class="ot">-&gt;</span> [singleton _period <span class="op">|</span> isPosix]</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true"></a>      <span class="dt">Just</span> (h, t)</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true"></a>        <span class="op">|</span> h <span class="op">==</span> _quotedbl</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true"></a>        , (<span class="dt">Just</span> _) <span class="ot">&lt;-</span> uncons t <span class="co">-- &gt;= 2</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true"></a>        , isWindows</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true"></a>        , (<span class="dt">Just</span> (i, l)) <span class="ot">&lt;-</span> unsnoc t</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true"></a>        , l <span class="op">==</span> _quotedbl <span class="ot">-&gt;</span> [i]</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true"></a>        <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">-&gt;</span> [x]</span></code></pre></div>
+<p>The windows include site is something like:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="co">-- word16 based bytestring functions</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">System.OsPath.Data.ByteString.Short.Word16</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a><span class="co">-- defining types</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true"></a><span class="pp">#define FILEPATH ShortByteString</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true"></a><span class="pp">#define WINDOWS</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true"></a><span class="co">-- include the CPP module</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true"></a><span class="pp">#include &quot;Internal.hs&quot;</span></span></code></pre></div>
+<p>Then we can have a <code>WindowsPath</code>/<code>PosixPath</code>/<code>OsPath</code> wrappers:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a><span class="ot">splitPath ::</span> <span class="dt">FILEPATH_NAME</span> <span class="ot">-&gt;</span> [<span class="dt">FILEPATH_NAME</span>]</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a>splitPath (<span class="dt">OSSTRING_NAME</span> bs) <span class="ot">=</span> <span class="dt">OSSTRING_NAME</span> <span class="op">&lt;$&gt;</span> C.splitPath bs</span></code></pre></div>
+<p>And that is included like so:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">System.OsPath.Types</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">System.OsString.Windows</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">System.OsPath.Windows.Internal</span> <span class="kw">as</span> <span class="dt">C</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true"></a></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true"></a><span class="pp">#define FILEPATH_NAME WindowsPath</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true"></a><span class="pp">#define WINDOWS</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true"></a></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true"></a><span class="pp">#include &quot;PathWrapper.hs&quot;</span></span></code></pre></div>
+<p>Not very pretty, but avoids a lot of repetition and doesn’t require a partial wrapper layer that converts between <code>ShortByteString</code> and <code>String</code>.</p>
+<h3 id="accessing-the-raw-bytes-in-a-cross-platform-manner">Accessing the raw bytes in a cross-platform manner</h3>
+<p>Some libraries might need access to the raw bytes of the filepaths, e.g. because the <code>filepath</code> API is insufficient. It’s important to understand that on unix, we’re basically dealing with <code>[Word8]</code> and on windows with <code>[Word16]</code>, where both lists are represented as a compact <code>ShortByteString</code>.</p>
+<p>E.g. a cross-platform function might look like this:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode hs"><code class="sourceCode haskell"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a><span class="kw">module</span> <span class="dt">MyModule</span> <span class="kw">where</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true"></a></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">System.OsPath.Types</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">System.OsString.Internal.Types</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true"></a><span class="pp">#if defined(mingw32_HOST_OS)</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true"></a><span class="co">-- word 16 based windows API</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">System.OsPath.Data.ByteString.Short.Word16</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true"></a>       as <span class="dt">SBS</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">System.OsPath.Windows</span> <span class="kw">as</span> <span class="dt">PFP</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true"></a><span class="pp">#else</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true"></a><span class="co">-- word 8 based posix API</span></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">System.OsPath.Data.ByteString.Short</span> <span class="kw">as</span> <span class="dt">SBS</span></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">System.OsPath.Posix</span> <span class="kw">as</span> <span class="dt">PFP</span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true"></a><span class="pp">#endif</span></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true"></a></span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true"></a><span class="ot">crossPlatformFunction ::</span> <span class="dt">OsPath</span> <span class="ot">-&gt;</span> <span class="dt">IO</span> ()</span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true"></a><span class="pp">#if defined(mingw32_HOST_OS)</span></span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true"></a>crossPlatformFunction (<span class="dt">OsString</span> pfp<span class="op">@</span>(<span class="dt">WindowsString</span> ba)) <span class="ot">=</span> <span class="kw">do</span></span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true"></a>    <span class="co">-- use filepath functions for windows specific</span></span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true"></a>    <span class="co">-- operating system strings</span></span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true"></a>    <span class="kw">let</span> ext <span class="ot">=</span> PFP.takeExtension pfp</span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true"></a>    <span class="co">-- operate directly on the underlying bytestring</span></span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true"></a>    <span class="co">-- (which is a wide character bytestring, so uses Word16)</span></span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true"></a>    <span class="kw">let</span> foo <span class="ot">=</span> SBS.takeWhile</span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true"></a>    <span class="op">...</span></span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true"></a><span class="pp">#else</span></span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true"></a>crossPlatformFunction (<span class="dt">OsString</span> pfp<span class="op">@</span>(<span class="dt">PosixString</span> ba)) <span class="ot">=</span> <span class="kw">do</span></span>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true"></a>    <span class="co">-- use filepath functions for posix specific</span></span>
+<span id="cb8-29"><a href="#cb8-29" aria-hidden="true"></a>    <span class="co">-- operating system strings</span></span>
+<span id="cb8-30"><a href="#cb8-30" aria-hidden="true"></a>    <span class="kw">let</span> ext <span class="ot">=</span> PFP.takeExtension pfp</span>
+<span id="cb8-31"><a href="#cb8-31" aria-hidden="true"></a>    <span class="co">-- operate directly on the underlying bytestring</span></span>
+<span id="cb8-32"><a href="#cb8-32" aria-hidden="true"></a>    <span class="co">-- (which is just Word8 bytestring)</span></span>
+<span id="cb8-33"><a href="#cb8-33" aria-hidden="true"></a>    <span class="kw">let</span> foo <span class="ot">=</span> SBS.takeWhile</span>
+<span id="cb8-34"><a href="#cb8-34" aria-hidden="true"></a>    <span class="op">...</span></span>
+<span id="cb8-35"><a href="#cb8-35" aria-hidden="true"></a><span class="pp">#endif</span></span></code></pre></div>
+<h2 id="history-of-the-proposal">History of the proposal</h2>
+<ol type="1">
+<li>first wiki proposal: <a href="https://gitlab.haskell.org/ghc/ghc/-/wikis/proposal/abstract-file-path">https://gitlab.haskell.org/ghc/ghc/-/wikis/proposal/abstract-file-path</a></li>
+<li>Revival attempts
+<ul>
+<li><a href="https://discourse.haskell.org/t/reviving-the-abstract-filepath-proposal-afpp-in-user-space/2344">https://discourse.haskell.org/t/reviving-the-abstract-filepath-proposal-afpp-in-user-space/2344</a></li>
+<li><a href="https://mail.haskell.org/pipermail/libraries/2021-August/031427.html">https://mail.haskell.org/pipermail/libraries/2021-August/031427.html</a></li>
+<li><a href="https://groups.google.com/g/haskell-core-libraries/c/WzapcSvvfQM/m/oDhGbf9wCwAJ?pli=1">https://groups.google.com/g/haskell-core-libraries/c/WzapcSvvfQM/m/oDhGbf9wCwAJ?pli=1</a></li>
+</ul></li>
+<li>PRs:
+<ul>
+<li><a href="https://gitlab.haskell.org/haskell/filepath/-/merge_requests/103">https://gitlab.haskell.org/haskell/filepath/-/merge_requests/103</a></li>
+<li><a href="https://github.com/haskell/bytestring/pull/471">https://github.com/haskell/bytestring/pull/471</a></li>
+<li><a href="https://github.com/haskell/win32/pull/198">https://github.com/haskell/win32/pull/198</a></li>
+<li><a href="https://github.com/haskell/unix/pull/202">https://github.com/haskell/unix/pull/202</a></li>
+<li><a href="https://github.com/haskell/directory/pull/136">https://github.com/haskell/directory/pull/136</a></li>
+</ul></li>
+<li>Haskell Foundation thread: <a href="https://github.com/haskellfoundation/tech-proposals/issues/35">https://github.com/haskellfoundation/tech-proposals/issues/35</a></li>
+<li>Reddit discussion: <a href="https://www.reddit.com/r/haskell/comments/vivjdo/abstract_filepath_coming_soon/">https://www.reddit.com/r/haskell/comments/vivjdo/abstract_filepath_coming_soon/</a></li>
+</ol>
+<h2 id="contributors">Contributors</h2>
+<ol type="1">
+<li>Author, filepath maintainer and proposal champion: Julian Ospald (me)</li>
+<li>Bodigrim providing help and support as CLC chair, giving reviews as bytestring maintainer and providing help with questions about encoding</li>
+<li><code>bytestring</code> maintainers providing review for the <code>ShortByteString</code> PR</li>
+<li><code>unix</code> maintainers providing PR review</li>
+<li>Tamar Christina (<code>Win32</code> maintainer) providing PR review and further guidance for the <code>file-io</code> library</li>
+<li><code>directory</code> maintainer providing PR review</li>
+<li>Ericson2314 via various dicussions</li>
+<li>Koz Ross helping with encoding questions</li>
+<li>GHC team helping with getting this into 9.6</li>
+<li>HF encouraging me</li>
+<li>reddit community giving loads of opinions on function names ;)</li>
+<li>various people on IRC discussing alternatives like PEP-383/UTF-8b/WTF-8</li>
+</ol>
+<h2 id="patch-load">Patch load</h2>
+<ul>
+<li>filepath: 11126 insertions(+), 3062 deletions(-)</li>
+<li>bytestring: 1795 insertions(+), 145 deletions(-)</li>
+<li>Win32: 2668 insertions(+), 986 deletions(-)</li>
+<li>unix: 8705 insertions(+), 3 deletions(-)</li>
+<li>directory: 2959 insertions(+), 939 deletions(-)</li>
+<li>file-io: 296 insertions(+)</li>
+</ul>
+<p>Total: 27549 insertions(+), 5135 deletions(-)</p>
+<h2 id="how-to-help">How to help</h2>
+<ul>
+<li>create issues for your favorite libraries to support <code>OsPath</code> linking to this blog</li>
+<li>create PRs for existing issues:
+<ul>
+<li><a href="https://github.com/haskell/process/issues/252">https://github.com/haskell/process/issues/252</a></li>
+</ul></li>
+</ul>
+<h2 id="faq">FAQ</h2>
+<h3 id="why-is-there-no-isstring-instance-overloadedstrings">Why is there no IsString instance (OverloadedStrings)?</h3>
+<p><code>IsString</code> has a broken API: <a href="https://github.com/haskell/bytestring/issues/140">https://github.com/haskell/bytestring/issues/140</a></p>
+<p>It can’t express failure. Conversion to <code>OsPath</code> can fail. Use the provided QuasiQuoters instead.</p>
+<h3 id="why-is-this-not-in-base">Why is this not in base?</h3>
+<p>Nothing is stopping this from eventually getting into base. But the barrier of doing so is much higher. It may happen eventually.</p>
+<h3 id="when-will-filepath-be-dropped">When will ‘FilePath’ be dropped?</h3>
+<p>Probably never. It would break loads of code. We don’t want to do that, for now.</p>
+<h3 id="yet-another-string-type">Yet another String type?</h3>
+<p>Right… I suggest using python if you don’t like types ;)</p>
+  </div>
+  
+  <div class="post">
+    <h1 class="post-title">
       <a href="../posts/2021-10-22-conduit-to-streamly.html">
         From conduit to streamly
       </a>

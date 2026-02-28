@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+  <head>
+  <!---
+  <link href="http://gmpg.org/xfn/11" rel="profile">
+  -->
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+
+  <title>
+    
+      Yet another opinion on LLMs &middot; Hasufell's blog
+    
+  </title>
+
+  
+      
+  <link rel="canonical" href="https://hasufell.github.io/posts/2026-02-28-LLMs.html">
+      
+  
+
+  <link rel="stylesheet" href="https://hasufell.github.io/css/poole.css">
+  <link rel="stylesheet" href="https://hasufell.github.io/css/syntax.css">
+  <link rel="stylesheet" href="https://hasufell.github.io/css/lanyon.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=PT+Serif:400,400italic,700%7CPT+Sans:400">
+
+  <!---
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="{{ '/public/apple-touch-icon-precomposed.png' | absolute_url }}">
+  <link rel="shortcut icon" href="{{ '/public/favicon.ico' | absolute_url }}">
+  -->
+
+  <link rel="alternate" type="application/rss+xml" title="RSS" href="https://hasufell.github.io/atom.xml">
+
+  <!--- deactivate google analytics
+  {% if site.google_analytics_id %}
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+    ga('create', '{{ site.google_analytics_id }}', 'auto');
+    ga('send', 'pageview');
+  </script>
+  {% endif %}
+  -->
+</head>
+
+
+  <body>
+
+    <!-- Target for toggling the sidebar `.sidebar-checkbox` is for regular
+     styles, `#sidebar-checkbox` for behavior. -->
+<input type="checkbox" class="sidebar-checkbox" id="sidebar-checkbox">
+
+<!-- Toggleable sidebar -->
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-item">
+    <p>Hasufell's blog</p>
+  </div>
+
+  <nav class="sidebar-nav">
+    <a class="sidebar-nav-item" href="https://hasufell.github.io">Home</a>
+
+    <!--- The code below dynamically generates a sidebar nav of the files in the folder /pages -->
+
+    
+      
+        <a class="sidebar-nav-item" href="https://hasufell.github.io/pages/About.html">About</a>
+      
+    
+      
+        <a class="sidebar-nav-item" href="https://hasufell.github.io/pages/Contact.html">Contact</a>
+      
+    
+
+    <a class="sidebar-nav-item" href="https://hasufell.github.io/archive.html">Archive</a>
+
+    <a class="sidebar-nav-item" href="https://github.com/hasufell/hasufell.github.io">GitHub project</a>
+
+  </nav>
+
+  <div class="sidebar-item">
+    <p>
+      &copy; 2021. All rights reserved.
+    </p>
+    <p>
+        <img src="https://hasufell.github.io/images/haskell-logo.png" class="logo" style="display: inline;" />
+        Site created with
+        <a href="https://jaspervdj.be/hakyll">Hakyll</a>.
+        <br>
+        Modified theme
+        <a href="https://github.com/hahey/lanyon-hakyll">lanyon-hakyll</a>
+        based on
+        <a href="https://lanyon.getpoole.com/">Lanyon</a>.
+    </p>
+  </div>
+</div>
+
+
+    <!-- Wrap is the content to shift when toggling the sidebar. We wrap the
+         content to avoid any CSS collisions with our real content. -->
+    <div class="wrap">
+      <div class="masthead">
+        <div class="container">
+          <h3 class="masthead-title">
+            <a href="https://hasufell.github.io" title="Home">Hasufell's blog</a>
+            <small>haskell and tech, mostly</small>
+          </h3>
+        </div>
+      </div>
+
+      <div class="container content">
+          <div class="post">
+    <h1 class="post-title">
+      <a href="../posts/2026-02-28-LLMs.html">
+        Yet another opinion on LLMs
+      </a>
+    </h1>
+    <span class="post-date">February 28, 2026,
+      
+         Posted by Julian Ospald
+      
+    </span>
+     <h2 id="toc">TOC</h2>
+<ul>
+<li><a href="#opinion">Opinion</a></li>
+<li><a href="#what-is-good-use-of-llms">What is good use of LLMs</a></li>
+<li><a href="#using-llms-to-build-things">Using LLMs to build things</a></li>
+<li><a href="#what-now">What now?</a></li>
+</ul>
+<h2 id="opinion">Opinion</h2>
+<p>After I’ve been exposed to LLMs more frequently at work doing Haskell, there are a couple of things that have crystallized for me:</p>
+<ol type="1">
+<li>they are exceptionally poor at reasoning</li>
+<li>they lie more often than not</li>
+<li>they are gigantic guessing/templating machines</li>
+</ol>
+<h2 id="what-is-good-use-of-llms">What is good use of LLMs</h2>
+<p>The issue with using LLMs isn’t just the well-known hallucination issue, which is btw. massively understated, it’s also that it will not by default go out of its way to find anything but the most average answer.</p>
+<p>If you’re dealing with complicated problems you’ll end up with messy prompts and lots of back and forth, because the agent will just shuffle through possible answers, starting with the most direct one. You’ll keep pointing out flaws or saying it’s plain wrong and it will just try the next possibility.</p>
+<p>After all, it doesn’t really reason, it’s just guessing. But once we know that, that’s fine.</p>
+<p>The consequences of that is what I feel many people easily overlook:</p>
+<ul>
+<li>the only reasonable way to use LLMs is when you can trivially verify the output, or…</li>
+<li>when you have superior domain knowledge and it becomes a sparring partner</li>
+</ul>
+<p>This can be tricky. When dealing with e.g. bugs, there’s often a way to simply try the suggested solution and see if it solves the issue. When you don’t have a way to easily verify the output via trial and error, then you’ll have to have extensive knowledge in the domain, so you can guide the LLM and tell it where it’s wrong. But once you don’t know the domain very well, you’re screwed. And that’s unfortunately one of the main use cases: I found myself asking Claude a lot of questions about linking and FreeBSD issues. I got lied to and went off-course so many times, that I’m confident to say it made me less productive. But when I used it in domains I have extensive knowledge myself, I could spot the lies and expose them. Then after a while it would get things right. Whether that actually saved me any time, I’m also not sure, but I’m sure there are cases where it did. But even then I rarely enjoyed the interactions.</p>
+<p>Another implication is that using LLMs for summaries or to broadly explaining a codebase is improper use as well, because you have no idea how accurate it is. On the other hand, using it for <em>navigating</em> a codebase is much less risky, because if it sends you in a wrong direction, the worst thing that can happen is that you read more code.</p>
+<h2 id="using-llms-to-build-things">Using LLMs to build things</h2>
+<p>I’m not into vibe coding at all. My opinion is that it isn’t much different from copy-pasting code from StackOverflow. Back in the day, we used to call those people poor engineers. Today with the use of AI it’s suddenly fancy.</p>
+<p>There are many reasons why I think it’s inappropriate use:</p>
+<ul>
+<li>it’s not good at novel problems (as in: things outside of the training set)</li>
+<li>it still produces average code</li>
+<li>it doesn’t really design anything organically</li>
+</ul>
+<p>I think the best comparsion is the blog post <a href="https://blog.yossarian.net/2025/01/10/Be-aware-of-the-Makefile-effect">Be aware of the Makefile effect</a>, which argues that most people copy paste a known good solution into a new context and then make small adjustments. I think vibe coding takes this to a whole new level. You start with a piece of code that Claude throws out and then adjust it here and there until it works.</p>
+<p>This is not how a good programmer discovering a new problem works though: you think about the issue holistically, develop a mental model and then decide how you express it in code, weighing competing concerns like extensibility, performance, simplicity and so on.</p>
+<p>When vibe coding, the output of code is too much and too fast for these fundamental mental processes to have enough time to take place. You’re busy navigating the pieces and composing them and interacting with the prompt. But you’re not really designing anything. You’re guiding a copy-paste machine. I think it’s highly unlikely that the code would look the same way if you had written it from scratch. And I think that’s a useful metric to have.</p>
+<p>But you could say it excels in prototyping and maybe that’s true… but prototypes have the tendency to become the first released version. You’d have to actually delete the code and start from scratch and only use the <em>experience</em> you gained from the prototype. But did you actually gain experience there?</p>
+<h2 id="the-social-impact">The social impact</h2>
+<p>I don’t want to talk about the energy consumption problem, the AI funding bubble, etc., but about the social impact on us programmers.</p>
+<p>I’ve had cases, where:</p>
+<ul>
+<li>people commit AI generated files/patches and ask for a review</li>
+<li>I ask someone to explain something to me and they run my question through an LLM and paste the output to me</li>
+<li>during an online argument, someone suddenly pastes AI-slop into the chat, because maybe they got bored of the conversation</li>
+</ul>
+<p>I find all of these cases incredibly frustrating. If you want me to review the output of your Claude conversation, you’re essentially asking me to do your job. It’s not a review. If I ask for your help, I’m asking you. I can run my questions through an AI prompt myself, I don’t need you for that. It’s almost a case of “Let Me Google That For You” and I find it disrespectful.</p>
+<p>Apart from that, there’s already growing concern that <a href="https://www.theguardian.com/technology/2025/oct/15/pupils-fear-ai-eroding-study-ability-research">AI is actually bad for learning</a> and the video <a href="https://youtu.be/0xS68sl2D70?si=FJrp3O1fGTWJaGv2">Veritasium: What Everyone Gets Wrong About AI</a> explores that question as well, but also something more fundamental: <strong>the difference between two systems of thought</strong>:</p>
+<ul>
+<li>system one: fast, partly subconscious thinking (also utilizing experience/memory to come to an answer more quickly)</li>
+<li>system two: slow, conscious, effortful, methodical thinking</li>
+</ul>
+<p>Neither of them is good or bad, but we have a tendency to over-utilize system one, because it’s good when dealing with high throughput and lots of stimuli… filtering through data quickly. But sometimes it leads us off-course, especially when we underestimate the problem.</p>
+<p>When we’re using LLM to support us in the quest to maximize our productivity, I’d argue we’re losing our ability to make use of system two even more, because instead of taking a step back and thinking deeply about the problem, I can just have LLM shuffle through possible answers, try them out and move on. But I’ll also not remember the interaction, nor the answer! There were no “aha” moments.</p>
+<p>Despite the impact on the individual or on teams, there’s also more concerning ecosystem effects. A study is arguing that <a href="https://arxiv.org/pdf/2601.15494">Vibe Coding Kills Open Source</a> and it reduces welfare despite higher productivity.</p>
+<p>I personally think it also makes people engage less directly with maintainers and projects, because instead of filing bugs, they can just ask AI to find an answer or a workaround.</p>
+<p>I have many more concerns: will people even bother writing documentation, will they even read this blog post or just skim through an AI summary? How will all of this shape the way we collaborate? Right now, I am mostly pessimistic.</p>
+<h2 id="llm-use-outside-of-tech">LLM use outside of tech</h2>
+<figure>
+<img src="../images/photo_2026-02-28_14-51-12.jpg" style="width:50.0%" alt="AI reddit" /><figcaption aria-hidden="true">AI reddit</figcaption>
+</figure>
+<p>I’ve had more success using LLMs outside of tech as a websearch on steroids. Instead of going through 30 different reddit threads, I can get an approximate answer in seconds and also have it list all the sources. I use that when researching on things related to my road bike, new wheel sets, etc. In the end, all the information is verifiable and I use it more as a gateway to more information (as in: I actually go to the reddit threads and read them). Similar when I search about products or trying to find local shops that offer a specific inventory.</p>
+<p>On the other hand, last time I searched for information regarding banking fees on international transfers, I got lied to by Gemini 4 times in a row after I verified all the information manually.</p>
+<h2 id="what-now">What now?</h2>
+<p>I like programming. And I like collaboration, pair programming, design discussions and so on.</p>
+<p>I don’t think that AI use is making any of that more fun. To me it’s mostly a productivity gold rush. There’s some nice use cases, but most of what has been promised, didn’t actually happen. The caveats are huge and there’s many negative side effects of people relying more on these tools.</p>
+<p>Although I don’t really want to go deep into the policial side of the topic, some notable Haskellers like Audrey Tang have expressed that <a href="https://english.elpais.com/technology/2025-11-02/audrey-tang-hacker-and-taiwanese-digital-minister-ai-is-a-parasite-that-fosters-polarization.html">“AI is a parasite that fosters polarization”</a>.</p>
+<p>Managers seem to push for AI use, because that’s what is expected of everyone now. You’re not on top of technology or productivity if you’re not neck deep in AI subscriptions.</p>
+<p>I find it a bit comical at times, because if you had a work colleague who lies 20% of the time with confidence, you’d fire them. But with the new LLM technology, we seem fine with that. Maybe because it’s much cheaper than an employee and maybe because many people don’t even notice that they’re consuming false information, because they don’t adhere to what I call “good use of LLM”.</p>
+<p>There’s also some evidence that it may not actually boost productivity:</p>
+<ul>
+<li><a href="https://www.reuters.com/business/ai-slows-down-some-experienced-software-developers-study-finds-2025-07-10/">AI slows down some experienced software developers, study finds</a></li>
+<li><a href="https://www.aol.com/articles/thousands-ceos-just-admitted-ai-183249072.html">Thousands of CEOs just admitted AI had no impact on employment or productivity</a></li>
+</ul>
+<p>I’ve also noticed that when you bring up these opinions that AI advocates often blame the user and say “you just don’t know how to use AI correctly”. It starts to feel a bit like a religious war at times.</p>
+<p>It certainly is not just another technology. It’s quite different from previous technological advancements.</p>
+</div>
+
+
+<div class="related">
+  <h2>Related posts</h2>
+  <ul class="related-posts">
+      
+      <li>
+        <h3>
+          <a href="../posts/2026-01-22-dynamic-ghcup-action.html">
+            Dynamic GHC matrix in GitHub CI
+            <small>January 22, 2026</small>
+          </a>
+        </h3>
+      </li>
+    
+      <li>
+        <h3>
+          <a href="../posts/2025-04-01-use-nix.html">
+            GHCup discontinued (or why you should use Nix)
+            <small>April  1, 2025</small>
+          </a>
+        </h3>
+      </li>
+    
+      <li>
+        <h3>
+          <a href="../posts/2024-05-07-ultimate-string-guide.html">
+            The ultimate guide to Haskell Strings
+            <small>May  7, 2024</small>
+          </a>
+        </h3>
+      </li>
+    
+  </ul>
+</div>
+
+
+<div class="related">
+  <h2>Comments</h2>
+<script src="https://utteranc.es/client.js" repo="hasufell/hasufell.github.io" issue-term="pathname" theme="github-light" crossorigin="anonymous" async>
+</script>
+</div>
+
+      </div>
+    </div>
+
+    <label for="sidebar-checkbox" class="sidebar-toggle"></label>
+
+    <script src="https://hasufell.github.io/public/js/script.js"></script>
+
+  </body>
+
+</html>
