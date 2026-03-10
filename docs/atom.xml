@@ -331,7 +331,7 @@
 <p>GitHub runner-images <a href="https://github.com/actions/runner-images/blob/5668be8c2f48215b30abe1f6cc5dd6a827ff411d/images/ubuntu/scripts/build/install-haskell.sh#L26">do something similar</a> when preinstalling GHCup.</p>]]></summary>
 </entry>
 <entry>
-    <title>GHCup discontinued (or why you should use Nix)</title>
+    <title>April fools': GHCup discontinued (or why you should use Nix)</title>
     <link href="https://github.com/hasufell/hasufell.github.io/posts/2025-04-01-use-nix.html" />
     <id>https://github.com/hasufell/hasufell.github.io/posts/2025-04-01-use-nix.html</id>
     <published>2025-04-01T00:00:00Z</published>
